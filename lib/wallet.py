@@ -342,7 +342,7 @@ class Abstract_Wallet(PrintError):
         addrs = self.get_receiving_addresses()
         if len(addrs) > 0:
             if not bitcoin.is_address(addrs[0]):
-                raise WalletFileException('The addresses in this wallet are not bitcoin addresses.')
+                raise WalletFileException('The addresses in this wallet are not smartcash addresses.')
 
     def synchronize(self):
         pass

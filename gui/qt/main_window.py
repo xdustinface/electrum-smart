@@ -124,7 +124,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.create_status_bar()
         self.need_update = threading.Event()
 
-        self.decimal_point = config.get('decimal_point', 5)
+        self.decimal_point = config.get('decimal_point', 8)
         self.num_zeros     = int(config.get('num_zeros',0))
 
         self.completions = QStringListModel()
@@ -372,7 +372,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.setGeometry(100, 100, 840, 400)
 
     def watching_only_changed(self):
-        name = "Electrum Testnet" if constants.net.TESTNET else "Electrum"
+        name = "Electrum Testnet" if constants.net.TESTNET else "Electrum-Smart"
         title = '%s %s  -  %s' % (name, self.wallet.electrum_version,
                                         self.wallet.basename())
         extra = [self.wallet.storage.get('wallet_type', '?')]
@@ -657,9 +657,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if self.decimal_point == 2:
             return 'bits'
         if self.decimal_point == 5:
-            return 'mBTC'
+            return 'mSMART'
         if self.decimal_point == 8:
-            return 'BTC'
+            return 'SMART'
         raise Exception('Unknown base unit')
 
     def connect_fields(self, window, btc_e, fiat_e, fee_e):
@@ -2723,9 +2723,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         SSL_id_e.setReadOnly(True)
         id_widgets.append((SSL_id_label, SSL_id_e))
 
-        units = ['BTC', 'mBTC', 'bits']
+        units = ['SMART', 'mSMART', 'bits']
         msg = _('Base unit of your wallet.')\
-              + '\n1BTC=1000mBTC.\n' \
+              + '\n1SMART=1000mSMART.\n' \
               + _(' These settings affects the fields in the Send tab')+' '
         unit_label = HelpLabel(_('Base unit') + ':', msg)
         unit_combo = QComboBox()
@@ -2737,9 +2737,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 return
             edits = self.amount_e, self.fee_e, self.receive_amount_e
             amounts = [edit.get_amount() for edit in edits]
-            if unit_result == 'BTC':
+            if unit_result == 'SMART':
                 self.decimal_point = 8
-            elif unit_result == 'mBTC':
+            elif unit_result == 'mSMART':
                 self.decimal_point = 5
             elif unit_result == 'bits':
                 self.decimal_point = 2

@@ -37,6 +37,7 @@ from . import version
 from .util import print_error, InvalidPassword, assert_bytes, to_bytes, inv_dict
 from . import segwit_addr
 from . import constants
+from Crypto.Hash import keccak
 
 
 ################################## transactions
@@ -182,6 +183,21 @@ def sha256(x):
     x = to_bytes(x, 'utf8')
     return bytes(hashlib.sha256(x).digest())
 
+def keccak256(x):
+    x = to_bytes(x, 'utf8')
+    keccak_hash = keccak.new(digest_bits=256)
+    keccak_hash.update(x)
+    return bytes(keccak_hash.digest())
+
+def Hash_Keccak(x):
+    x = to_bytes(x, 'utf8')
+    out = bytes(keccak256(x))
+    return out
+
+def Hash_Sha256(x):
+    x = to_bytes(x, 'utf8')
+    out = bytes(sha256(x))
+    return out
 
 def Hash(x):
     x = to_bytes(x, 'utf8')
@@ -268,7 +284,7 @@ def hash_160(public_key):
 def hash160_to_b58_address(h160, addrtype):
     s = bytes([addrtype])
     s += h160
-    return base_encode(s+Hash(s)[0:4], base=58)
+    return base_encode(s+Hash_Keccak(s)[0:4], base=58)
 
 
 def b58_address_to_hash160(addr):
@@ -451,7 +467,7 @@ class InvalidChecksum(Exception):
 
 
 def EncodeBase58Check(vchIn):
-    hash = Hash(vchIn)
+    hash = Hash_Keccak(vchIn)
     return base_encode(vchIn + hash[0:4], base=58)
 
 
@@ -459,7 +475,7 @@ def DecodeBase58Check(psz):
     vchRet = base_decode(psz, None, base=58)
     key = vchRet[0:-4]
     csum = vchRet[-4:]
-    hash = Hash(key)
+    hash = Hash_Keccak(key)
     cs32 = hash[0:4]
     if cs32 != csum:
         raise InvalidChecksum('expected {}, actual {}'.format(bh2u(cs32), bh2u(csum)))

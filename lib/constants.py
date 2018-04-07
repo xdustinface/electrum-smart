@@ -92,16 +92,70 @@ class BitcoinTestnet:
         'p2wsh':       0x02575483,  # Vpub
     }
 
+class SmartCashMainnet:
+
+    TESTNET = False
+    WIF_PREFIX = 0xbf #191
+    ADDRTYPE_P2PKH = 63
+    ADDRTYPE_P2SH = 18
+    SEGWIT_HRP = "smart"
+    GENESIS = "000007acc6970b812948d14ea5a0a13db0fdd07d5047c7e69101fa8b361e05a4"
+    DEFAULT_PORTS = {'t': '50001', 's': '50002'}
+    DEFAULT_SERVERS = read_json('servers.json', {})
+    CHECKPOINTS = read_json('checkpoints.json', [])
+
+    XPRV_HEADERS = {
+        'standard':    0x0488ade4,  # xprv
+        'p2wpkh-p2sh': 0x049d7878,  # yprv
+        'p2wsh-p2sh':  0x0295b005,  # Yprv
+        'p2wpkh':      0x04b2430c,  # zprv
+        'p2wsh':       0x02aa7a99,  # Zprv
+    }
+    XPUB_HEADERS = {
+        'standard':    0x0488b21e,  # xpub
+        'p2wpkh-p2sh': 0x049d7cb2,  # ypub
+        'p2wsh-p2sh':  0x0295b43f,  # Ypub
+        'p2wpkh':      0x04b24746,  # zpub
+        'p2wsh':       0x02aa7ed3,  # Zpub
+    }
+
+
+class SmartCashTestnet:
+
+    TESTNET = True
+    WIF_PREFIX = 0xc1 #193
+    ADDRTYPE_P2PKH = 65
+    ADDRTYPE_P2SH = 21
+    SEGWIT_HRP = "tsmart"
+    GENESIS = "0x0000027235b5679bcd28c90d03d4bf1a9ba4c07c4efcc1c87d6c68cce25e6e5d"
+    DEFAULT_PORTS = {'t': '51001', 's': '51002'}
+    DEFAULT_SERVERS = read_json('servers_testnet.json', {})
+    CHECKPOINTS = read_json('checkpoints_testnet.json', [])
+
+    XPRV_HEADERS = {
+        'standard':    0x04358394,  # tprv
+        'p2wpkh-p2sh': 0x044a4e28,  # uprv
+        'p2wsh-p2sh':  0x024285b5,  # Uprv
+        'p2wpkh':      0x045f18bc,  # vprv
+        'p2wsh':       0x02575048,  # Vprv
+    }
+    XPUB_HEADERS = {
+        'standard':    0x043587cf,  # tpub
+        'p2wpkh-p2sh': 0x044a5262,  # upub
+        'p2wsh-p2sh':  0x024289ef,  # Upub
+        'p2wpkh':      0x045f1cf6,  # vpub
+        'p2wsh':       0x02575483,  # Vpub
+    }
 
 # don't import net directly, import the module instead (so that net is singleton)
-net = BitcoinMainnet
+net = SmartCashMainnet
 
 
 def set_mainnet():
     global net
-    net = BitcoinMainnet
+    net = SmartCashMainnet
 
 
 def set_testnet():
     global net
-    net = BitcoinTestnet
+    net = SmartCashTestnet

@@ -912,7 +912,7 @@ class Transaction:
         if not all_segwit and not self.is_complete():
             return None
         ser = self.serialize(witness=False)
-        return bh2u(Hash(bfh(ser))[::-1])
+        return bh2u(Hash_Sha256(bfh(ser))[::-1])
 
     def wtxid(self):
         ser = self.serialize(witness=True)
@@ -1027,7 +1027,7 @@ class Transaction:
                     sec, compressed = keypairs.get(x_pubkey)
                     pubkey = public_key_from_private_key(sec, compressed)
                     # add signature
-                    pre_hash = Hash(bfh(self.serialize_preimage(i)))
+                    pre_hash = Hash_Sha256(bfh(self.serialize_preimage(i)))
                     pkey = regenerate_key(sec)
                     secexp = pkey.secret
                     private_key = bitcoin.MySigningKey.from_secret_exponent(secexp, curve = SECP256k1)

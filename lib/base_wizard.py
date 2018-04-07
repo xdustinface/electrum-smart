@@ -89,9 +89,9 @@ class BaseWizard(object):
         ])
         wallet_kinds = [
             ('standard',  _("Standard wallet")),
-            ('2fa', _("Wallet with two-factor authentication")),
-            ('multisig',  _("Multi-signature wallet")),
-            ('imported',  _("Import Bitcoin addresses or private keys")),
+            #('2fa', _("Wallet with two-factor authentication")),
+            #('multisig',  _("Multi-signature wallet")),
+            #('imported',  _("Import Bitcoin addresses or private keys")),
         ]
         choices = [pair for pair in wallet_kinds if pair[0] in wallet_types]
         self.choice_dialog(title=title, message=message, choices=choices, run_next=self.on_wallet_type)
@@ -123,18 +123,20 @@ class BaseWizard(object):
         self.multisig_dialog(run_next=on_multisig)
 
     def choose_keystore(self):
-        assert self.wallet_type in ['standard', 'multisig']
+        #assert self.wallet_type in ['standard', 'multisig']
+        assert self.wallet_type in ['standard']
         i = len(self.keystores)
         title = _('Add cosigner') + ' (%d of %d)'%(i+1, self.n) if self.wallet_type=='multisig' else _('Keystore')
         if self.wallet_type =='standard' or i==0:
             message = _('Do you want to create a new seed, or to restore a wallet using an existing seed?')
             choices = [
-                ('choose_seed_type', _('Create a new seed')),
+                #('choose_seed_type', _('Create a new seed')),
+                ('create_standard_seed', _('Create a new seed')),
                 ('restore_from_seed', _('I already have a seed')),
-                ('restore_from_key', _('Use a master key')),
+                #('restore_from_key', _('Use a master key')),
             ]
-            if not self.is_kivy:
-                choices.append(('choose_hw_device',  _('Use a hardware device')))
+            #if not self.is_kivy:
+            #    choices.append(('choose_hw_device',  _('Use a hardware device')))
         else:
             message = _('Add a cosigner to your multi-sig wallet')
             choices = [
