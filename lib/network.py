@@ -989,6 +989,7 @@ class Network(util.DaemonThread):
         self.stop_network()
         self.on_stop()
 
+
     def on_notify_header(self, interface, header):
         height = header.get('block_height')
         if not height:

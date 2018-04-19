@@ -2663,7 +2663,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         fee_widgets.append((feebox_cb, None))
 
         use_rbf_cb = QCheckBox(_('Use Replace-By-Fee'))
-        use_rbf_cb.setChecked(self.config.get('use_rbf', True))
+        use_rbf_cb.setChecked(self.config.get('use_rbf', False))
         use_rbf_cb.setToolTip(
             _('If you check this box, your transactions will be marked as non-final,') + '\n' + \
             _('and you will have the possibility, while they are unconfirmed, to replace them with transactions that pay higher fees.') + '\n' + \
