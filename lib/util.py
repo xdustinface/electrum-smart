@@ -41,6 +41,7 @@ def inv_dict(d):
 
 
 base_units = {'SMART':8, 'mSMART':5, 'uSMART':2}
+fee_levels = [_('Within 25 blocks'), _('Within 10 blocks'), _('Within 5 blocks'), _('Within 2 blocks'), _('In the next block')]
 
 def normalize_version(v):
     return [int(x) for x in re.sub(r'(\.0+)*$','', v).split(".")]

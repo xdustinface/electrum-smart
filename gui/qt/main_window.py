@@ -1043,7 +1043,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.amount_e = BTCAmountEdit(self.get_decimal_point)
         self.payto_e = PayToEdit(self)
         msg = _('Recipient of the funds.') + '\n\n'\
-              + _('You may enter a Bitcoin address, a label from your list of contacts (a list of completions will be proposed), or an alias (email-like address that forwards to a Bitcoin address)')
+              + _('You may enter a SmartCash address, a label from your list of contacts (a list of completions will be proposed), or an alias (email-like address that forwards to a Bitcoin address)')
         payto_label = HelpLabel(_('Pay to'), msg)
         grid.addWidget(payto_label, 1, 0)
         grid.addWidget(self.payto_e, 1, 1, 1, -1)
@@ -1090,7 +1090,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         hbox.addStretch(1)
         grid.addLayout(hbox, 4, 4)
 
-        msg = _('Bitcoin transactions are in general not free. A transaction fee is paid by the sender of the funds.') + '\n\n'\
+        msg = _('SmartCash transactions are in general not free. A transaction fee is paid by the sender of the funds.') + '\n\n'\
               + _('The amount of fee can be decided freely by the sender. However, transactions with low fees take more time to be processed.') + '\n\n'\
               + _('A suggested fee is automatically added to this field. You may override it. The suggested fee increases with the size of the transaction.')
         self.fee_e_label = HelpLabel(_('Fee'), msg)
@@ -2145,7 +2145,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         address  = address.text().strip()
         message = message.toPlainText().strip()
         if not bitcoin.is_address(address):
-            self.show_message(_('Invalid Bitcoin address.'))
+            self.show_message(_('Invalid SmartCash address.'))
             return
         if self.wallet.is_watching_only():
             self.show_message(_('This is a watching-only wallet.'))
@@ -2173,7 +2173,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         address  = address.text().strip()
         message = message.toPlainText().strip().encode('utf-8')
         if not bitcoin.is_address(address):
-            self.show_message(_('Invalid Bitcoin address.'))
+            self.show_message(_('Invalid SmartCash address.'))
             return
         try:
             # This can throw on invalid base64
@@ -2644,8 +2644,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         )
         fee_type_label = HelpLabel(_('Fee estimation') + ':', msg)
         fee_type_combo = QComboBox()
-        fee_type_combo.addItems([_('Static'), _('ETA'), _('Mempool')])
-        fee_type_combo.setCurrentIndex((2 if self.config.use_mempool_fees() else 1) if self.config.is_dynfee() else 0)
+        #fee_type_combo.addItems([_('Static'), _('ETA'), _('Mempool')])
+        #fee_type_combo.setCurrentIndex((2 if self.config.use_mempool_fees() else 1) if self.config.is_dynfee() else 0)
+        fee_type_combo.addItems([_('Static')])
+        fee_type_combo.setDisabled(True)
         def on_fee_type(x):
             self.config.set_key('mempool_fees', x==2)
             self.config.set_key('dynamic_fees', x>0)
@@ -2663,7 +2665,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         fee_widgets.append((feebox_cb, None))
 
         use_rbf_cb = QCheckBox(_('Use Replace-By-Fee'))
-        use_rbf_cb.setChecked(self.config.get('use_rbf', False))
+        #use_rbf_cb.setDisabled(True)
+        use_rbf_cb.setChecked(self.config.get('use_rbf', True))
         use_rbf_cb.setToolTip(
             _('If you check this box, your transactions will be marked as non-final,') + '\n' + \
             _('and you will have the possibility, while they are unconfirmed, to replace them with transactions that pay higher fees.') + '\n' + \

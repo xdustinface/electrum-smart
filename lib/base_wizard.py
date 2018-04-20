@@ -490,7 +490,7 @@ class BaseWizard(object):
             _("The type of addresses used by your wallet will depend on your seed."),
             _("Segwit wallets use bech32 addresses, defined in BIP173."),
             _("Please note that websites and other wallets may not support these addresses yet."),
-            _("Thus, you might want to keep using a non-segwit wallet in order to be able to receive bitcoins during the transition period.")
+            _("Thus, you might want to keep using a non-segwit wallet in order to be able to receive smartcashs during the transition period.")
         ])
         choices = [
             ('create_standard_seed', _('Standard')),
