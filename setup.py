@@ -82,7 +82,7 @@ setup(
             'locale/*/LC_MESSAGES/electrum.mo',
         ]
     },
-    scripts=['electrum'],
+    scripts=['electrum-smart'],
     data_files=data_files,
     description="Lightweight SmartCash Wallet",
     author="Thomas Voegtlin",
