@@ -36,12 +36,12 @@ if platform.system() in ['Linux', 'FreeBSD', 'DragonFly']:
         else:
             usr_share = os.path.expanduser('~/.local/share')
     data_files += [
-        (os.path.join(usr_share, 'applications/'), ['electrum.desktop']),
-        (os.path.join(usr_share, icons_dirname), ['icons/electrum.png'])
+        (os.path.join(usr_share, 'applications/'), ['electrum-smart.desktop']),
+        (os.path.join(usr_share, icons_dirname), ['icons/electrum-smart.png'])
     ]
 
 setup(
-    name="Electrum",
+    name="Electrum-SMART",
     version=version.ELECTRUM_VERSION,
     install_requires=requirements,
     extras_require={
@@ -88,6 +88,6 @@ setup(
     author="Thomas Voegtlin",
     author_email="thomasv@electrum.org",
     license="MIT Licence",
-    url="https://electrum.org",
+    url="https://smartcash.cc",
     long_description="""Lightweight SmartCash Wallet"""
 )
