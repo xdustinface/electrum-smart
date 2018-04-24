@@ -2,9 +2,9 @@
 
 # Parameterize
 PYTHON_VERSION=3.6.4
-BUILDDIR=/tmp/electrum-build
-PACKAGE=Electrum
-GIT_REPO=https://github.com/spesmilo/electrum
+BUILDDIR=/tmp/electrum-smart-build
+PACKAGE=Electrum-SMART
+GIT_REPO=https://github.com/rc125/electrum
 
 . $(dirname "$0")/base.sh
 
