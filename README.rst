@@ -1,26 +1,13 @@
-Electrum - Lightweight Bitcoin client
+Electrum-SMART - Lightweight SmartCash client
 =====================================
 
 ::
 
   Licence: MIT Licence
   Author: Thomas Voegtlin
+  Port Maintainer: rc125
   Language: Python
-  Homepage: https://electrum.org/
-
-
-.. image:: https://travis-ci.org/spesmilo/electrum.svg?branch=master
-    :target: https://travis-ci.org/spesmilo/electrum
-    :alt: Build Status
-.. image:: https://coveralls.io/repos/github/spesmilo/electrum/badge.svg?branch=master
-    :target: https://coveralls.io/github/spesmilo/electrum?branch=master
-    :alt: Test coverage statistics
-.. image:: https://img.shields.io/badge/help-translating-blue.svg
-    :target: https://crowdin.com/project/electrum
-    :alt: Help translating Electrum online
-
-
-
+  Homepage: https://smartcash.cc/
 
 
 Getting started
