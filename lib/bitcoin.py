@@ -37,7 +37,7 @@ from . import version
 from .util import print_error, InvalidPassword, assert_bytes, to_bytes, inv_dict
 from . import segwit_addr
 from . import constants
-from Crypto.Hash import keccak
+from Cryptodome.Hash import keccak
 
 
 ################################## transactions
