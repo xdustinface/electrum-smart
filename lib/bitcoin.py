@@ -615,10 +615,9 @@ from ecdsa.curves import SECP256k1
 from ecdsa.ellipticcurve import Point
 from ecdsa.util import string_to_number, number_to_string
 
-
 def msg_magic(message):
     length = bfh(var_int(len(message)))
-    return b"\x16SmartCash Signed Message:\n" + length + message
+    return b"\x20SmartCash Signed Message:\n" + length + message
 
 
 def verify_message(address, sig, message):
