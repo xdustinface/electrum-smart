@@ -26,7 +26,7 @@ for repo in electrum-smart electrum-smart-locale electrum-smart-icons; do
 	git checkout master
 	cd ..
     else
-	URL=https://github.com/rc125/$repo.git
+	URL=https://github.com/smartcash/$repo.git
 	git clone -b master $URL $repo
     fi
 done
