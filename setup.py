@@ -50,7 +50,7 @@ setup(
     packages=[
         'electrum',
         'electrum_gui',
-        'electrum_gui.qt',
+        'electrum_smart_gui.qt',
         'electrum_plugins',
         'electrum_plugins.audio_modem',
         'electrum_plugins.cosigner_pool',

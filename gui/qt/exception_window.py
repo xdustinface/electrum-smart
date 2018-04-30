@@ -35,8 +35,8 @@ import PyQt5.QtCore as QtCore
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 
-from electrum.i18n import _
-from electrum import ELECTRUM_VERSION, bitcoin, constants
+from electrum_smart.i18n import _
+from electrum_smart import ELECTRUM_VERSION, bitcoin, constants
 
 from .util import MessageBoxMixin
 

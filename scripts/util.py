@@ -1,8 +1,8 @@
 import select, time, queue
 # import electrum
-from electrum import Connection, Interface, SimpleConfig
+from electrum_smart import Connection, Interface, SimpleConfig
 
-from electrum.network import parse_servers
+from electrum_smart.network import parse_servers
 from collections import defaultdict
 
 # electrum.util.set_verbosity(1)
