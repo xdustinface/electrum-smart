@@ -6,9 +6,9 @@ import sys
 import os
 
 PACKAGE='Electrum-SMART'
-PYPKG='electrum-smart'
+PYPKG='electrum_smart'
 MAIN_SCRIPT='electrum-smart'
-ICONS_FILE='electrum.icns'
+ICONS_FILE='electrum-smart.icns'
 
 for i, x in enumerate(sys.argv):
     if x == '--name':

@@ -43,11 +43,11 @@ mkdir $BUILDDIR
 
 info "Downloading icons and locale..."
 for repo in icons locale; do
-  git clone $GIT_REPO-$repo $BUILDDIR/electrum-$repo
+  git clone $GIT_REPO-$repo $BUILDDIR/electrum-smart-$repo
 done
 
-cp -R $BUILDDIR/electrum-locale/locale/ ./lib/locale/
-cp    $BUILDDIR/electrum-icons/icons_rc.py ./gui/qt/
+cp -R $BUILDDIR/electrum-smart-locale/locale/ ./lib/locale/
+cp    $BUILDDIR/electrum-smart-icons/icons_rc.py ./gui/qt/
 
 
 info "Downloading libusb..."
