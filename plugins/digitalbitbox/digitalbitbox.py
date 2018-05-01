@@ -4,7 +4,7 @@
 #
 
 try:
-    import electrum
+    import electrum_smart as electrum
     from electrum_smart.bitcoin import TYPE_ADDRESS, push_script, var_int, msg_magic, Hash, verify_message, pubkey_from_signature, point_to_ser, public_key_to_p2pkh, EncodeAES, DecodeAES, MyVerifyingKey
     from electrum_smart.bitcoin import serialize_xpub, deserialize_xpub
     from electrum_smart import constants

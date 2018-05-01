@@ -7,7 +7,7 @@ import traceback
 from decimal import Decimal
 import threading
 
-import electrum
+import electrum_smart as electrum
 from electrum_smart.bitcoin import TYPE_ADDRESS
 from electrum_smart import WalletStorage, Wallet
 from electrum_smart_gui.kivy.i18n import _

@@ -7,7 +7,7 @@ import traceback
 
 import base64
 
-import electrum
+import electrum_smart as electrum
 from electrum_smart.plugins import BasePlugin, hook
 from electrum_smart.i18n import _
 

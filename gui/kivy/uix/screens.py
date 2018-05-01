@@ -168,7 +168,7 @@ class SendScreen(CScreen):
     payment_request = None
 
     def set_URI(self, text):
-        import electrum
+        import electrum_smart as electrum
         try:
             uri = electrum.util.parse_URI(text, self.app.on_pr)
         except:
