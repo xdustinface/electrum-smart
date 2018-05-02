@@ -110,6 +110,8 @@ class SettingsDialog(Factory.Popup):
         self._unit_dialog = None
         self._coinselect_dialog = None
 
+
+
     def update(self):
         self.wallet = self.app.wallet
         self.disable_pin = self.wallet.is_watching_only() if self.wallet else True

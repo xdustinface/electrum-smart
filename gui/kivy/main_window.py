@@ -121,7 +121,7 @@ class ElectrumWindow(App):
 
     use_rbf = BooleanProperty(False)
     def on_use_rbf(self, instance, x):
-        self.electrum_config.set_key('use_rbf', self.use_rbf, True)
+        self.electrum_config.set_key('use_rbf', self.use_rbf, False)
 
     use_change = BooleanProperty(False)
     def on_use_change(self, instance, x):
@@ -266,7 +266,7 @@ class ElectrumWindow(App):
         self.daemon = self.gui_object.daemon
         self.fx = self.daemon.fx
 
-        self.use_rbf = config.get('use_rbf', True)
+        self.use_rbf = config.get('use_rbf', False)
         self.use_change = config.get('use_change', True)
         self.use_unconfirmed = not config.get('confirmed_only', False)
 
@@ -308,7 +308,7 @@ class ElectrumWindow(App):
         if is_address(data):
             self.set_URI(data)
             return
-        if data.startswith('bitcoin:'):
+        if data.startswith('smartcash:'):
             self.set_URI(data)
             return
         # try to decode transaction
