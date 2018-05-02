@@ -551,7 +551,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         d = self.network.get_donation_address()
         if d:
             host = self.network.get_parameters()[0]
-            self.pay_to_URI('bitcoin:%s?message=donation for %s'%(d, host))
+            self.pay_to_URI('smartcash:%s?message=donation for %s'%(d, host))
         else:
             self.show_error(_('No donation address for this server'))
 
@@ -1513,7 +1513,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         amount = tx.output_value() if self.is_max else sum(map(lambda x:x[2], outputs))
         fee = tx.get_fee()
 
-        use_rbf = self.config.get('use_rbf', True)
+        use_rbf = self.config.get('use_rbf', False)
         if use_rbf:
             tx.set_rbf(True)
 
@@ -1698,7 +1698,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         try:
             out = util.parse_URI(URI, self.on_pr)
         except BaseException as e:
-            self.show_error(_('Invalid bitcoin URI:') + '\n' + str(e))
+            self.show_error(_('Invalid SmartCash URI:') + '\n' + str(e))
             return
         self.show_send_tab()
         r = out.get('r')
@@ -2315,7 +2315,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if not data:
             return
         # if the user scanned a bitcoin URI
-        if str(data).startswith("bitcoin:"):
+        if str(data).startswith("smartcash:"):
             self.pay_to_URI(data)
             return
         # else if the user scanned an offline signed tx
@@ -2666,8 +2666,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         fee_widgets.append((feebox_cb, None))
 
         use_rbf_cb = QCheckBox(_('Use Replace-By-Fee'))
-        #use_rbf_cb.setDisabled(True)
-        use_rbf_cb.setChecked(self.config.get('use_rbf', True))
+        use_rbf_cb.setDisabled(True)
+        use_rbf_cb.setChecked(self.config.get('use_rbf', False))
         use_rbf_cb.setToolTip(
             _('If you check this box, your transactions will be marked as non-final,') + '\n' + \
             _('and you will have the possibility, while they are unconfirmed, to replace them with transactions that pay higher fees.') + '\n' + \

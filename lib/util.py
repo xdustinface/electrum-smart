@@ -546,8 +546,8 @@ def parse_URI(uri, on_pr=None):
         return {'address': uri}
 
     u = urllib.parse.urlparse(uri)
-    if u.scheme != 'bitcoin':
-        raise Exception("Not a smartcash URI")
+    if u.scheme != 'smartcash':
+        raise Exception("Not a SmartCash URI")
     address = u.path
 
     # python for android fails to parse query
