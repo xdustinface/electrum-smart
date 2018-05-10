@@ -518,22 +518,22 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         tools_menu = menubar.addMenu(_("&Tools"))
 
         # Settings / Preferences are all reserved keywords in OSX using this as work around
-        tools_menu.addAction(_("Electrum preferences") if sys.platform == 'darwin' else _("Preferences"), self.settings_dialog)
+        tools_menu.addAction(_("Preferences") if sys.platform == 'darwin' else _("Preferences"), self.settings_dialog)
         tools_menu.addAction(_("&Network"), lambda: self.gui_object.show_network_dialog(self))
-        tools_menu.addAction(_("&Plugins"), self.plugins_dialog)
+        #tools_menu.addAction(_("&Plugins"), self.plugins_dialog)
         tools_menu.addSeparator()
         tools_menu.addAction(_("&Sign/verify message"), self.sign_verify_message)
-        tools_menu.addAction(_("&Encrypt/decrypt message"), self.encrypt_message)
+        #tools_menu.addAction(_("&Encrypt/decrypt message"), self.encrypt_message)
         tools_menu.addSeparator()
 
         paytomany_menu = tools_menu.addAction(_("&Pay to many"), self.paytomany)
 
-        raw_transaction_menu = tools_menu.addMenu(_("&Load transaction"))
-        raw_transaction_menu.addAction(_("&From file"), self.do_process_from_file)
-        raw_transaction_menu.addAction(_("&From text"), self.do_process_from_text)
-        raw_transaction_menu.addAction(_("&From the blockchain"), self.do_process_from_txid)
-        raw_transaction_menu.addAction(_("&From QR code"), self.read_tx_from_qrcode)
-        self.raw_transaction_menu = raw_transaction_menu
+        #raw_transaction_menu = tools_menu.addMenu(_("&Load transaction"))
+        #raw_transaction_menu.addAction(_("&From file"), self.do_process_from_file)
+        #raw_transaction_menu.addAction(_("&From text"), self.do_process_from_text)
+        #raw_transaction_menu.addAction(_("&From the blockchain"), self.do_process_from_txid)
+        #raw_transaction_menu.addAction(_("&From QR code"), self.read_tx_from_qrcode)
+        #self.raw_transaction_menu = raw_transaction_menu
         run_hook('init_menubar_tools', self, tools_menu)
 
         help_menu = menubar.addMenu(_("&Help"))
