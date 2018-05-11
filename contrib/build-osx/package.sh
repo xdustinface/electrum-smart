@@ -78,10 +78,10 @@ ${genisoimage} \
     -r \
     -dir-mode 0755 \
     -apple \
-    -o Electrum_uncompressed.dmg \
-    /tmp/electrum-macos/image || fail "Unable to create uncompressed dmg"
+    -o Electrum-SMART_uncompressed.dmg \
+    /tmp/electrum-smart-macos/image || fail "Unable to create uncompressed dmg"
 
-dmg dmg Electrum-SMART_uncompressed.dmg electrum-$VERSION.dmg || fail "Unable to create compressed dmg"
+dmg dmg Electrum-SMART_uncompressed.dmg electrum-smart-$VERSION.dmg || fail "Unable to create compressed dmg"
 rm Electrum-SMART_uncompressed.dmg
 
 echo "Done."
