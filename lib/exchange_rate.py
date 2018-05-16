@@ -404,16 +404,8 @@ class CryptoCompare(ExchangeBase):
 class CoinMarketCap(ExchangeBase):
 
     def get_rates(self, ccy):
-        ccys = ['AUD', 'BRL', 'CAD', 'CHF', 'CLP', 'CNY', 'CZK', 'DKK', 'EUR', 
-                'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'JPY', 'KRW', 'MXN', 
-                'MYR', 'NOK', 'NZD', 'PHP', 'PKR', 'PLN', 'RUB', 'SEK', 'SGD', 
-                'THB', 'TRY', 'TWD', 'ZAR']
-        json = self.get_json('api.coinmarketcap.com', '/v1/ticker/SmartCash?convert=%s' % ccy)[0]
-        result = dict.fromkeys(ccys)
-        if ccy in ccys:
-            ticker_ccy = 'price_' + ccy.lower()
-            result[ccy] = Decimal(json[ticker_ccy])
-        return result      
+        json = self.get_json('api.coinmarketcap.com', '/v2/ticker/1828/?convert=%s' % ccy)
+        return {ccy.upper(): Decimal(json['data']['quotes'][ccy]['price'])}
       
 
 def dictinvert(d):
