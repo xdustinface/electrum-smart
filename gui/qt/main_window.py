@@ -1149,6 +1149,13 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.fee_e.textEdited.connect(partial(on_fee_or_feerate, self.fee_e, False))
         self.fee_e.editingFinished.connect(partial(on_fee_or_feerate, self.fee_e, True))
 
+        # disable fee slider for now
+
+        self.fee_slider.setVisible(False)
+        self.size_e.setVisible(False)
+        self.feerate_e.setVisible(False)
+        self.fee_e.setEnabled(False)
+
         def feerounding_onclick():
             text = (self.feerounding_text + '\n\n' +
                     _('To somewhat protect your privacy, Electrum tries to create change with similar precision to other outputs.') + ' ' +
@@ -1185,8 +1192,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         grid.addLayout(vbox_feecontrol, 5, 1, 1, -1)
 
-        if not self.config.get('show_fee', False):
-            self.fee_adv_controls.setVisible(False)
+        # disable fee slider and set manual fees for now
+        if not self.config.get('show_fee', True):
+            self.fee_adv_controls.setVisible(True)
 
         self.preview_button = EnterButton(_("Preview"), self.do_preview)
         self.preview_button.setToolTip(_('Display the details of your transaction before signing it.'))
@@ -2645,8 +2653,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         )
         fee_type_label = HelpLabel(_('Fee estimation') + ':', msg)
         fee_type_combo = QComboBox()
-        #fee_type_combo.addItems([_('Static'), _('ETA'), _('Mempool')])
-        #fee_type_combo.setCurrentIndex((2 if self.config.use_mempool_fees() else 1) if self.config.is_dynfee() else 0)
+        fee_type_combo.addItems([_('Static'), _('ETA'), _('Mempool')])
+        fee_type_combo.setCurrentIndex((2 if self.config.use_mempool_fees() else 1) if self.config.is_dynfee() else 0)
         fee_type_combo.addItems([_('Static')])
         fee_type_combo.setDisabled(True)
         def on_fee_type(x):
@@ -2957,8 +2965,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         fiat_widgets.append((QLabel(_('Show Fiat balance for addresses')), fiat_address_checkbox))
         fiat_widgets.append((QLabel(_('Source')), ex_combo))
 
+        #disable fee slider for now
         tabs_info = [
-            (fee_widgets, _('Fees')),
+            #(fee_widgets, _('Fees')),
             (tx_widgets, _('Transactions')),
             (gui_widgets, _('Appearance')),
             (fiat_widgets, _('Fiat')),
