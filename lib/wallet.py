@@ -78,11 +78,18 @@ TX_HEIGHT_UNCONF_PARENT = -1
 TX_HEIGHT_UNCONFIRMED = 0
 
 
+
+#def relayfee(network):
+#    from .simple_config import FEERATE_DEFAULT_RELAY
+#    MAX_RELAY_FEE = 100000
+#    #f = network.relay_fee if network and network.relay_fee else FEERATE_DEFAULT_RELAY
+#    f = FEERATE_DEFAULT_RELAY
+#    return min(f, MAX_RELAY_FEE)
+
 def relayfee(network):
     from .simple_config import FEERATE_DEFAULT_RELAY
-    MAX_RELAY_FEE = 50000
-    #f = network.relay_fee if network and network.relay_fee else FEERATE_DEFAULT_RELAY
-    f = FEERATE_DEFAULT_RELAY
+    MAX_RELAY_FEE = 10 * FEERATE_DEFAULT_RELAY
+    f = network.relay_fee if network and network.relay_fee else FEERATE_DEFAULT_RELAY
     return min(f, MAX_RELAY_FEE)
 
 def dust_threshold(network):
@@ -1192,13 +1199,14 @@ class Abstract_Wallet(PrintError):
 
     def make_unsigned_transaction(self, inputs, outputs, config, fixed_fee=None,
                                   change_addr=None, is_sweep=False):
+
         # check outputs
         i_max = None
         for i, o in enumerate(outputs):
             _type, data, value = o
             if _type == TYPE_ADDRESS:
                 if not is_address(data):
-                    raise Exception("Invalid bitcoin address: {}".format(data))
+                    raise Exception("Invalid SmartCash address: {}".format(data))
             if value == '!':
                 if i_max is not None:
                     raise Exception("More than one output set to spend max")
@@ -1248,6 +1256,14 @@ class Abstract_Wallet(PrintError):
             coin_chooser = coinchooser.get_coin_chooser(config)
             tx = coin_chooser.make_tx(inputs, outputs, change_addrs[:max_change],
                                       fee_estimator, self.dust_threshold())
+            # SmartCash Fee
+            if(tx.estimated_size() < 1000):
+                fixed_fee = 100000
+                fee_estimator = lambda size: fixed_fee
+                max_change = self.max_change_outputs if self.multiple_change else 1
+                coin_chooser = coinchooser.get_coin_chooser(config)
+                tx = coin_chooser.make_tx(inputs, outputs, change_addrs[:max_change],
+                                          fee_estimator, self.dust_threshold())
         else:
             # FIXME?? this might spend inputs with negative effective value...
             sendable = sum(map(lambda x:x['value'], inputs))
@@ -1255,6 +1271,9 @@ class Abstract_Wallet(PrintError):
             outputs[i_max] = (_type, data, 0)
             tx = Transaction.from_io(inputs, outputs[:])
             fee = fee_estimator(tx.estimated_size())
+            # SmartCash Fee
+            if(fee < 100000):
+                fee = 100000
             amount = max(0, sendable - tx.output_value() - fee)
             outputs[i_max] = (_type, data, amount)
             tx = Transaction.from_io(inputs, outputs[:])

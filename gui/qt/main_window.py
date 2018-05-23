@@ -1289,9 +1289,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         '''
 
         estimatedFee = self.fee_e.get_amount() if self.fee_e.get_amount() is not None else None
-        #if estimatedFee < 100000:
-            #self.fee_e.setAmount(100000)
-            #freeze_fee = True
 
         freeze_fee = self.is_send_fee_frozen()
         freeze_feerate = self.is_send_feerate_frozen()
