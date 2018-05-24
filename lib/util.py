@@ -501,6 +501,8 @@ def time_difference(distance_in_time, include_seconds):
 mainnet_block_explorers = {
     'SmartExplorer': ('https://explorer.smartcash.cc/',
                         {'tx': 'tx/', 'addr': 'address/'}),
+    'RpcExplorer': ('https://rpcexplorer.smartcash.cc/',
+                        {'tx': 'tx/', 'addr': 'address/'}),
     'system default': ('blockchain:/',
                         {'tx': 'tx/', 'addr': 'address/'}),
 }
