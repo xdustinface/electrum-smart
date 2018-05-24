@@ -1736,11 +1736,15 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.not_enough_funds = False
         self.payment_request = None
         self.payto_e.is_pr = False
+        #for e in [self.payto_e, self.message_e, self.amount_e, self.fiat_send_e,
+        #          self.fee_e, self.feerate_e]:
+        #    e.setText('')
+        #    e.setFrozen(False)
+        #self.fee_slider.activate()
         for e in [self.payto_e, self.message_e, self.amount_e, self.fiat_send_e,
-                  self.fee_e, self.feerate_e]:
+                  self.feerate_e]:
             e.setText('')
             e.setFrozen(False)
-        #self.fee_slider.activate()
         self.feerate_e.setAmount(self.config.fee_per_byte())
         self.size_e.setAmount(0)
         self.feerounding_icon.setVisible(False)
