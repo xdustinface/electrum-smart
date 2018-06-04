@@ -197,7 +197,7 @@ class Abstract_Wallet(PrintError):
         self.synchronizer = None
         self.verifier = None
 
-        self.gap_limit_for_change = 6  # constant
+        self.gap_limit_for_change = 4  # constant
 
         # locks: if you need to take multiple ones, acquire them in the order they are defined here!
         self.lock = threading.RLock()
@@ -2067,7 +2067,7 @@ class Deterministic_Wallet(Abstract_Wallet):
 
     def __init__(self, storage):
         Abstract_Wallet.__init__(self, storage)
-        self.gap_limit = storage.get('gap_limit', 20)
+        self.gap_limit = storage.get('gap_limit', 10)
 
     def has_seed(self):
         return self.keystore.has_seed()
