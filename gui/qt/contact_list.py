@@ -78,8 +78,8 @@ class ContactList(MyTreeWidget):
             menu.addAction(_("Pay to"), lambda: self.parent.payto_contacts(keys))
             menu.addAction(_("Delete"), lambda: self.parent.delete_contacts(keys))
             URLs = [block_explorer_URL(self.config, 'addr', key) for key in filter(is_address, keys)]
-            if URLs:
-                menu.addAction(_("View on block explorer"), lambda: map(webbrowser.open, URLs))
+            #if URLs:
+            #    menu.addAction(_("View on block explorer"), lambda: map(webbrowser.open, URLs))
 
         run_hook('create_contact_menu', menu, selected)
         menu.exec_(self.viewport().mapToGlobal(position))
