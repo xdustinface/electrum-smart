@@ -37,6 +37,7 @@ os.environ['KIVY_DATA_DIR'] = os.path.abspath(os.path.dirname(__file__)) + '/gui
 if is_local or is_android:
     sys.path.insert(0, os.path.join(script_dir, 'packages'))
 
+os.environ['QT_AUTO_SCREEN_SCALE_FACTOR'] = "1"
 
 def check_imports():
     # pure-python dependencies need to be imported here for pyinstaller

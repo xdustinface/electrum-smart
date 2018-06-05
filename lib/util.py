@@ -502,9 +502,7 @@ mainnet_block_explorers = {
     'SmartExplorer': ('https://explorer.smartcash.cc/',
                         {'tx': 'tx/', 'addr': 'address/'}),
     'RpcExplorer': ('https://rpcexplorer.smartcash.cc/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'system default': ('blockchain:/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
+                        {'tx': 'tx/', 'addr': 'address/'})
 }
 
 testnet_block_explorers = {
