@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight SmartCash client
 # Copyright (C) 2014 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -30,8 +30,8 @@ import requests
 
 from PyQt5.QtWidgets import QApplication, QPushButton
 
-from electrum.plugins import BasePlugin, hook
-from electrum.i18n import _
+from electrum_smart.plugins import BasePlugin, hook
+from electrum_smart.i18n import _
 
 
 

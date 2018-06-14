@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - Lightweight SmartCash Client
 # Copyright (C) 2015 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -24,10 +24,10 @@
 # SOFTWARE.
 import webbrowser
 
-from electrum.i18n import _
-from electrum.util import block_explorer_URL
-from electrum.plugins import run_hook
-from electrum.bitcoin import is_address
+from electrum_smart.i18n import _
+from electrum_smart.util import block_explorer_URL
+from electrum_smart.plugins import run_hook
+from electrum_smart.bitcoin import is_address
 
 from .util import *
 
@@ -133,7 +133,7 @@ class AddressList(MyTreeWidget):
                 self.setCurrentItem(address_item)
 
     def create_menu(self, position):
-        from electrum.wallet import Multisig_Wallet
+        from electrum_smart.wallet import Multisig_Wallet
         is_multisig = isinstance(self.wallet, Multisig_Wallet)
         can_delete = self.wallet.can_delete_address()
         selected = self.selectedItems()
@@ -164,7 +164,7 @@ class AddressList(MyTreeWidget):
                 menu.addAction(_("Private key"), lambda: self.parent.show_private_key(addr))
             if not is_multisig and not self.wallet.is_watching_only():
                 menu.addAction(_("Sign/verify message"), lambda: self.parent.sign_verify_message(addr))
-                menu.addAction(_("Encrypt/decrypt message"), lambda: self.parent.encrypt_message(addr))
+                #menu.addAction(_("Encrypt/decrypt message"), lambda: self.parent.encrypt_message(addr))
             if can_delete:
                 menu.addAction(_("Remove from wallet"), lambda: self.parent.remove_address(addr))
             addr_URL = block_explorer_URL(self.config, 'addr', addr)

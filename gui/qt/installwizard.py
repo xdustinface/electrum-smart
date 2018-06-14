@@ -8,10 +8,10 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from electrum import Wallet, WalletStorage
-from electrum.util import UserCancelled, InvalidPassword
-from electrum.base_wizard import BaseWizard, HWD_SETUP_DECRYPT_WALLET
-from electrum.i18n import _
+from electrum_smart import Wallet, WalletStorage
+from electrum_smart.util import UserCancelled, InvalidPassword
+from electrum_smart.base_wizard import BaseWizard, HWD_SETUP_DECRYPT_WALLET
+from electrum_smart.i18n import _
 
 from .seed_dialog import SeedLayout, KeysLayout
 from .network_dialog import NetworkChoiceLayout
@@ -98,7 +98,7 @@ class InstallWizard(QDialog, MessageBoxMixin, BaseWizard):
     def __init__(self, config, app, plugins, storage):
         BaseWizard.__init__(self, config, storage)
         QDialog.__init__(self, None)
-        self.setWindowTitle('Electrum-Smart  -  ' + _('Install Wizard'))
+        self.setWindowTitle('Electrum-Smart  -  ' + _('Wizard'))
         self.app = app
         self.config = config
         # Set for base base class
@@ -143,7 +143,7 @@ class InstallWizard(QDialog, MessageBoxMixin, BaseWizard):
         hbox.setStretchFactor(scroll, 1)
         outer_vbox.addLayout(hbox)
         outer_vbox.addLayout(Buttons(self.back_button, self.next_button))
-        self.set_icon(':icons/electrum.png')
+        self.set_icon(':icons/electrum-smart.png')
         self.show()
         self.raise_()
         self.refresh_gui()  # Need for QT on MacOSX.  Lame.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - Lightweight SmartCash Client
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation files
@@ -35,8 +35,8 @@ import PyQt5.QtCore as QtCore
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 
-from electrum.i18n import _
-from electrum import ELECTRUM_VERSION, bitcoin, constants
+from electrum_smart.i18n import _
+from electrum_smart import ELECTRUM_VERSION, bitcoin, constants
 
 from .util import MessageBoxMixin
 
@@ -63,17 +63,17 @@ class Exception_Window(QWidget, MessageBoxMixin):
         self.exc_args = (exctype, value, tb)
         self.main_window = main_window
         QWidget.__init__(self)
-        self.setWindowTitle('Electrum - ' + _('An Error Occured'))
+        self.setWindowTitle('Electrum-SMART - ' + _('An Error Occured'))
         self.setMinimumSize(600, 300)
 
         main_box = QVBoxLayout()
 
         heading = QLabel('<h2>' + _('Sorry!') + '</h2>')
         main_box.addWidget(heading)
-        main_box.addWidget(QLabel(_('Something went wrong while executing Electrum.')))
+        main_box.addWidget(QLabel(_('Something went wrong while executing Electrum-SMART.')))
 
         main_box.addWidget(QLabel(
-            _('To help us diagnose and fix the problem, you can send us a bug report that contains useful debug '
+            _('To help us diagnose and fix the problem, you can create a issue that contains useful debug '
               'information:')))
 
         collapse_info = QPushButton(_("Show report contents"))
@@ -82,17 +82,17 @@ class Exception_Window(QWidget, MessageBoxMixin):
                                  self, "Report contents", self.get_report_string()))
         main_box.addWidget(collapse_info)
 
-        main_box.addWidget(QLabel(_("Please briefly describe what led to the error (optional):")))
+        #main_box.addWidget(QLabel(_("Please briefly describe what led to the error (optional):")))
 
-        self.description_textfield = QTextEdit()
-        self.description_textfield.setFixedHeight(50)
-        main_box.addWidget(self.description_textfield)
+        #self.description_textfield = QTextEdit()
+        #self.description_textfield.setFixedHeight(50)
+        #main_box.addWidget(self.description_textfield)
 
-        main_box.addWidget(QLabel(_("Do you want to send this report?")))
+        main_box.addWidget(QLabel(_("Do you want to report this?")))
 
         buttons = QHBoxLayout()
 
-        report_button = QPushButton(_('Send Bug Report'))
+        report_button = QPushButton(_('Create a Issue'))
         report_button.clicked.connect(self.send_report)
         report_button.setIcon(QIcon(":icons/tab_send.png"))
         buttons.addWidget(report_button)
@@ -113,7 +113,9 @@ class Exception_Window(QWidget, MessageBoxMixin):
     def send_report(self):
         if constants.net.GENESIS[-4:] not in ["4943", "e26f"] and ".electrum.org" in report_server:
             # Gah! Some kind of altcoin wants to send us crash reports.
-            self.main_window.show_critical(_("Please report this issue manually."))
+            import webbrowser
+            webbrowser.open('https://github.com/SmartCash/electrum-smart/issues/new')
+            #self.main_window.show_critical(_("Please report this issue manually."))
             return
         report = self.get_traceback_info()
         report.update(self.get_additional_info())

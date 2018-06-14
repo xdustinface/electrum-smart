@@ -1,4 +1,4 @@
-# Electrum - lightweight Bitcoin client
+# Electrum - Lightweight SmartCash Client
 # Copyright (C) 2011 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -501,8 +501,8 @@ def time_difference(distance_in_time, include_seconds):
 mainnet_block_explorers = {
     'SmartExplorer': ('https://explorer.smartcash.cc/',
                         {'tx': 'tx/', 'addr': 'address/'}),
-    'system default': ('blockchain:/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
+    'RpcExplorer': ('https://rpcexplorer.smartcash.cc/',
+                        {'tx': 'tx/', 'addr': 'address/'})
 }
 
 testnet_block_explorers = {
@@ -546,8 +546,8 @@ def parse_URI(uri, on_pr=None):
         return {'address': uri}
 
     u = urllib.parse.urlparse(uri)
-    if u.scheme != 'bitcoin':
-        raise Exception("Not a smartcash URI")
+    if u.scheme != 'smartcash':
+        raise Exception("Not a SmartCash URI")
     address = u.path
 
     # python for android fails to parse query

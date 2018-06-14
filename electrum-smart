@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- mode: python -*-
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - Lightweight SmartCash Client
 # Copyright (C) 2011 thomasv@gitorious
 #
 # Permission is hereby granted, free of charge, to any person
@@ -37,6 +37,7 @@ os.environ['KIVY_DATA_DIR'] = os.path.abspath(os.path.dirname(__file__)) + '/gui
 if is_local or is_android:
     sys.path.insert(0, os.path.join(script_dir, 'packages'))
 
+os.environ['QT_AUTO_SCREEN_SCALE_FACTOR'] = "1"
 
 def check_imports():
     # pure-python dependencies need to be imported here for pyinstaller
@@ -67,24 +68,24 @@ if not is_android:
 # load local module as electrum
 if is_local or is_android:
     import imp
-    imp.load_module('electrum', *imp.find_module('lib'))
-    imp.load_module('electrum_gui', *imp.find_module('gui'))
-    imp.load_module('electrum_plugins', *imp.find_module('plugins'))
+    imp.load_module('electrum_smart', *imp.find_module('lib'))
+    imp.load_module('electrum_smart_gui', *imp.find_module('gui'))
+    imp.load_module('electrum_smart_plugins', *imp.find_module('plugins'))
 
 
 
-from electrum import bitcoin, util
-from electrum import constants
-from electrum import SimpleConfig, Network
-from electrum.wallet import Wallet, Imported_Wallet
-from electrum.storage import WalletStorage, get_derivation_used_for_hw_device_encryption
-from electrum.util import print_msg, print_stderr, json_encode, json_decode, UserCancelled
-from electrum.util import set_verbosity, InvalidPassword
-from electrum.commands import get_parser, known_commands, Commands, config_variables
-from electrum import daemon
-from electrum import keystore
-from electrum.mnemonic import Mnemonic
-import electrum_plugins
+from electrum_smart import bitcoin, util
+from electrum_smart import constants
+from electrum_smart import SimpleConfig, Network
+from electrum_smart.wallet import Wallet, Imported_Wallet
+from electrum_smart.storage import WalletStorage, get_derivation_used_for_hw_device_encryption
+from electrum_smart.util import print_msg, print_stderr, json_encode, json_decode, UserCancelled
+from electrum_smart.util import set_verbosity, InvalidPassword
+from electrum_smart.commands import get_parser, known_commands, Commands, config_variables
+from electrum_smart import daemon
+from electrum_smart import keystore
+from electrum_smart.mnemonic import Mnemonic
+import electrum_smart_plugins
 
 # get password routine
 def prompt_password(prompt, confirm=True):
@@ -178,7 +179,7 @@ def init_daemon(config_options):
     storage = WalletStorage(config.get_wallet_path())
     if not storage.file_exists():
         print_msg("Error: Wallet file not found.")
-        print_msg("Type 'electrum create' to create a new wallet, or provide a path to a wallet with the -w option")
+        print_msg("Type 'electrum-smart create' to create a new wallet, or provide a path to a wallet with the -w option")
         sys.exit(0)
     if storage.is_encrypted():
         if storage.is_encrypted_with_hw_device():
@@ -216,7 +217,7 @@ def init_cmdline(config_options, server):
 
     if cmd.requires_wallet and not storage.file_exists():
         print_msg("Error: Wallet file not found.")
-        print_msg("Type 'electrum create' to create a new wallet, or provide a path to a wallet with the -w option")
+        print_msg("Type 'electrum-smart create' to create a new wallet, or provide a path to a wallet with the -w option")
         sys.exit(0)
 
     # important warning
@@ -329,7 +330,7 @@ def run_offline_command(config, config_options, plugins):
     return result
 
 def init_plugins(config, gui_name):
-    from electrum.plugins import Plugins
+    from electrum_smart.plugins import Plugins
     return Plugins(config, is_local or is_android, gui_name)
 
 
@@ -382,7 +383,7 @@ if __name__ == '__main__':
         config_options['portable'] = True
 
     if config_options.get('portable'):
-        config_options['electrum_path'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'electrum_data')
+        config_options['electrum_path'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'electrum-smart_data')
 
     # kivy sometimes freezes when we write to sys.stderr
     set_verbosity(config_options.get('verbose') and config_options.get('gui')!='kivy')
@@ -390,7 +391,7 @@ if __name__ == '__main__':
     # check uri
     uri = config_options.get('url')
     if uri:
-        if not uri.startswith('bitcoin:'):
+        if not uri.startswith('smartcash:'):
             print_stderr('unknown command:', uri)
             sys.exit(1)
         config_options['url'] = uri
@@ -435,13 +436,13 @@ if __name__ == '__main__':
                 d = daemon.Daemon(config, fd, False)
                 d.start()
                 if config.get('websocket_server'):
-                    from electrum import websockets
+                    from electrum_smart import websockets
                     websockets.WebSocketServer(config, d.network).start()
                 if config.get('requests_dir'):
                     path = os.path.join(config.get('requests_dir'), 'index.html')
                     if not os.path.exists(path):
                         print("Requests directory not configured.")
-                        print("You can configure it using https://github.com/spesmilo/electrum-merchant")
+                        print("You can configure it using https://github.com/smartcash/electrum-smart-merchant")
                         sys.exit(1)
                 d.join()
                 sys.exit(0)
@@ -463,7 +464,7 @@ if __name__ == '__main__':
         else:
             cmd = known_commands[cmdname]
             if cmd.requires_network:
-                print_msg("Daemon not running; try 'electrum daemon start'")
+                print_msg("Daemon not running; try 'electrum-smart daemon start'")
                 sys.exit(1)
             else:
                 plugins = init_plugins(config, 'cmdline')

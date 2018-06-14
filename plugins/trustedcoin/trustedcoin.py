@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - Lightweight Bitcoin Client
+# Electrum - Lightweight SmartCash Client
 # Copyright (C) 2015 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -30,18 +30,18 @@ import json
 from urllib.parse import urljoin
 from urllib.parse import quote
 
-import electrum
-from electrum import bitcoin
-from electrum import constants
-from electrum import keystore
-from electrum.bitcoin import *
-from electrum.mnemonic import Mnemonic
-from electrum import version
-from electrum.wallet import Multisig_Wallet, Deterministic_Wallet
-from electrum.i18n import _
-from electrum.plugins import BasePlugin, hook
-from electrum.util import NotEnoughFunds
-from electrum.storage import STO_EV_USER_PW
+import electrum_smart as electrum
+from electrum_smart import bitcoin
+from electrum_smart import constants
+from electrum_smart import keystore
+from electrum_smart.bitcoin import *
+from electrum_smart.mnemonic import Mnemonic
+from electrum_smart import version
+from electrum_smart.wallet import Multisig_Wallet, Deterministic_Wallet
+from electrum_smart.i18n import _
+from electrum_smart.plugins import BasePlugin, hook
+from electrum_smart.util import NotEnoughFunds
+from electrum_smart.storage import STO_EV_USER_PW
 
 # signing_xpub is hardcoded so that the wallet can be restored from seed, without TrustedCoin's server
 def get_signing_xpub():
@@ -386,8 +386,8 @@ class TrustedCoinPlugin(BasePlugin):
 
     @classmethod
     def get_xkeys(self, seed, passphrase, derivation):
-        from electrum.mnemonic import Mnemonic
-        from electrum.keystore import bip32_root, bip32_private_derivation
+        from electrum_smart.mnemonic import Mnemonic
+        from electrum_smart.keystore import bip32_root, bip32_private_derivation
         bip32_seed = Mnemonic.mnemonic_to_seed(seed, passphrase)
         xprv, xpub = bip32_root(bip32_seed, 'standard')
         xprv, xpub = bip32_private_derivation(xprv, "m/", derivation)

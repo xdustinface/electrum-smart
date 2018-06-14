@@ -3,17 +3,17 @@ from kivy.factory import Factory
 from kivy.properties import ObjectProperty
 from kivy.lang import Builder
 
-from electrum.util import base_units
-from electrum.i18n import languages
-from electrum_gui.kivy.i18n import _
-from electrum.plugins import run_hook
-from electrum import coinchooser
+from electrum_smart.util import base_units
+from electrum_smart.i18n import languages
+from electrum_smart_gui.kivy.i18n import _
+from electrum_smart.plugins import run_hook
+from electrum_smart import coinchooser
 
 from .choice_dialog import ChoiceDialog
 
 Builder.load_string('''
 #:import partial functools.partial
-#:import _ electrum_gui.kivy.i18n._
+#:import _ electrum_smart_gui.kivy.i18n._
 
 <SettingsDialog@Popup>
     id: settings
@@ -44,7 +44,7 @@ Builder.load_string('''
                 SettingsItem:
                     bu: app.base_unit
                     title: _('Denomination') + ': ' + self.bu
-                    description: _("Base unit for Bitcoin amounts.")
+                    description: _("Base unit for SmartCash amounts.")
                     action: partial(root.unit_dialog, self)
                 CardSeparator
                 SettingsItem:
@@ -109,6 +109,8 @@ class SettingsDialog(Factory.Popup):
         self._language_dialog = None
         self._unit_dialog = None
         self._coinselect_dialog = None
+
+
 
     def update(self):
         self.wallet = self.app.wallet

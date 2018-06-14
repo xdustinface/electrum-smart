@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - Lightweight Bitcoin Client
+# Electrum - Lightweight SmartCash Client
 # Copyright (C) 2015 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -31,12 +31,12 @@ from decimal import Decimal
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
-from electrum_gui.qt.util import *
-from electrum_gui.qt.qrcodewidget import QRCodeWidget
-from electrum_gui.qt.amountedit import AmountEdit
-from electrum_gui.qt.main_window import StatusBarButton
-from electrum.i18n import _
-from electrum.plugins import hook
+from electrum_smart_gui.qt.util import *
+from electrum_smart_gui.qt.qrcodewidget import QRCodeWidget
+from electrum_smart_gui.qt.amountedit import AmountEdit
+from electrum_smart_gui.qt.main_window import StatusBarButton
+from electrum_smart.i18n import _
+from electrum_smart.plugins import hook
 from .trustedcoin import TrustedCoinPlugin, server
 
 

@@ -23,7 +23,7 @@ Electrum from its root directory, without installing it on your
 system; all the python dependencies are included in the 'packages'
 directory. To run Electrum from its root directory, just do::
 
-    ./electrum
+    ./electrum-smart
 
 You can also install Electrum on your system, by running this command::
 
@@ -46,7 +46,7 @@ Development version
 
 Check out the code from Github::
 
-    git clone git://github.com/spesmilo/electrum.git
+    git clone git://github.com/smartcash/electrum-smart.git
     cd electrum
 
 Run install (this should install dependencies)::

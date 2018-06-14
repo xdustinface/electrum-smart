@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- mode: python -*-
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight SmartCash client
 # Copyright (C) 2016  The Electrum developers
 #
 # Permission is hereby granted, free of charge, to any person
@@ -27,11 +27,11 @@
 import threading
 
 from PyQt5.Qt import QVBoxLayout, QLabel
-from electrum_gui.qt.password_dialog import PasswordDialog, PW_PASSPHRASE
-from electrum_gui.qt.util import *
+from electrum_smart_gui.qt.password_dialog import PasswordDialog, PW_PASSPHRASE
+from electrum_smart_gui.qt.util import *
 
-from electrum.i18n import _
-from electrum.util import PrintError
+from electrum_smart.i18n import _
+from electrum_smart.util import PrintError
 
 # The trickiest thing about this handler was getting windows properly
 # parented on MacOSX.
@@ -172,9 +172,9 @@ class QtHandlerBase(QObject, PrintError):
 
 
 
-from electrum.plugins import hook
-from electrum.util import UserCancelled
-from electrum_gui.qt.main_window import StatusBarButton
+from electrum_smart.plugins import hook
+from electrum_smart.util import UserCancelled
+from electrum_smart_gui.qt.main_window import StatusBarButton
 
 class QtPluginBase(object):
 

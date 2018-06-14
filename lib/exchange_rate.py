@@ -21,7 +21,8 @@ CCY_PRECISIONS = {'BHD': 3, 'BIF': 0, 'BYR': 0, 'CLF': 4, 'CLP': 0,
                   'JOD': 3, 'JPY': 0, 'KMF': 0, 'KRW': 0, 'KWD': 3,
                   'LYD': 3, 'MGA': 1, 'MRO': 1, 'OMR': 3, 'PYG': 0,
                   'RWF': 0, 'TND': 3, 'UGX': 0, 'UYI': 0, 'VND': 0,
-                  'VUV': 0, 'XAF': 0, 'XAU': 4, 'XOF': 0, 'XPF': 0}
+                  'VUV': 0, 'XAF': 0, 'XAU': 4, 'XOF': 0, 'XPF': 0,
+                  'BTC': 5, 'ETH': 4}
 
 
 class ExchangeBase(PrintError):
@@ -369,6 +370,43 @@ class Zaif(ExchangeBase):
         json = self.get_json('api.zaif.jp', '/api/1/last_price/btc_jpy')
         return {'JPY': Decimal(json['last_price'])}
 
+class HitBTC(ExchangeBase):
+
+    def get_rates(self, ccy):
+        ccys = ['USD']
+        json = self.get_json('api.hitbtc.com', '/api/1/public/SMART%s/ticker' % ccy)
+        result = dict.fromkeys(ccys)
+        if ccy in ccys:
+            result[ccy] = Decimal(json['last'])
+        return result
+
+
+class CryptoCompare(ExchangeBase):
+
+    def get_rates(self,ccy):
+        json = self.get_json('min-api.cryptocompare.com', '/data/price?fsym=SMART&tsyms=USD,EUR,THB,BTC,ETH')
+        return {'USD': Decimal(json['USD']), 'EUR': Decimal(json['EUR']), 'THB': Decimal(json['THB']), 'BTC': Decimal(json['BTC']), 'ETH': Decimal(json['ETH'])}
+
+    def history_ccys(self):
+        return ['AUD', 'BRL', 'CAD', 'CHF', 'CLP', 'CNY', 'CZK', 'DKK', 'EUR',
+                'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'JPY', 'KRW', 'MXN',
+                'MYR', 'NOK', 'NZD', 'PHP', 'PKR', 'PLN', 'RUB', 'SEK', 'SGD',
+                'THB', 'TRY', 'TWD', 'ZAR']
+
+    def historical_rates(self, ccy):
+        query = '/data/histoday?fsym=SMART&tsym=%s&limit=1000&aggregate=1' % ccy
+        json = self.get_json('min-api.cryptocompare.com', query)
+        history = json['Data']
+        return dict([(time.strftime('%Y-%m-%d', time.localtime(t['time'])), t['close'])
+                                    for t in history])
+
+
+class CoinMarketCap(ExchangeBase):
+
+    def get_rates(self, ccy):
+        json = self.get_json('api.coinmarketcap.com', '/v2/ticker/1828/?convert=%s' % ccy)
+        return {ccy.upper(): Decimal(json['data']['quotes'][ccy]['price'])}
+      
 
 def dictinvert(d):
     inv = {}
@@ -567,6 +605,6 @@ class FxThread(ThreadJob):
         return self.fiat_value(satoshis, self.history_rate(d_t))
 
     def timestamp_rate(self, timestamp):
-        from electrum.util import timestamp_to_datetime
+        from electrum_smart.util import timestamp_to_datetime
         date = timestamp_to_datetime(timestamp)
         return self.history_rate(date)

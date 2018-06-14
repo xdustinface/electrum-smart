@@ -3,14 +3,14 @@ import hashlib
 import sys
 import traceback
 
-from electrum import bitcoin
-from electrum.bitcoin import TYPE_ADDRESS, int_to_hex, var_int
-from electrum.i18n import _
-from electrum.plugins import BasePlugin
-from electrum.keystore import Hardware_KeyStore
-from electrum.transaction import Transaction
+from electrum_smart import bitcoin
+from electrum_smart.bitcoin import TYPE_ADDRESS, int_to_hex, var_int
+from electrum_smart.i18n import _
+from electrum_smart.plugins import BasePlugin
+from electrum_smart.keystore import Hardware_KeyStore
+from electrum_smart.transaction import Transaction
 from ..hw_wallet import HW_PluginBase
-from electrum.util import print_error, is_verbose, bfh, bh2u, versiontuple
+from electrum_smart.util import print_error, is_verbose, bfh, bh2u, versiontuple
 
 try:
     import hid
@@ -27,7 +27,7 @@ except ImportError:
 
 MSG_NEEDS_FW_UPDATE_GENERIC = _('Firmware version too old. Please update at') + \
                       ' https://www.ledgerwallet.com'
-MSG_NEEDS_FW_UPDATE_SEGWIT = _('Firmware version (or "Bitcoin" app) too old for Segwit support. Please update at') + \
+MSG_NEEDS_FW_UPDATE_SEGWIT = _('Firmware version (or "SmartCash" app) too old for Segwit support. Please update at') + \
                       ' https://www.ledgerwallet.com'
 MULTI_OUTPUT_SUPPORT = '1.1.4'
 SEGWIT_SUPPORT = '1.1.10'
@@ -188,7 +188,7 @@ class Ledger_Client():
                 self.perform_hw1_preflight()
             except BTChipException as e:
                 if (e.sw == 0x6d00 or e.sw == 0x6700):
-                    raise Exception(_("Device not in Bitcoin mode")) from e
+                    raise Exception(_("Device not in SmartCash mode")) from e
                 raise e
             self.preflightDone = True
 

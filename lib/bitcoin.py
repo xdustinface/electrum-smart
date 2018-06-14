@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight SmartCash client
 # Copyright (C) 2011 thomasv@gitorious
 #
 # Permission is hereby granted, free of charge, to any person
@@ -415,7 +415,7 @@ def base_encode(v, base):
         result.append(chars[mod])
         long_value = div
     result.append(chars[long_value])
-    # Bitcoin does a little leading-zero-compression:
+    # SmartCash does a little leading-zero-compression:
     # leading 0-bytes in the input become leading-1s
     nPad = 0
     for c in v:
@@ -615,10 +615,9 @@ from ecdsa.curves import SECP256k1
 from ecdsa.ellipticcurve import Point
 from ecdsa.util import string_to_number, number_to_string
 
-
 def msg_magic(message):
     length = bfh(var_int(len(message)))
-    return b"\x16SmartCash Signed Message:\n" + length + message
+    return b"\x1ASmartCash Signed Message:\n" + length + message
 
 
 def verify_message(address, sig, message):

@@ -1,15 +1,15 @@
 from binascii import hexlify, unhexlify
 
-from electrum.util import bfh, bh2u
-from electrum.bitcoin import (b58_address_to_hash160, xpub_from_pubkey,
+from electrum_smart.util import bfh, bh2u
+from electrum_smart.bitcoin import (b58_address_to_hash160, xpub_from_pubkey,
                               TYPE_ADDRESS, TYPE_SCRIPT,
                               is_segwit_address)
-from electrum import constants
-from electrum.i18n import _
-from electrum.plugins import BasePlugin
-from electrum.transaction import deserialize, Transaction
-from electrum.keystore import Hardware_KeyStore, is_xpubkey, parse_xpubkey
-from electrum.base_wizard import ScriptTypeNotSupported
+from electrum_smart import constants
+from electrum_smart.i18n import _
+from electrum_smart.plugins import BasePlugin
+from electrum_smart.transaction import deserialize, Transaction
+from electrum_smart.keystore import Hardware_KeyStore, is_xpubkey, parse_xpubkey
+from electrum_smart.base_wizard import ScriptTypeNotSupported
 
 from ..hw_wallet import HW_PluginBase
 
