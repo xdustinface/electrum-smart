@@ -52,11 +52,13 @@ from electrum_smart import Transaction
 from electrum_smart import util, bitcoin, commands, coinchooser
 from electrum_smart import paymentrequest
 from electrum_smart.wallet import Multisig_Wallet, AddTransactionException
+from electrum_smart.masternode_manager import MasternodeManager
 
 from .amountedit import AmountEdit, BTCAmountEdit, MyLineEdit, FeerateEdit
 from .qrcodewidget import QRCodeWidget, QRDialog
 from .qrtextedit import ShowQRTextEdit, ScanQRTextEdit
 from .transaction_dialog import show_transaction
+from .masternode_dialog import MasternodeDialog
 #from .fee_slider import FeeSlider
 from .util import *
 
@@ -99,6 +101,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         QMainWindow.__init__(self)
 
         self.gui_object = gui_object
+        self.masternode_manager = None
         self.config = config = gui_object.config
 
         self.setup_exception_hook()
@@ -168,6 +171,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         QShortcut(QKeySequence("Ctrl+R"), self, self.update_wallet)
         QShortcut(QKeySequence("Ctrl+PgUp"), self, lambda: wrtabs.setCurrentIndex((wrtabs.currentIndex() - 1)%wrtabs.count()))
         QShortcut(QKeySequence("Ctrl+PgDown"), self, lambda: wrtabs.setCurrentIndex((wrtabs.currentIndex() + 1)%wrtabs.count()))
+        QShortcut(QKeySequence("Ctrl+N"), self, self.show_masternode_dialog)
 
         for i in range(wrtabs.count()):
             QShortcut(QKeySequence("Alt+" + str(i + 1)), self, lambda i=i: wrtabs.setCurrentIndex(i))
@@ -337,8 +341,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def load_wallet(self, wallet):
         wallet.thread = TaskThread(self, self.on_error)
         self.wallet = wallet
+        self.masternode_manager = MasternodeManager(self.wallet, self.config)
         self.update_recently_visited(wallet.storage.path)
         # address used to create a dummy transaction and estimate transaction fee
+        self.masternode_manager.send_subscriptions()
         self.history_list.update()
         self.address_list.update()
         self.utxo_list.update()
@@ -514,6 +520,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         add_toggle_action(view_menu, self.utxo_tab)
         add_toggle_action(view_menu, self.contacts_tab)
         add_toggle_action(view_menu, self.console_tab)
+
+        wallet_menu.addSeparator()
+        wallet_menu.addAction(_("Smartnodes"), self.show_masternode_dialog)
 
         tools_menu = menubar.addMenu(_("&Tools"))
 
@@ -1788,6 +1797,18 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         from .contact_list import ContactList
         self.contact_list = l = ContactList(self)
         return self.create_list_tab(l)
+
+    def create_proposals_tab(self):
+        from masternode_budget_widgets import ProposalsTab
+        self.proposals_list = ProposalsTab(self)
+        return self.proposals_list
+
+    def update_proposals_tab(self):
+        # Disabled until API is stable.
+        return
+        if not self.masternode_manager:
+            return
+        self.proposals_list.update(list(self.network.all_proposals))
 
     def remove_address(self, addr):
         if self.question(_("Do you want to remove")+" %s "%addr +_("from your wallet?")):
@@ -3203,4 +3224,13 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.msg_box(QPixmap(":icons/offline_tx.png"), None, _('Success'), _("Transaction added to wallet history"))
             return True
 
+    def show_masternode_dialog(self):
+        d = MasternodeDialog(self.masternode_manager, self)
+        d.exec_()
+
+    def proposals_changed(self):
+        """Callback for when proposals change."""
+        if not self.masternode_manager:
+            return
+        self.update_proposals_tab()
 
