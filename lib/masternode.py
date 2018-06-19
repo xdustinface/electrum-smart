@@ -1,4 +1,4 @@
-"""DASH masternode support."""
+"""SMART masternode support."""
 import time
 import base64
 
@@ -164,9 +164,9 @@ class MasternodeAnnounce(object):
 
     Attributes:
         - alias: Alias to help the user identify this masternode.
-        - vin: 1K Dash input.
+        - vin: 10K SMART input.
         - addr: Address that the masternode can be reached at.
-        - collateral_key: Key that can spend the 1K Dash input.
+        - collateral_key: Key that can spend the 10K SMART input.
         - delegate_key: Key that the masternode will sign messages with.
         - sig: Message signature.
         - sig_time: Message signature creation time.
@@ -177,7 +177,7 @@ class MasternodeAnnounce(object):
 
     """
     def __init__(self, alias='', vin=None, addr=NetworkAddress(), collateral_key='', delegate_key='',
-                 sig='', sig_time=0, protocol_version=70201, last_ping=MasternodePing(),
+                 sig='', sig_time=0, protocol_version=90025, last_ping=MasternodePing(),
                  last_dsq=0, announced=False):
         self.alias = alias
         if vin is None:
@@ -246,7 +246,7 @@ class MasternodeAnnounce(object):
         s = to_bytes(str(self.addr))
         s += to_bytes(str(self.sig_time))
 
-        if self.protocol_version < 70201:
+        if self.protocol_version < 90025:
             # Decode the hex-encoded bytes for our keys.
             s += bfh(self.collateral_key)
             s += bfh(self.delegate_key)

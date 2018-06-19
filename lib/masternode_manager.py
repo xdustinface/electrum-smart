@@ -179,10 +179,12 @@ class MasternodeManager(object):
 
         used_vins = map(lambda mn: '%s:%d' % (mn.vin.get('prevout_hash'), mn.vin.get('prevout_n', 0xffffffff)), self.masternodes)
         unused = lambda d: '%s:%d' % (d['prevout_hash'], d['prevout_n']) not in used_vins
-        correct_amount = lambda d: d['value'] == 1000 * bitcoin.COIN
 
-        # Valid outputs have a value of exactly 1000 DASH and
-        # are not in use by an existing masternode.
+        #smartnode 10000 output
+        correct_amount = lambda d: d['value'] == 10000 * bitcoin.COIN
+
+        # Valid outputs have a value of exactly 10000 SMART and
+        # are not in use by an existing smartnode.
         is_valid = lambda d: correct_amount(d) and unused(d)
 
         coins = filter(is_valid, coins)
@@ -196,32 +198,32 @@ class MasternodeManager(object):
         """Raise an exception if alias can't be signed and announced to the network."""
         mn = self.get_masternode(alias)
         if not mn:
-            raise Exception('Nonexistent masternode')
+            raise Exception('Nonexistent smartnode')
         if not mn.vin.get('prevout_hash'):
             raise Exception('Collateral payment is not specified')
         if not mn.collateral_key:
             raise Exception('Collateral key is not specified')
         if not mn.delegate_key:
-            raise Exception('Masternode delegate key is not specified')
+            raise Exception('Smartnode delegate key is not specified')
         if not mn.addr.ip:
-            raise Exception('Masternode has no IP address')
+            raise Exception('Smartnode has no IP address')
 
         # Ensure that the collateral payment has >= MASTERNODE_MIN_CONFIRMATIONS.
         height, conf, timestamp = self.wallet.get_tx_height(mn.vin['prevout_hash'])
         if conf < MASTERNODE_MIN_CONFIRMATIONS:
             raise Exception('Collateral payment must have at least %d confirmations (current: %d)' % (MASTERNODE_MIN_CONFIRMATIONS, conf))
         # Ensure that the masternode's vin is valid.
-        if mn.vin.get('value', 0) != bitcoin.COIN * 1000:
-            raise Exception('Masternode requires a collateral 1000 DASH output.')
+        if mn.vin.get('value', 0) != bitcoin.COIN * 10000:
+            raise Exception('Smartnode requires a collateral 10000 SMART output.')
 
         # If the masternode has been announced, it can be announced again if it has been disabled.
         if mn.announced:
             status = self.masternode_statuses.get(mn.get_collateral_str())
             if status in ['PRE_ENABLED', 'ENABLED']:
-                raise Exception('Masternode has already been activated')
+                raise Exception('Smartnode has already been activated')
 
     def save(self):
-        """Save masternodes."""
+        """Save smartnodes."""
         masternodes = {}
         for mn in self.masternodes:
             masternodes[mn.alias] = mn.dump()
@@ -233,15 +235,15 @@ class MasternodeManager(object):
         self.wallet.storage.put('budget_votes', votes)
 
     def sign_announce(self, alias, password):
-        """Sign a Masternode Announce message for alias."""
+        """Sign a Smartnode Announce message for alias."""
         self.check_can_sign_masternode(alias)
         mn = self.get_masternode(alias)
-        # Ensure that the masternode's vin is valid.
+        # Ensure that the smartnode's vin is valid.
         if mn.vin.get('scriptSig') is None:
             mn.vin['scriptSig'] = ''
         if mn.vin.get('sequence') is None:
             mn.vin['sequence'] = 0xffffffff
-        # Ensure that the masternode's last_ping is current.
+        # Ensure that the smartnode's last_ping is current.
         height = self.wallet.get_local_height() - 12
         blockchain = self.wallet.network.blockchain()
         header = blockchain.read_header(height)
@@ -251,14 +253,14 @@ class MasternodeManager(object):
         # Sign ping with delegate key.
         self.wallet.sign_masternode_ping(mn.last_ping, mn.delegate_key)
 
-        # After creating the Masternode Ping, sign the Masternode Announce.
+        # After creating the Smartnode Ping, sign the Smartnode Announce.
         address = bitcoin.public_key_to_p2pkh(bfh(mn.collateral_key))
         mn.sig = self.wallet.sign_message(address, mn.serialize_for_sig(update_time=True), password)
 
         return mn
 
     def send_announce(self, alias):
-        """Broadcast a Masternode Announce message for alias to the network.
+        """Broadcast a Smartnode Announce message for alias to the network.
 
         Returns a 2-tuple of (error_message, was_announced).
         """
@@ -266,7 +268,7 @@ class MasternodeManager(object):
             raise Exception('Not connected')
 
         mn = self.get_masternode(alias)
-        # Vector-serialize the masternode.
+        # Vector-serialize the smartnode.
         serialized = '01' + mn.serialize()
         errmsg = []
         callback = lambda r: self.broadcast_announce_callback(alias, errmsg, r)
@@ -279,7 +281,7 @@ class MasternodeManager(object):
         return (errmsg, mn.announced)
 
     def broadcast_announce_callback(self, alias, errmsg, r):
-        """Callback for when a Masternode Announce message is broadcasted."""
+        """Callback for when a Smartnode Announce message is broadcasted."""
         try:
             self.on_broadcast_announce(alias, r)
         except Exception as e:
@@ -300,7 +302,7 @@ class MasternodeManager(object):
         mn_hash = mn.get_hash()
         mn_dict = result.get(mn_hash)
         if not mn_dict:
-            raise Exception('No result for expected Masternode Hash. Got %s' % result)
+            raise Exception('No result for expected Smartnode Hash. Got %s' % result)
 
         if mn_dict.get('errorMessage'):
             raise Exception('Announce was rejected: %s' % mn_dict['errorMessage'])
@@ -322,7 +324,7 @@ class MasternodeManager(object):
         return pubkey
 
     def import_masternode_conf_lines(self, conf_lines, password):
-        """Import a list of MasternodeConfLine."""
+        """Import a list of SmartnodeConfLine."""
         def already_have(line):
             for masternode in self.masternodes:
                 # Don't let aliases collide.
@@ -354,13 +356,11 @@ class MasternodeManager(object):
 
         return num_imported
 
-
-
     def get_votes(self, alias):
         """Get budget votes that alias has cast."""
         mn = self.get_masternode(alias)
         if not mn:
-            raise Exception('Nonexistent masternode')
+            raise Exception('Nonexistent smartnode')
         return filter(lambda v: v.vin == mn.vin, self.budget_votes)
 
     def check_can_vote(self, alias, proposal_name):
@@ -376,19 +376,19 @@ class MasternodeManager(object):
         else:
             raise Exception('Unknown proposal')
 
-        # Make sure the masternode hasn't already voted.
+        # Make sure the smartnode hasn't already voted.
         proposal_hash = proposal.get_hash()
         previous_votes = self.get_votes(alias)
         if any(v.proposal_hash == proposal_hash for v in previous_votes):
-            raise Exception('Masternode has already voted on this proposal')
+            raise Exception('Smartnode has already voted on this proposal')
 
         mn = self.get_masternode(alias)
         if not mn.announced:
-            raise Exception('Masternode has not been activated')
+            raise Exception('Smartnode has not been activated')
         else:
             status = self.masternode_statuses.get(mn.get_collateral_str())
             if status not in ['PRE_ENABLED', 'ENABLED']:
-                raise Exception('Masternode is not currently enabled')
+                raise Exception('Smartnode is not currently enabled')
 
     def vote(self, alias, proposal_name, vote_choice):
         """Vote on a budget proposal."""
@@ -431,8 +431,6 @@ class MasternodeManager(object):
             self.save()
 
         self.network_event.set()
-
-
 
     def get_proposal(self, name):
         for proposal in self.proposals:
@@ -528,7 +526,7 @@ class MasternodeManager(object):
         proposal.submitted = True
 
     def masternode_subscription_response(self, response):
-        """Callback for when a masternode's status changes."""
+        """Callback for when a smartnode's status changes."""
         collateral = response['params'][0]
         mn = None
         for masternode in self.masternodes:
@@ -542,5 +540,5 @@ class MasternodeManager(object):
         status = response['result']
         if status is None:
             status = False
-        print_error('Received updated status for masternode %s: "%s"' % (mn.alias, status))
+        print_error('Received updated status for smartnode %s: "%s"' % (mn.alias, status))
         self.masternode_statuses[collateral] = status

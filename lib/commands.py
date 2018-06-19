@@ -640,10 +640,10 @@ class Commands:
         for k in list(self.wallet.receive_requests.keys()):
             self.wallet.remove_payment_request(k, self.config)
 
-    # Masternode commands.
+    # Smartnode commands.
     @command('wnp')
     def importmasternodeconf(self, conf_file):
-        """Import a masternode.conf file."""
+        """Import a smartnode.conf file."""
         if not os.path.exists(conf_file):
             return 'File does not exist.'
         with open(conf_file, 'r') as f:
@@ -661,10 +661,10 @@ class Commands:
 
     @command('w')
     def newmasternode(self, alias):
-        """Create a new masternode."""
+        """Create a new smartnode."""
         try:
             self.masternode_manager.add_masternode(MasternodeAnnounce(alias=alias))
-            return 'Added new masternode "%s".' % alias
+            return 'Added new smartnode "%s".' % alias
         except Exception as e:
             return 'Error: %s' % str(e)
 
@@ -673,31 +673,31 @@ class Commands:
         """Remove an existing masternode."""
         try:
             self.masternode_manager.remove_masternode(alias)
-            return 'Removed masternode "%s".' % alias
+            return 'Removed smartnode "%s".' % alias
         except Exception as e:
             return 'Error: %s' % str(e)
 
     @command('w')
     def listmasternodes(self):
-        """List wallet masternodes."""
+        """List wallet smartnodes."""
         return sorted([i.alias for i in self.masternode_manager.masternodes])
 
     @command('w')
     def showmasternode(self, alias):
-        """Show details about a masternode."""
+        """Show details about a smartnode."""
         mn = self.masternode_manager.get_masternode(alias)
         if not mn:
-            return 'No masternode exists for alias "%s".' % alias
+            return 'No smartnode exists for alias "%s".' % alias
         return mn.dump()
 
     @command('w')
     def listmasternodepayments(self):
-        """List unused masternode-compatible payments."""
+        """List unused smartnode-compatible payments."""
         return self.masternode_manager.get_masternode_outputs(exclude_frozen = False)
 
     @command('wnp')
     def activatemasternode(self, alias):
-        """Activate a masternode."""
+        """Activate a smartnode."""
         self.masternode_manager.populate_masternode_output(alias)
         try:
             self.masternode_manager.sign_announce(alias, self.password)
@@ -709,117 +709,7 @@ class Commands:
         except Exception as e:
             return 'Error sending: ' + str(e)
 
-        return 'Masternode "%s" activated successfully.' % alias
-
-        # Budget-related commands.
-
-    @command('wp')
-    def prepareproposal(self, proposal_name, proposal_url, payments_count, block_start, address, amount,
-                        broadcast=False):
-        """Create a budget proposal transaction."""
-        proposal = self.masternode_manager.get_proposal(proposal_name)
-        amount = int(amount * COIN)
-        if not proposal:
-            proposal = BudgetProposal(proposal_name=proposal_name, proposal_url=proposal_url, start_block=block_start,
-                                      payment_amount=amount, address=address)
-            proposal.set_payments_count(payments_count)
-            self.masternode_manager.add_proposal(proposal)
-
-        tx = self.masternode_manager.create_proposal_tx(proposal_name, self.password)
-
-        if broadcast:
-            r, h = self.wallet.sendtx(tx)
-            return h
-        return str(tx)
-
-    @command('wn')
-    def sendproposal(self, proposal_name):
-        """Send a budget proposal."""
-        try:
-            errmsg, submitted = self.masternode_manager.submit_proposal(proposal_name)
-        except Exception as e:
-            return 'Error: %s' % str(e)
-
-        if errmsg:
-            return 'Error: %s' % errmsg
-        return submitted
-
-    @command('wn')
-    def sendreadyproposals(self):
-        """Send all budget proposals that are ready to be sent."""
-        results = {}
-        proposals = filter(lambda p: p.fee_txid and not p.submitted and not p.rejected,
-                           self.masternode_manager.proposals)
-        for p in proposals:
-            height, conf, timestamp = self.wallet.get_tx_height(p.fee_txid)
-            if conf < BUDGET_FEE_CONFIRMATIONS:
-                continue
-
-            errmsg, success = self.masternode_manager.submit_proposal(p.proposal_name)
-            if not success:
-                results[p.proposal_name] = errmsg
-            else:
-                results[p.proposal_name] = 'Successfully submitted'
-
-        return results
-
-    @command('w')
-    def listproposals(self):
-        """List proposals created with this wallet."""
-        return {p.proposal_name: p.dump() for p in self.masternode_manager.proposals}
-
-    @command('w')
-    def listreadyproposals(self):
-        """List the proposals created with this wallet that are ready to be submitted."""
-        results = {}
-        proposals = filter(lambda p: p.fee_txid and not p.submitted and not p.rejected,
-                           self.masternode_manager.proposals)
-        for p in proposals:
-            height, conf, timestamp = self.wallet.get_tx_height(p.fee_txid)
-            if conf < BUDGET_FEE_CONFIRMATIONS:
-                continue
-            results[p.proposal_name] = p.dump()
-
-        return results
-
-    @command('n')
-    def mnbudget(self, budget_command):
-        """Get information on masternode budget proposals."""
-        valid_commands = ('list', 'nextblock', 'nextsuperblocksize', 'projection')
-        if budget_command not in valid_commands:
-            return 'Budget command must be one of %s' % valid_commands
-        method = 'masternode.budget.%s' % budget_command
-        return self.network.synchronous_get([(method, [])])[0]
-
-    @command('n')
-    def getvotes(self, proposal_hash):
-        """Get the votes for a budget proposal."""
-        req = ('masternode.budget.getvotes', [proposal_hash])
-        return self.network.synchronous_get([req])[0]
-
-    @command('n')
-    def getproposalhash(self, proposal_name):
-        """Get the hash of a budget proposal by its name."""
-        req = ('masternode.budget.getproposalhash', [proposal_name])
-        return self.network.synchronous_get([req])[0]
-
-    @command('n')
-    def getproposal(self, proposal_hash):
-        """Get information on a budget proposal."""
-        req = ('masternode.budget.getproposal', [proposal_hash])
-        return self.network.synchronous_get([req])[0]
-
-    @command('wn')
-    def vote(self, alias, proposal_name, vote_choice):
-        """Vote on a proposal."""
-        valid_choices = ('yes', 'no')
-        if vote_choice.lower() not in valid_choices:
-            return 'Invalid vote choice: "%s"' % vote_choice
-
-        errmsg, success = self.masternode_manager.vote(alias, proposal_name, vote_choice)
-        if errmsg:
-            return 'Error: %s' % errmsg
-        return success
+        return 'Smartnode "%s" activated successfully.' % alias
 
     @command('n')
     def notify(self, address, URL):

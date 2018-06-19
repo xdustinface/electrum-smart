@@ -1792,7 +1792,7 @@ class Abstract_Wallet(PrintError):
         index = self.get_address_index(addr)
         return self.keystore.decrypt_message(index, message, password)
 
-    # Dash Abstract_Wallet additions
+    # SmartCash Abstract_Wallet additions
     def get_delegate_private_key(self, pubkey):
         """Get the private delegate key for pubkey."""
         return self.masternode_delegates.get(pubkey, '')
@@ -1807,7 +1807,7 @@ class Abstract_Wallet(PrintError):
             raise Exception('Invalid private key')
 
         if self.masternode_delegates.get(pubkey):
-            raise AlreadyHaveAddress('Masternode key already in wallet',
+            raise AlreadyHaveAddress('Smartnode key already in wallet',
                                      address)
 
         self.masternode_delegates[pubkey] = sec
