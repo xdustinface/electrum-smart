@@ -155,7 +155,7 @@ class MasternodeManager(object):
         if not txid or prevout_n is None:
             return
         # Return if it already has the information.
-        if mn.collateral_key and mn.vin.get('address') and mn.vin.get('value') == 1000 * bitcoin.COIN:
+        if mn.collateral_key and mn.vin.get('address') and mn.vin.get('value') == 10000 * bitcoin.COIN:
             return
 
         tx = self.wallet.transactions.get(txid)

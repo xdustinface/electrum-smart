@@ -160,14 +160,14 @@ def serialize_input_str(vin):
 
 
 class MasternodeAnnounce(object):
-    """A masternode announce message.
+    """A smartnode announce message.
 
     Attributes:
-        - alias: Alias to help the user identify this masternode.
+        - alias: Alias to help the user identify this smartnode.
         - vin: 10K SMART input.
-        - addr: Address that the masternode can be reached at.
+        - addr: Address that the smartnode can be reached at.
         - collateral_key: Key that can spend the 10K SMART input.
-        - delegate_key: Key that the masternode will sign messages with.
+        - delegate_key: Key that the smartnode will sign messages with.
         - sig: Message signature.
         - sig_time: Message signature creation time.
         - protocol_version: The masternode's protocol version.
@@ -234,7 +234,7 @@ class MasternodeAnnounce(object):
         vds.write_int64(self.sig_time)
         vds.write_uint32(self.protocol_version)
         self.last_ping.serialize(vds)
-        vds.write_int64(self.last_dsq)
+        #vds.write_int64(self.last_dsq)
 
         return bh2u(vds.input)
 
@@ -246,14 +246,17 @@ class MasternodeAnnounce(object):
         s = to_bytes(str(self.addr))
         s += to_bytes(str(self.sig_time))
 
-        if self.protocol_version < 90025:
-            # Decode the hex-encoded bytes for our keys.
-            s += bfh(self.collateral_key)
-            s += bfh(self.delegate_key)
-        else:
-            # Use the RIPEMD-160 hashes of our keys.
-            s += to_bytes(hash_encode(bitcoin.hash_160(bfh(self.collateral_key))), 'utf-8')
-            s += to_bytes(hash_encode(bitcoin.hash_160(bfh(self.delegate_key))), 'utf-8')
+        s += to_bytes(hash_encode(bitcoin.hash_160(bfh(self.collateral_key))), 'utf-8')
+        s += to_bytes(hash_encode(bitcoin.hash_160(bfh(self.delegate_key))), 'utf-8')
+
+        #if self.protocol_version < 90025:
+        #    # Decode the hex-encoded bytes for our keys.
+        #    s += bfh(self.collateral_key)
+        #    s += bfh(self.delegate_key)
+        #else:
+        #    # Use the RIPEMD-160 hashes of our keys.
+        #    s += to_bytes(hash_encode(bitcoin.hash_160(bfh(self.collateral_key))), 'utf-8')
+        #    s += to_bytes(hash_encode(bitcoin.hash_160(bfh(self.delegate_key))), 'utf-8')
 
         s += to_bytes(str(self.protocol_version))
         return s
