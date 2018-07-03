@@ -244,7 +244,7 @@ class MasternodeManager(object):
         if mn.vin.get('sequence') is None:
             mn.vin['sequence'] = 0xffffffff
         # Ensure that the smartnode's last_ping is current.
-        height = self.wallet.get_local_height() - 12
+        height = self.wallet.get_local_height() - 67
         blockchain = self.wallet.network.blockchain()
         header = blockchain.read_header(height)
         mn.last_ping.block_hash = hash_header(header)
