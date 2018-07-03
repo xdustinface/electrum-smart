@@ -269,15 +269,12 @@ class MasternodeAnnounce(object):
         serialize_input(vds, self.vin)
         vds.write_string(bfh(self.collateral_key))
         vds.write_int64(self.sig_time)
-        return hash_encode(bitcoin.Hash(vds.input))
+        return hash_encode(bitcoin.Hash_Sha256(vds.input))
 
     def serialize(self, vds=None):
         if not vds:
             vds = BCDataStream()
-        if self.protocol_version <= 90026:
-            serialize_input(vds, self.vin)
-        else:
-            serialize_outpoint(vds, self.vin)
+        serialize_input(vds, self.vin)
         self.addr.serialize(vds)
         vds.write_string(bfh(self.collateral_key))
         vds.write_string(bfh(self.delegate_key))
