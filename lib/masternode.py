@@ -140,7 +140,7 @@ class MasternodePing(object):
 
         if not delegate_pubkey:
             delegate_pubkey = bfh(bitcoin.public_key_from_private_key(key, is_compressed))
-        self.sig = eckey.sign_message(serialized, is_compressed)
+        self.sig = eckey.sign_node_message(serialized, is_compressed)
         return self.sig
 
     def dump(self):
@@ -289,19 +289,10 @@ class MasternodeAnnounce(object):
         """Serialize the message for signing."""
         if update_time:
             self.sig_time = int(time.time())
-
         s = to_bytes(str(self.addr))
         s += to_bytes(str(self.sig_time))
-
-        if self.protocol_version < 90026:
-            # Decode the hex-encoded bytes for our keys.
-            s += bfh(self.collateral_key)
-            s += bfh(self.delegate_key)
-        else:
-            # Use the RIPEMD-160 hashes of our keys.
-            s += to_bytes(hash_encode(bitcoin.hash_160(bfh(self.collateral_key))), 'utf-8')
-            s += to_bytes(hash_encode(bitcoin.hash_160(bfh(self.delegate_key))), 'utf-8')
-
+        s += to_bytes(hash_encode(bitcoin.hash_160(bfh(self.collateral_key))), 'utf-8')
+        s += to_bytes(hash_encode(bitcoin.hash_160(bfh(self.delegate_key))), 'utf-8')
         s += to_bytes(str(self.protocol_version))
         return s
 
@@ -377,11 +368,11 @@ class MasternodeAnnounce(object):
         eckey = bitcoin.regenerate_key(key)
 
         serialized = self.serialize_for_sig(update_time=update_time)
-        self.sig = eckey.sign_message(serialized, is_compressed)
+        self.sig = eckey.sign_node_message(serialized, is_compressed)
         return self.sig
 
     def verify(self, addr=None):
         """Verify that our sig is signed with addr's key."""
         if not addr:
             addr = bitcoin.public_key_to_p2pkh(bfh(self.collateral_key))
-        return bitcoin.verify_message(addr, self.sig, self.serialize_for_sig())
+        return bitcoin.verify_node_message(addr, self.sig, self.serialize_for_sig())

@@ -1782,6 +1782,10 @@ class Abstract_Wallet(PrintError):
         index = self.get_address_index(address)
         return self.keystore.sign_message(index, message, password)
 
+    def sign_node_message(self, address, message, password):
+        index = self.get_address_index(address)
+        return self.keystore.sign_node_message(index, message, password)
+
     def decrypt_message(self, pubkey, message, password):
         addr = self.pubkeys_to_address(pubkey)
         index = self.get_address_index(addr)
