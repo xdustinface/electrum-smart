@@ -165,7 +165,8 @@ class BudgetVote(object):
         return eckey.sign_message(serialized, is_compressed)
 
     def get_vin_short(self):
-        return '%s-%d' % (self.vin['prevout_hash'], self.vin['prevout_n'])
+        #return '%s-%d' % (self.vin['prevout_hash'], self.vin['prevout_n'])
+        return '%s' % (self.vin['prevout_hash'])
 
     def dump(self):
         kwargs = {}

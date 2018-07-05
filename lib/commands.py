@@ -642,7 +642,7 @@ class Commands:
 
     # Smartnode commands.
     @command('wnp')
-    def importmasternodeconf(self, conf_file):
+    def smartnode_importconf(self, conf_file):
         """Import a smartnode.conf file."""
         if not os.path.exists(conf_file):
             return 'File does not exist.'
@@ -660,7 +660,7 @@ class Commands:
         return '%d configuration%s imported.' % (num, 's' if num == 1 else '')
 
     @command('w')
-    def newmasternode(self, alias):
+    def smartnode_create(self, alias):
         """Create a new smartnode."""
         try:
             self.masternode_manager.add_masternode(MasternodeAnnounce(alias=alias))
@@ -669,7 +669,7 @@ class Commands:
             return 'Error: %s' % str(e)
 
     @command('w')
-    def rmmasternode(self, alias):
+    def smartnode_remove(self, alias):
         """Remove an existing masternode."""
         try:
             self.masternode_manager.remove_masternode(alias)
@@ -678,12 +678,12 @@ class Commands:
             return 'Error: %s' % str(e)
 
     @command('w')
-    def listmasternodes(self):
+    def smartnode_list(self):
         """List wallet smartnodes."""
         return sorted([i.alias for i in self.masternode_manager.masternodes])
 
     @command('w')
-    def showmasternode(self, alias):
+    def smartnode_show(self, alias):
         """Show details about a smartnode."""
         mn = self.masternode_manager.get_masternode(alias)
         if not mn:
@@ -691,16 +691,16 @@ class Commands:
         return mn.dump()
 
     @command('w')
-    def listmasternodepayments(self):
+    def smartnode_payments(self):
         """List unused smartnode-compatible payments."""
         return self.masternode_manager.get_masternode_outputs(exclude_frozen = False)
 
     @command('wnp')
-    def activatemasternode(self, alias):
+    def smartnode_activate(self, alias, password=None):
         """Activate a smartnode."""
         self.masternode_manager.populate_masternode_output(alias)
         try:
-            self.masternode_manager.sign_announce(alias, self.password)
+            self.masternode_manager.sign_announce(alias, password)
         except Exception as e:
             return 'Error signing: ' + str(e)
 

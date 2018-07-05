@@ -1,4 +1,4 @@
-"""SMART masternode support."""
+"""SmartCash smartnode support."""
 import time
 import base64
 
@@ -55,7 +55,7 @@ class NetworkAddress(object):
 
 
 class MasternodePing(object):
-    """A masternode ping message."""
+    """A smartnode ping message."""
     @classmethod
     def deserialize(cls, vds, protocol_version=90026):
         if protocol_version <= 90026:
@@ -257,7 +257,7 @@ class MasternodeAnnounce(object):
             sig_time = vds.read_int64()
 
             protocol_version = vds.read_uint32()
-            if protocol_version in [70209, 70210]:
+            if protocol_version in [90026]:
                 return True
             else:
                 return False
@@ -302,7 +302,8 @@ class MasternodeAnnounce(object):
             return
         if not 'prevout_hash' in self.vin or not 'prevout_n' in self.vin:
             return
-        return '%s-%d' % (self.vin['prevout_hash'], self.vin['prevout_n'])
+        #return '%s-%d' % (self.vin['prevout_hash'], self.vin['prevout_n'])
+        return 'COutPoint(%s, %d)' % (self.vin['prevout_hash'],self.vin['prevout_n'])
 
     @classmethod
     def from_dict(cls, d):
