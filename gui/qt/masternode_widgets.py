@@ -17,11 +17,13 @@ def masternode_status(status):
     Returns a 3-tuple of (enabled, one_word_description, description).
     """
     statuses = {
-        'PRE_ENABLED': (True, _('Enabling'), _('Waiting for smartnode to enable itself.')),
-        'ENABLED': (True, _('Enabled'), _('Smartnode is enabled.')),
-        'EXPIRED': (False, _('Disabled'), _('Smartnode failed to ping the network and was disabled.')),
-        'VIN_SPENT': (False, _('Disabled'), _('Collateral payment has been spent.')),
-        'REMOVE': (False, _('Disabled'), _('Smartnode failed to ping the network and was disabled.')),
+        'PRE_ENABLED': (True, _('PRE_ENABLED'), _('Waiting for smartnode to enable itself.')),
+        'ENABLED': (True, _('ENABLED'), _('Smartnode is enabled.')),
+        'EXPIRED': (False, _('EXPIRED'), _('Smartnode failed to ping the network and was disabled.')),
+        'NEW_START_REQUIRED': (False, _('NEW_START_REQUIRED'), _('Must activate smartnode again.')),
+        'UPDATE_REQUIRED': (False, _('UPDATE_REQUIRED'), _('Smartnode failed to ping the network and was disabled.')),
+        'POSE_BAN': (False, _('POSE_BAN'), _('Smartnode failed to ping the network and was disabled.')),
+        'OUTPOINT_SPENT': (False, _('OUTPOINT_SPENT'), _('Collateral payment has been spent.'))
     }
     if statuses.get(status):
         return statuses[status]
