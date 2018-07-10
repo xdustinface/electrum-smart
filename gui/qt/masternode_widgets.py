@@ -426,4 +426,3 @@ class SignAnnounceWidget(QWidget):
         """Set the smartnode's vin and sign an announcement."""
         self.mapper.submit()
         self.dialog.sign_announce(str(self.alias_edit.text()))
-
