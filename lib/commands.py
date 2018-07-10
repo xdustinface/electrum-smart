@@ -669,6 +669,16 @@ class Commands:
             return 'Error: %s' % str(e)
 
     @command('w')
+    def smartnode_status(self, alias):
+        """Get smartnode status."""
+        try:
+            self.masternode_manager.subscribe_to_masternodes()
+            status = self.masternode_manager.check_masternode_status(alias=alias)
+            return 'Smartnode status: %s' % (status)
+        except Exception as e:
+            return 'Error: %s' % str(e)
+
+    @command('w')
     def smartnode_remove(self, alias):
         """Remove an existing masternode."""
         try:

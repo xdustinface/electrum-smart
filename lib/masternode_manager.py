@@ -196,6 +196,30 @@ class MasternodeManager(object):
             if status in ['PRE_ENABLED', 'ENABLED']:
                 raise Exception('Smartnode has already been activated')
 
+    def check_masternode_status(self, alias):
+        """Raise an exception if alias can't be signed and announced to the network."""
+        mn = self.get_masternode(alias)
+        if not mn:
+            raise Exception('Nonexistent smartnode')
+        if not mn.vin.get('prevout_hash'):
+            raise Exception('Collateral payment is not specified')
+        if not mn.collateral_key:
+            raise Exception('Collateral key is not specified')
+        if not mn.delegate_key:
+            raise Exception('Smartnode delegate key is not specified')
+        if not mn.addr.ip:
+            raise Exception('Smartnode has no IP address')
+
+        # Ensure that the collateral payment has >= MASTERNODE_MIN_CONFIRMATIONS.
+        height, conf, timestamp = self.wallet.get_tx_height(mn.vin['prevout_hash'])
+        if conf < MASTERNODE_MIN_CONFIRMATIONS:
+            raise Exception('Collateral payment must have at least %d confirmations (current: %d)' % (MASTERNODE_MIN_CONFIRMATIONS, conf))
+        # Ensure that the Smartnode's vin is valid.
+        if mn.vin.get('value', 0) != bitcoin.COIN * 10000:
+            raise Exception('Smartnode requires a collateral 10000 SMART output.')
+
+        return self.masternode_statuses.get(mn.get_collateral_str())
+
     def save(self):
         """Save smartnodes."""
         masternodes = {}
