@@ -17,17 +17,19 @@ def masternode_status(status):
     Returns a 3-tuple of (enabled, one_word_description, description).
     """
     statuses = {
-        'PRE_ENABLED': (True, _('Enabling'), _('Waiting for masternode to enable itself.')),
-        'ENABLED': (True, _('Enabled'), _('Masternode is enabled.')),
-        'EXPIRED': (False, _('Disabled'), _('Masternode failed to ping the network and was disabled.')),
-        'VIN_SPENT': (False, _('Disabled'), _('Collateral payment has been spent.')),
-        'REMOVE': (False, _('Disabled'), _('Masternode failed to ping the network and was disabled.')),
+        'PRE_ENABLED': (True, _('PRE_ENABLED'), _('Waiting for smartnode to enable itself.')),
+        'ENABLED': (True, _('ENABLED'), _('Smartnode is enabled.')),
+        'EXPIRED': (False, _('EXPIRED'), _('Smartnode failed to ping the network and was disabled.')),
+        'NEW_START_REQUIRED': (False, _('NEW_START_REQUIRED'), _('Must activate smartnode again.')),
+        'UPDATE_REQUIRED': (False, _('UPDATE_REQUIRED'), _('Smartnode failed to ping the network and was disabled.')),
+        'POSE_BAN': (False, _('POSE_BAN'), _('Smartnode failed to ping the network and was disabled.')),
+        'OUTPOINT_SPENT': (False, _('OUTPOINT_SPENT'), _('Collateral payment has been spent.'))
     }
     if statuses.get(status):
         return statuses[status]
     elif status is False:
-        return (False, _('N/A'), _('Masternode has not been seen on the network.'))
-    return (False, _('Unknown'), _('Unknown masternode status.'))
+        return (False, _('N/A'), _('Smartnode has not been seen on the network.'))
+    return (False, _('Unknown'), _('Unknown smartnode status.'))
 
 class NetworkAddressWidget(QWidget):
     """Widget that represents a network address."""
@@ -89,11 +91,11 @@ class PrevOutWidget(QWidget):
         super(PrevOutWidget, self).__init__(parent)
         self.vin = {}
         self.hash_edit = QLineEdit()
-        self.hash_edit.setPlaceholderText(_('The TxID of your 1000 DASH output'))
+        self.hash_edit.setPlaceholderText(_('The TxID of your 10000 SMART output'))
         self.index_edit = QLineEdit()
-        self.index_edit.setPlaceholderText(_('The output number of your 1000 DASH output'))
+        self.index_edit.setPlaceholderText(_('The output number of your 10000 SMART output'))
         self.address_edit = QLineEdit()
-        self.address_edit.setPlaceholderText(_('The address that 1000 DASH was sent to'))
+        self.address_edit.setPlaceholderText(_('The address that 10000 SMART was sent to'))
 
         # Collection of fields so that it's easier to act on them all at once.
         self.fields = (self.hash_edit, self.index_edit, self.address_edit)
@@ -170,38 +172,38 @@ class PrevOutWidget(QWidget):
             widget.setReadOnly(isreadonly)
 
 class MasternodeEditor(QWidget):
-    """Editor for masternodes."""
+    """Editor for smartnodes."""
     def __init__(self, parent=None):
         super(MasternodeEditor, self).__init__(parent)
 
         self.alias_edit = QLineEdit()
-        self.alias_edit.setPlaceholderText(_('Enter a name for this masternode'))
+        self.alias_edit.setPlaceholderText(_('Enter a name for this smartnode'))
 
         self.vin_edit = PrevOutWidget()
 
         self.addr_edit = NetworkAddressWidget()
         self.delegate_key_edit = QLineEdit()
         self.delegate_key_edit.setFont(QFont(util.MONOSPACE_FONT))
-        self.delegate_key_edit.setPlaceholderText(_('Your masternode\'s private key'))
+        self.delegate_key_edit.setPlaceholderText(_('Your smartnode\'s private key'))
         self.protocol_version_edit = QLineEdit()
-        self.protocol_version_edit.setText('70201')
+        self.protocol_version_edit.setText('90025')
 
         self.status_edit = QLineEdit()
-        self.status_edit.setPlaceholderText(_('Masternode status'))
+        self.status_edit.setPlaceholderText(_('Smartnode status'))
         self.status_edit.setReadOnly(True)
 
         form = QFormLayout()
         form.addRow(_('Alias:'), self.alias_edit)
         form.addRow(_('Status:'), self.status_edit)
-        form.addRow(_('Collateral DASH Output:'), self.vin_edit)
-        form.addRow(_('Masternode Private Key:'), self.delegate_key_edit)
+        form.addRow(_('Collateral SMART Output:'), self.vin_edit)
+        form.addRow(_('Smartnode Private Key:'), self.delegate_key_edit)
         form.addRow(_('Address:'), self.addr_edit)
         form.addRow(_('Protocol Version:'), self.protocol_version_edit)
 
         self.setLayout(form)
 
     def get_masternode_args(self):
-        """Get MasternodeAnnounce keyword args from this widget's data."""
+        """Get SmartnodeAnnounce keyword args from this widget's data."""
         kwargs = {}
         kwargs['alias'] = str(self.alias_edit.text())
         kwargs['vin'] = self.vin_edit.get_dict()
@@ -212,7 +214,7 @@ class MasternodeEditor(QWidget):
         return kwargs
 
 class MasternodeOutputsWidget(QListWidget):
-    """Widget that displays available masternode outputs."""
+    """Widget that displays available smartnode outputs."""
     outputSelected = pyqtSignal(dict, name='outputSelected')
     def __init__(self, parent=None):
         super(MasternodeOutputsWidget, self).__init__(parent)
@@ -247,7 +249,7 @@ class MasternodeOutputsWidget(QListWidget):
         self.outputSelected.emit(self.outputs[str(items[0].text())])
 
 class MasternodeOutputsTab(QWidget):
-    """Widget that is used to select a masternode output."""
+    """Widget that is used to select a smartnode output."""
     def __init__(self, parent):
         super(MasternodeOutputsTab, self).__init__(parent)
         self.dialog = parent
@@ -255,7 +257,7 @@ class MasternodeOutputsTab(QWidget):
 
         include_frozen_checkbox = QCheckBox(_('Include frozen addresses'))
         include_frozen_checkbox.setChecked(False)
-        self.scan_outputs_button = QPushButton(_('Scan For Masternode Outputs'))
+        self.scan_outputs_button = QPushButton(_('Scan For Smartnode Outputs'))
         def on_scan_outputs():
             """Call scan_for_outputs() with whether to include frozen addresses."""
             self.scan_for_outputs(include_frozen_checkbox.isChecked())
@@ -283,8 +285,8 @@ class MasternodeOutputsTab(QWidget):
 
         vbox = QVBoxLayout()
 
-        desc = ' '.join(['Use this tab to scan for and choose a collateral payment for your masternode.',
-            'A valid collateral payment is exactly 1000 DASH.'])
+        desc = ' '.join(['Use this tab to scan for and choose a collateral payment for your smartnode.',
+            'A valid collateral payment is exactly 10000 SMART.'])
         desc = QLabel(_(desc))
         desc.setWordWrap(True)
         vbox.addWidget(desc)
@@ -297,7 +299,7 @@ class MasternodeOutputsTab(QWidget):
 
         valid_outputs_box = QVBoxLayout()
         valid_outputs_box.setContentsMargins(0, 0, 0, 0)
-        valid_outputs_box.addWidget(QLabel(_('Masternode Outputs:')))
+        valid_outputs_box.addWidget(QLabel(_('Smartnode Outputs:')))
         valid_outputs_box.addWidget(self.valid_outputs_list)
 
         vbox.addLayout(util.Buttons(include_frozen_checkbox, self.scan_outputs_button))
@@ -308,7 +310,7 @@ class MasternodeOutputsTab(QWidget):
         self.setLayout(vbox)
 
     def scan_for_outputs(self, include_frozen):
-        """Scan for 1000 DASH outputs.
+        """Scan for 10000 SMART outputs.
 
         If one or more is found, populate the list and enable the sign button.
         """
@@ -319,7 +321,7 @@ class MasternodeOutputsTab(QWidget):
         if len(coins) > 0:
             self.valid_outputs_list.add_outputs(coins)
         else:
-            self.status_edit.setText(_('No 1000 DASH outputs were found.'))
+            self.status_edit.setText(_('No 10000 SMART outputs were found.'))
             self.status_edit.setStyleSheet(util.ColorScheme.RED.as_stylesheet())
 
     def set_output(self, vin):
@@ -328,9 +330,9 @@ class MasternodeOutputsTab(QWidget):
         self.save_output_button.setEnabled(True)
 
     def save_output(self):
-        """Save the selected output as the current masternode's collateral."""
+        """Save the selected output as the current smartnode's collateral."""
         self.mapper.submit()
-        # Determine the masternode's collateral key using this output.
+        # Determine the smartnode's collateral key using this output.
         self.dialog.populate_collateral_key()
 
     def set_mapper_index(self, row):
@@ -341,26 +343,26 @@ class MasternodeOutputsTab(QWidget):
         self.mapper.setCurrentIndex(row)
         mn = self.dialog.masternodes_widget.masternode_for_row(row)
 
-        status_text = _('Masternode has no collateral payment assigned.')
+        status_text = _('Smartnode has no collateral payment assigned.')
         can_scan = not mn.announced
-        # Disable the scan_outputs button if the masternode already has an assigned output.
+        # Disable the scan_outputs button if the smartnode already has an assigned output.
         if mn.vin.get('value', 0) == COIN * 1000:
             can_scan = False
             self.valid_outputs_list.add_output(mn.vin)
-            status_text = _('Masternode already has a collateral payment.')
+            status_text = _('Smartnode already has a collateral payment.')
 
         self.status_edit.setText(_(status_text))
 
         self.scan_outputs_button.setEnabled(can_scan)
 
 class SignAnnounceWidget(QWidget):
-    """Widget that displays information about signing a Masternode Announce."""
+    """Widget that displays information about signing a Smartnode Announce."""
     def __init__(self, parent):
         super(SignAnnounceWidget, self).__init__(parent)
         self.dialog = parent
         self.manager = parent.manager
 
-        # Displays the status of the masternode.
+        # Displays the status of the smartnode.
         self.status_edit = QLineEdit()
         self.status_edit.setReadOnly(True)
 
@@ -381,7 +383,7 @@ class SignAnnounceWidget(QWidget):
         self.mapper.addMapping(self.collateral_edit, model.VIN, b'string')
         self.mapper.addMapping(self.delegate_edit, model.DELEGATE)
 
-        self.sign_button = QPushButton(_('Activate Masternode'))
+        self.sign_button = QPushButton(_('Activate Smartnode'))
         self.sign_button.setEnabled(False)
         self.sign_button.clicked.connect(self.sign_announce)
 
@@ -395,8 +397,8 @@ class SignAnnounceWidget(QWidget):
 
         form = QFormLayout()
         form.addRow(_('Alias:'), self.alias_edit)
-        form.addRow(_('Collateral DASH Output:'), self.collateral_edit)
-        form.addRow(_('Masternode Private Key:'), self.delegate_edit)
+        form.addRow(_('Collateral SMART Output:'), self.collateral_edit)
+        form.addRow(_('Smartnode Private Key:'), self.delegate_edit)
         vbox.addLayout(form)
         vbox.addLayout(util.Buttons(self.sign_button))
         self.setLayout(vbox)
@@ -408,7 +410,7 @@ class SignAnnounceWidget(QWidget):
         self.mapper.setCurrentIndex(row)
         mn = self.dialog.masternodes_widget.masternode_for_row(row)
 
-        # Disable the sign button if the masternode can't be signed (for whatever reason).
+        # Disable the sign button if the smartnode can't be signed (for whatever reason).
         status_text = '%s can be activated' % mn.alias
         can_sign = True
         try:
@@ -421,7 +423,6 @@ class SignAnnounceWidget(QWidget):
         self.sign_button.setEnabled(can_sign)
 
     def sign_announce(self):
-        """Set the masternode's vin and sign an announcement."""
+        """Set the smartnode's vin and sign an announcement."""
         self.mapper.submit()
         self.dialog.sign_announce(str(self.alias_edit.text()))
-

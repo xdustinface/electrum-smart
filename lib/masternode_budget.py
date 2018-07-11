@@ -107,7 +107,7 @@ class BudgetProposal(object):
             raise ValueError(_('Only P2PKH addresses are currently supported.'))
 
         if self.payment_amount < bitcoin.COIN:
-            raise ValueError(_('Payments must be at least 1 DASH.'))
+            raise ValueError(_('Payments must be at least 1 SMART.'))
 
         # Calculate max budget.
         subsidy = 5 * bitcoin.COIN
@@ -165,7 +165,8 @@ class BudgetVote(object):
         return eckey.sign_message(serialized, is_compressed)
 
     def get_vin_short(self):
-        return '%s-%d' % (self.vin['prevout_hash'], self.vin['prevout_n'])
+        #return '%s-%d' % (self.vin['prevout_hash'], self.vin['prevout_n'])
+        return '%s' % (self.vin['prevout_hash'])
 
     def dump(self):
         kwargs = {}

@@ -1,10 +1,10 @@
-"""DASH masternode support."""
+"""SmartCash smartnode support."""
 import time
 import base64
 
 from . import bitcoin
 from .bitcoin import hash_encode, hash_decode
-from .transaction import BCDataStream, parse_input
+from .transaction import BCDataStream, parse_input, parse_outpoint
 from . import util
 from .util import bfh, bh2u, to_bytes, to_string
 
@@ -13,7 +13,7 @@ class NetworkAddress(object):
     """A network address."""
     def __init__(self, ip='', port=0):
         self.ip = ip
-        self.port = port
+        self.port = int(port)
 
     @classmethod
     def deserialize(cls, vds):
@@ -55,17 +55,22 @@ class NetworkAddress(object):
 
 
 class MasternodePing(object):
-    """A masternode ping message."""
+    """A smartnode ping message."""
     @classmethod
-    def deserialize(cls, vds):
-        vin = parse_input(vds)
+    def deserialize(cls, vds, protocol_version=90026):
+        if protocol_version <= 90026:
+            vin = parse_input(vds)
+        else:
+            vin = parse_outpoint(vds)
+
         block_hash = hash_encode(vds.read_bytes(32))
         sig_time = vds.read_int64()
         sig = vds.read_bytes(vds.read_compact_size())
-        return cls(vin=vin, block_hash=block_hash, sig_time=sig_time, sig=sig)
+        return cls(vin=vin, block_hash=block_hash, sig_time=sig_time,
+                   sig=sig, protocol_version=protocol_version)
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d, protocol_version):
         kwargs = {}
         for key in ['vin', 'block_hash', 'sig_time', 'sig']:
             kwargs[key] = d.get(key)
@@ -80,20 +85,30 @@ class MasternodePing(object):
         else:
             kwargs['sig'] = ''
 
+        kwargs['protocol_version'] = protocol_version
+
         return cls(**kwargs)
 
-    def __init__(self, vin=None, block_hash='', sig_time=0, sig=''):
+    def __init__(self, vin=None, block_hash='', sig_time=0, sig='',
+                 protocol_version=90026):
         if vin is None:
             vin = {'prevout_hash':'', 'prevout_n': 0, 'scriptSig': '', 'sequence':0xffffffff}
+        else:
+            vin.update({'scriptSig': '', 'sequence':0xffffffff})
         self.vin = vin
         self.block_hash = block_hash
         self.sig_time = int(sig_time)
         self.sig = sig
+        self.protocol_version = int(protocol_version)
 
     def serialize(self, vds=None):
         if not vds:
             vds = BCDataStream()
-        serialize_input(vds, self.vin)
+        if self.protocol_version <= 90026:
+            serialize_input(vds, self.vin)
+        else:
+            serialize_outpoint(vds, self.vin)
+
         vds.write(hash_decode(self.block_hash))
         vds.write_int64(self.sig_time)
         vds.write_string(self.sig)
@@ -125,12 +140,17 @@ class MasternodePing(object):
 
         if not delegate_pubkey:
             delegate_pubkey = bfh(bitcoin.public_key_from_private_key(key, is_compressed))
-        self.sig = eckey.sign_message(serialized, is_compressed)
+        self.sig = eckey.sign_node_message(serialized, is_compressed)
         return self.sig
 
     def dump(self):
         sig = base64.b64encode(to_bytes(self.sig)).decode('utf-8')
         return {'vin': self.vin, 'block_hash': self.block_hash, 'sig_time': self.sig_time, 'sig': sig}
+
+
+def serialize_outpoint(vds, outpoint):
+    vds.write(hash_decode(outpoint['prevout_hash']))
+    vds.write_uint32(outpoint['prevout_n'])
 
 
 def serialize_input(vds, vin):
@@ -164,40 +184,46 @@ class MasternodeAnnounce(object):
 
     Attributes:
         - alias: Alias to help the user identify this masternode.
-        - vin: 1K Dash input.
+        - vin: 10K SMART input (outpoint: 10K SMART input for proto > 90026).
         - addr: Address that the masternode can be reached at.
-        - collateral_key: Key that can spend the 1K Dash input.
+        - collateral_key: Key that can spend the 10K SMART input.
         - delegate_key: Key that the masternode will sign messages with.
         - sig: Message signature.
         - sig_time: Message signature creation time.
         - protocol_version: The masternode's protocol version.
         - last_ping: The last time the masternode pinged the network.
-        - last_dsq: The last time the masternode sent a DSQ (darksend) message.
         - announced: Whether this announce has been broadcast.
 
     """
-    def __init__(self, alias='', vin=None, addr=NetworkAddress(), collateral_key='', delegate_key='',
-                 sig='', sig_time=0, protocol_version=70201, last_ping=MasternodePing(),
-                 last_dsq=0, announced=False):
+    def __init__(self, alias='', vin=None, addr=NetworkAddress(),
+                 collateral_key='', delegate_key='', sig='', sig_time=0,
+                 protocol_version=90026, last_ping=MasternodePing(),
+                 announced=False):
         self.alias = alias
         if vin is None:
             vin = {'prevout_hash':'', 'prevout_n': 0, 'scriptSig': '', 'sequence':0xffffffff}
+        else:
+            vin.update({'scriptSig': '', 'sequence':0xffffffff})
         self.vin = vin
         self.addr = addr
         self.collateral_key = collateral_key
         self.delegate_key = delegate_key
         self.sig = sig
         self.sig_time = int(sig_time)
-        self.protocol_version = protocol_version
+        self.protocol_version = int(protocol_version)
         self.last_ping = last_ping
-        self.last_dsq = last_dsq
         self.announced = announced
 
     @classmethod
     def deserialize(cls, raw):
         vds = BCDataStream()
         vds.write(bfh(raw))
-        vin = parse_input(vds)
+
+        if MasternodeAnnounce.check_latest_protocol_version(raw):
+            vin = parse_outpoint(vds)
+        else:
+            vin = parse_input(vds)
+
         address = NetworkAddress.deserialize(vds)
         collateral_pubkey = bh2u(vds.read_bytes(vds.read_compact_size()))
         delegate_pubkey = bh2u(vds.read_bytes(vds.read_compact_size()))
@@ -207,21 +233,43 @@ class MasternodeAnnounce(object):
 
         protocol_version = vds.read_uint32()
 
-        last_ping = MasternodePing.deserialize(vds)
+        last_ping = MasternodePing.deserialize(vds, protocol_version)
 
-        last_dsq = vds.read_int64()
-
-        kwargs = {'vin': vin, 'addr': address, 'collateral_key': collateral_pubkey,
-                    'delegate_key': delegate_pubkey, 'sig': sig, 'sig_time': sig_time,
-                    'protocol_version': protocol_version, 'last_ping': last_ping, 'last_dsq': last_dsq}
+        kwargs = {'vin': vin, 'addr': address,
+                  'collateral_key': collateral_pubkey,
+                  'delegate_key': delegate_pubkey,
+                  'sig': sig, 'sig_time': sig_time,
+                  'protocol_version': protocol_version, 'last_ping': last_ping}
         return cls(**kwargs)
+
+    @classmethod
+    def check_latest_protocol_version(cls, raw):
+        try:
+            vds = BCDataStream()
+            vds.write(bfh(raw))
+            vin = parse_outpoint(vds)
+
+            address = NetworkAddress.deserialize(vds)
+            collateral_pubkey = bh2u(vds.read_bytes(vds.read_compact_size()))
+            delegate_pubkey = bh2u(vds.read_bytes(vds.read_compact_size()))
+
+            sig = vds.read_bytes(vds.read_compact_size())
+            sig_time = vds.read_int64()
+
+            protocol_version = vds.read_uint32()
+            if protocol_version in [90026]:
+                return True
+            else:
+                return False
+        except:
+            return False
 
     def get_hash(self):
         vds = BCDataStream()
         serialize_input(vds, self.vin)
         vds.write_string(bfh(self.collateral_key))
         vds.write_int64(self.sig_time)
-        return hash_encode(bitcoin.Hash(vds.input))
+        return hash_encode(bitcoin.Hash_Sha256(vds.input))
 
     def serialize(self, vds=None):
         if not vds:
@@ -234,7 +282,6 @@ class MasternodeAnnounce(object):
         vds.write_int64(self.sig_time)
         vds.write_uint32(self.protocol_version)
         self.last_ping.serialize(vds)
-        vds.write_int64(self.last_dsq)
 
         return bh2u(vds.input)
 
@@ -242,19 +289,10 @@ class MasternodeAnnounce(object):
         """Serialize the message for signing."""
         if update_time:
             self.sig_time = int(time.time())
-
         s = to_bytes(str(self.addr))
         s += to_bytes(str(self.sig_time))
-
-        if self.protocol_version < 70201:
-            # Decode the hex-encoded bytes for our keys.
-            s += bfh(self.collateral_key)
-            s += bfh(self.delegate_key)
-        else:
-            # Use the RIPEMD-160 hashes of our keys.
-            s += to_bytes(hash_encode(bitcoin.hash_160(bfh(self.collateral_key))), 'utf-8')
-            s += to_bytes(hash_encode(bitcoin.hash_160(bfh(self.delegate_key))), 'utf-8')
-
+        s += to_bytes(hash_encode(bitcoin.hash_160(bfh(self.collateral_key))), 'utf-8')
+        s += to_bytes(hash_encode(bitcoin.hash_160(bfh(self.delegate_key))), 'utf-8')
         s += to_bytes(str(self.protocol_version))
         return s
 
@@ -262,18 +300,21 @@ class MasternodeAnnounce(object):
         """Get the collateral as a string used to identify this masternode."""
         if not self.vin:
             return
-        if not 'prevout_hash' in self.vin or not 'prevout_hash' in self.vin:
+        if not 'prevout_hash' in self.vin or not 'prevout_n' in self.vin:
             return
-        return '%s-%d' % (self.vin['prevout_hash'], self.vin['prevout_n'])
+        #return '%s-%d' % (self.vin['prevout_hash'], self.vin['prevout_n'])
+        return 'COutPoint(%s, %d)' % (self.vin['prevout_hash'],self.vin['prevout_n'])
 
     @classmethod
     def from_dict(cls, d):
         kwargs = {}
         for key in ['alias', 'vin', 'collateral_key', 'delegate_key', 'sig', 'sig_time',
-                    'protocol_version', 'last_dsq', 'announced']:
+                    'protocol_version', 'announced']:
             kwargs[key] = d.get(key)
 
+        protocol_version = int(kwargs['protocol_version'])
         vin = kwargs.get('vin')
+
         if vin:
             kwargs['vin'] = vin
         else:
@@ -293,16 +334,16 @@ class MasternodeAnnounce(object):
 
         last_ping = d.get('last_ping')
         if last_ping:
-            kwargs['last_ping'] = MasternodePing.from_dict(last_ping)
+            kwargs['last_ping'] = MasternodePing.from_dict(last_ping, protocol_version)
         else:
-            kwargs['last_ping'] = MasternodePing.from_dict({})
+            kwargs['last_ping'] = MasternodePing.from_dict({}, protocol_version)
 
         return cls(**kwargs)
 
     def dump(self):
         kwargs = {}
         for key in ['alias', 'vin', 'collateral_key', 'delegate_key', 'sig_time',
-                    'protocol_version', 'last_dsq', 'announced']:
+                    'protocol_version', 'announced']:
             kwargs[key] = getattr(self, key)
 
         if self.sig:
@@ -328,11 +369,11 @@ class MasternodeAnnounce(object):
         eckey = bitcoin.regenerate_key(key)
 
         serialized = self.serialize_for_sig(update_time=update_time)
-        self.sig = eckey.sign_message(serialized, is_compressed)
+        self.sig = eckey.sign_node_message(serialized, is_compressed)
         return self.sig
 
     def verify(self, addr=None):
         """Verify that our sig is signed with addr's key."""
         if not addr:
             addr = bitcoin.public_key_to_p2pkh(bfh(self.collateral_key))
-        return bitcoin.verify_message(addr, self.sig, self.serialize_for_sig())
+        return bitcoin.verify_node_message(addr, self.sig, self.serialize_for_sig())

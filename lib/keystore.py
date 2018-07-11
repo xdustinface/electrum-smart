@@ -93,6 +93,11 @@ class Software_KeyStore(KeyStore):
         key = regenerate_key(privkey)
         return key.sign_message(message, compressed)
 
+    def sign_node_message(self, sequence, message, password):
+        privkey, compressed = self.get_private_key(sequence, password)
+        key = regenerate_key(privkey)
+        return key.sign_node_message(message, compressed)
+
     def decrypt_message(self, sequence, message, password):
         privkey, compressed = self.get_private_key(sequence, password)
         ec = regenerate_key(privkey)

@@ -16,11 +16,11 @@ from .masternode_widgets import *
 from .masternode_budget_widgets import *
 from . import util
 
-# Background color for enabled masternodes.
+# Background color for enabled smartnodes.
 ENABLED_MASTERNODE_BG = '#80ff80'
 
 class MasternodesModel(QAbstractTableModel):
-    """Model for masternodes."""
+    """Model for smartnodes."""
     ALIAS = 0
     STATUS = 1
     VIN = 2
@@ -192,7 +192,7 @@ class MasternodesModel(QAbstractTableModel):
         return True
 
 class MasternodesWidget(QWidget):
-    """Widget that displays masternodes."""
+    """Widget that displays smartnodes."""
     def __init__(self, manager, parent=None):
         super(MasternodesWidget, self).__init__(parent)
         self.manager = manager
@@ -232,7 +232,7 @@ class MasternodesWidget(QWidget):
                 break
 
     def populate_collateral_key(self, row):
-        """Fill in the collateral key for a masternode based on its collateral output.
+        """Fill in the collateral key for a smartnode based on its collateral output.
 
         row refers to the desired row in the proxy model, not the actual model.
         """
@@ -259,17 +259,17 @@ class MasternodesWidget(QWidget):
         return self.model.import_masternode_conf_lines(conf_lines, pw)
 
 class MasternodeDialog(QDialog, PrintError):
-    """GUI for managing masternodes."""
+    """GUI for managing smartnodes."""
 
     def __init__(self, manager, parent):
         super(MasternodeDialog, self).__init__(parent)
         self.gui = parent
         self.manager = manager
-        self.setWindowTitle(_('Masternode Manager'))
+        self.setWindowTitle(_('Smartnode Manager'))
 
         self.waiting_dialog = None
         self.create_layout()
-        # Create a default masternode if none are present.
+        # Create a default smartnode if none are present.
         if len(self.manager.masternodes) == 0:
             self.masternodes_widget.add_masternode(MasternodeAnnounce(alias='default'), save=False)
         self.masternodes_widget.view.selectRow(0)
@@ -281,10 +281,10 @@ class MasternodeDialog(QDialog, PrintError):
         self.masternodes_widget = MasternodesWidget(self.manager)
 
         self.tabs = QTabWidget()
-        self.tabs.addTab(self.create_view_masternode_tab(), _('View Masternode'))
+        self.tabs.addTab(self.create_view_masternode_tab(), _('View Smartnode'))
         self.tabs.addTab(self.create_collateral_tab(), _('Choose Collateral'))
-        self.tabs.addTab(self.create_sign_announce_tab(), _('Activate Masternode'))
-        self.tabs.addTab(self.create_masternode_conf_tab(), _('Masternode.conf'))
+        self.tabs.addTab(self.create_sign_announce_tab(), _('Activate Smartnode'))
+        self.tabs.addTab(self.create_masternode_conf_tab(), _('Smartnode.conf'))
         # Disabled until API is stable.
 #        self.tabs.addTab(self.create_vote_tab(), _('Vote'))
 
@@ -294,16 +294,16 @@ class MasternodeDialog(QDialog, PrintError):
         bottom_buttons = util.Buttons(util.CloseButton(self))
 
         vbox = QVBoxLayout()
-        vbox.addWidget(QLabel(_('Masternodes:')))
+        vbox.addWidget(QLabel(_('Smartnodes:')))
         vbox.addWidget(self.masternodes_widget, stretch=1)
         vbox.addWidget(self.tabs)
         vbox.addLayout(bottom_buttons)
         self.setLayout(vbox)
 
     def create_view_masternode_tab(self):
-        """Create the tab used to view masternodes."""
-        desc = ' '.join(['In this tab, you can view your masternodes and fill in required data about them.',
-            'The collateral payment for a masternode can be specified using the "Choose Collateral" tab.',
+        """Create the tab used to view smartnodes."""
+        desc = ' '.join(['In this tab, you can view your smartnodes and fill in required data about them.',
+            'The collateral payment for a smartnode can be specified using the "Choose Collateral" tab.',
         ])
         desc = QLabel(_(desc))
         desc.setWordWrap(True)
@@ -326,13 +326,13 @@ class MasternodeDialog(QDialog, PrintError):
         mapper.addMapping(editor.delegate_key_edit, MasternodesModel.DELEGATE)
         mapper.addMapping(editor.protocol_version_edit, MasternodesModel.PROTOCOL_VERSION)
 
-        self.save_new_masternode_button = QPushButton('Save As New Masternode')
+        self.save_new_masternode_button = QPushButton('Save As New Smartnode')
         self.save_new_masternode_button.clicked.connect(lambda: self.save_current_masternode(as_new=True))
 
-        self.save_masternode_button = QPushButton(_('Save Masternode'))
+        self.save_masternode_button = QPushButton(_('Save Smartnode'))
         self.save_masternode_button.clicked.connect(self.save_current_masternode)
 
-        self.delete_masternode_button = QPushButton(_('Delete Masternode'))
+        self.delete_masternode_button = QPushButton(_('Delete Smartnode'))
         self.delete_masternode_button.clicked.connect(self.delete_current_masternode)
 
         vbox = QVBoxLayout()
@@ -346,16 +346,16 @@ class MasternodeDialog(QDialog, PrintError):
         return w
 
     def create_masternode_conf_tab(self):
-        """Create the tab used to import masternode.conf files."""
+        """Create the tab used to import smartnode.conf files."""
 
-        desc = ' '.join(['You can use this form to import your masternode.conf file.',
+        desc = ' '.join(['You can use this form to import your smartnode.conf file.',
             'This file is usually located in the same directory that your wallet file is in.',
-            'If you just need to import your masternode\'s private key, use the regular process for importing a key.'])
+            'If you just need to import your smartnode\'s private key, use the regular process for importing a key.'])
         desc = QLabel(_(desc))
         desc.setWordWrap(True)
 
         import_filename_edit = QLineEdit()
-        import_filename_edit.setPlaceholderText(_('Enter the path to your masternode.conf'))
+        import_filename_edit.setPlaceholderText(_('Enter the path to your smartnode.conf'))
         import_select_file = QPushButton(_('Select File...'))
         hbox = QHBoxLayout()
         hbox.addWidget(import_filename_edit, stretch=1)
@@ -383,10 +383,10 @@ class MasternodeDialog(QDialog, PrintError):
         return w
 
     def import_masternode_conf(self, filename):
-        """Import a masternode.conf file."""
+        """Import a smartnode.conf file."""
         pw = None
         if self.manager.wallet.has_password():
-            pw = self.gui.password_dialog(msg=_('Please enter your password to import Masternode information.'))
+            pw = self.gui.password_dialog(msg=_('Please enter your password to import Smartnode information.'))
             if pw is None:
                 return
 
@@ -405,17 +405,17 @@ class MasternodeDialog(QDialog, PrintError):
 
         num = self.masternodes_widget.import_masternode_conf_lines(conf_lines, pw)
         if not num:
-            return QMessageBox.warning(self, _('Failed to Import'), _('Could not import any masternode configurations. Please ensure that they are not already imported.'))
+            return QMessageBox.warning(self, _('Failed to Import'), _('Could not import any smartnode configurations. Please ensure that they are not already imported.'))
         # Grammar is important.
         configurations = 'configuration' if num == 1 else 'configurations'
         adjective = 'this' if num == 1 else 'these'
-        noun = 'masternode' if num == 1 else 'masternodes'
+        noun = 'smartnode' if num == 1 else 'smartnodes'
         words = {'adjective': adjective, 'configurations': configurations, 'noun': noun, 'num': num,}
         msg = '{num} {noun} {configurations} imported.\n\nPlease wait for transactions involving {adjective} {configurations} to be retrieved before activating {adjective} {noun}.'.format(**words)
         QMessageBox.information(self, _('Success'), _(msg))
 
     def selected_masternode(self):
-        """Get the currently-selected masternode."""
+        """Get the currently-selected smartnode."""
         row = self.mapper.currentIndex()
         mn = self.masternodes_widget.masternode_for_row(row)
         return mn
@@ -423,7 +423,7 @@ class MasternodeDialog(QDialog, PrintError):
     def delete_current_masternode(self):
         """Delete the masternode that is being viewed."""
         mn = self.selected_masternode()
-        if QMessageBox.question(self, _('Delete'), _('Do you want to remove the masternode configuration for') + ' %s?'%mn.alias,
+        if QMessageBox.question(self, _('Delete'), _('Do you want to remove the smartnode configuration for') + ' %s?'%mn.alias,
                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No) == QMessageBox.Yes:
             self.masternodes_widget.remove_masternode(mn.alias)
             self.masternodes_widget.view.selectRow(0)
@@ -431,7 +431,7 @@ class MasternodeDialog(QDialog, PrintError):
     def save_current_masternode(self, as_new=False):
         """Save the masternode that is being viewed.
 
-        If as_new is True, a new masternode will be created.
+        If as_new is True, a new smartnode will be created.
         """
         delegate_privkey = str(self.masternode_editor.delegate_key_edit.text())
         if not delegate_privkey:
@@ -447,7 +447,7 @@ class MasternodeDialog(QDialog, PrintError):
             delegate_pubkey = ''
 
         alias = str(self.masternode_editor.alias_edit.text())
-        # Construct a new masternode.
+        # Construct a new smartnode.
         if as_new:
             kwargs = self.masternode_editor.get_masternode_args()
             kwargs['delegate_key'] = delegate_pubkey
@@ -479,7 +479,7 @@ class MasternodeDialog(QDialog, PrintError):
         self.update_mappers_index()
 
     def on_editor_alias_changed(self, text):
-        """Enable or disable the 'Save As New Masternode' button.
+        """Enable or disable the 'Save As New Smartnode' button.
 
         Aliases must be unique and have at least one character.
         """
@@ -493,9 +493,9 @@ class MasternodeDialog(QDialog, PrintError):
         return self.collateral_tab
 
     def create_sign_announce_tab(self):
-        desc = ' '.join(['You can sign a Masternode Announce message to activate your masternode.',
-            'First, ensure that all the required data has been entered for this masternode.',
-            'Then, click "Activate Masternode" to activate your masternode.',
+        desc = ' '.join(['You can sign a Smartnode Announce message to activate your smartnode.',
+            'First, ensure that all the required data has been entered for this smartnode.',
+            'Then, click "Activate Smartnode" to activate your smartnode.',
         ])
         desc = QLabel(_(desc))
         desc.setWordWrap(True)
@@ -515,7 +515,7 @@ class MasternodeDialog(QDialog, PrintError):
         """Sign an announce for alias. This is called by SignAnnounceWidget."""
         pw = None
         if self.manager.wallet.has_password():
-            pw = self.gui.password_dialog(msg=_('Please enter your password to activate masternode "%s".' % alias))
+            pw = self.gui.password_dialog(msg=_('Please enter your password to activate smartnode "%s".' % alias))
             if pw is None:
                 return
 
@@ -525,37 +525,38 @@ class MasternodeDialog(QDialog, PrintError):
             return self.manager.sign_announce(alias, pw)
 
         def on_sign_successful(mn):
-            self.print_msg('Successfully signed Masternode Announce.')
+            self.print_msg('Successfully signed Smartnode Announce.')
             self.send_announce(alias)
         # Proceed to broadcasting the announcement, or re-enable the button.
         def on_sign_error(err):
-            self.print_error('Error signing MasternodeAnnounce:')
+            self.print_error('Error signing SmartnodeAnnounce:')
             # Print traceback information to error log.
             self.print_error(''.join(traceback.format_tb(err[2])))
             self.print_error(''.join(traceback.format_exception_only(err[0], err[1])))
             self.sign_announce_widget.sign_button.setEnabled(True)
 
-        util.WaitingDialog(self, _('Signing Masternode Announce...'), sign_thread, on_sign_successful, on_sign_error)
+        util.WaitingDialog(self, _('Signing Smartnodenode Announce...'), sign_thread, on_sign_successful, on_sign_error)
 
 
     def send_announce(self, alias):
-        """Send an announce for a masternode."""
+        """Send an announce for a smartnode."""
         def send_thread():
             return self.manager.send_announce(alias)
 
         def on_send_successful(result):
             errmsg, was_announced = result
-            if was_announced:
-                self.print_msg('Successfully broadcasted MasternodeAnnounce for "%s"' % alias)
-                QMessageBox.information(self, _('Success'), _('Masternode activated successfully.'))
-            else:
-                self.print_error('Failed to broadcast MasternodeAnnounce: %s' % errmsg)
+            if errmsg:
+                self.print_error('Failed to broadcast SmartnodeAnnounce: %s' % errmsg)
                 QMessageBox.critical(self, _('Error Sending'), _(errmsg))
+            elif was_announced:
+                self.print_msg('Successfully broadcasted SmartnodeAnnounce for "%s"' % alias)
+                QMessageBox.information(self, _('Success'), _('Smartnode activated successfully.'))
             self.masternodes_widget.refresh_items()
             self.masternodes_widget.select_masternode(alias)
 
+
         def on_send_error(err):
-            self.print_error('Error sending Masternode Announce message:')
+            self.print_error('Error sending Smartnode Announce message:')
             # Print traceback information to error log.
             self.print_error(''.join(traceback.format_tb(err[2])))
             self.print_error(''.join(traceback.format_exception_only(err[0], err[1])))
@@ -563,8 +564,8 @@ class MasternodeDialog(QDialog, PrintError):
             self.masternodes_widget.refresh_items()
             self.masternodes_widget.select_masternode(alias)
 
-        self.print_msg('Sending Masternode Announce message...')
-        util.WaitingDialog(self, _('Broadcasting masternode...'), send_thread, on_send_successful, on_send_error)
+        self.print_msg('Sending Smartnode Announce message...')
+        util.WaitingDialog(self, _('Broadcasting smartnode...'), send_thread, on_send_successful, on_send_error)
 
     def create_vote_tab(self):
         self.proposals_widget = ProposalsWidget(self, self.gui.proposals_list.get_model())
@@ -580,7 +581,7 @@ class MasternodeDialog(QDialog, PrintError):
         vote_choice = 'yes' if vote_yes else 'no'
         mn = self.selected_masternode()
         if not mn.announced:
-            return QMessageBox.critical(self, _('Cannot Vote'), _('Masternode has not been activated.'))
+            return QMessageBox.critical(self, _('Cannot Vote'), _('Smartnode has not been activated.'))
         # Check that we can vote before asking for a password.
         try:
             self.manager.check_can_vote(mn.alias, proposal_name)
@@ -611,7 +612,7 @@ class MasternodeDialog(QDialog, PrintError):
         util.WaitingDialog(self, _('Voting...'), vote_thread, on_vote_successful, on_vote_failed)
 
     def populate_collateral_key(self):
-        """Use the selected masternode's collateral output to determine its collateral key."""
+        """Use the selected smartnode's collateral output to determine its collateral key."""
         row = self.mapper.currentIndex()
         self.masternodes_widget.populate_collateral_key(row)
         self.update_mappers_index()
