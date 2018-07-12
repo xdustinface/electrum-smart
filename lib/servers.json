@@ -1,5 +1,5 @@
 {
-    "electrum1.smartcash.cc": {
+    /*"electrum1.smartcash.cc": {
         "pruning": "-",
         "s": "50002",
         "t": "50001",
@@ -18,6 +18,12 @@
         "version": "1.2"
     },
     "electrum4.smartcash.cc": {
+        "pruning": "-",
+        "s": "50002",
+        "t": "50001",
+        "version": "1.2"
+    },*/
+    "144.202.47.131": {
         "pruning": "-",
         "s": "50002",
         "t": "50001",

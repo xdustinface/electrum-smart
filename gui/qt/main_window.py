@@ -522,7 +522,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         add_toggle_action(view_menu, self.console_tab)
 
         wallet_menu.addSeparator()
-        wallet_menu.addAction(_("Smartnodes"), self.show_masternode_dialog)
+        wallet_menu.addAction(_("Smartnode Manager"), self.show_masternode_dialog)
 
         tools_menu = menubar.addMenu(_("&Tools"))
 

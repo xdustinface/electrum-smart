@@ -505,10 +505,14 @@ def time_difference(distance_in_time, include_seconds):
         return "over %d years" % (round(distance_in_minutes / 525600))
 
 mainnet_block_explorers = {
-    'SmartExplorer': ('https://explorer.smartcash.cc/',
+    'Explorer': ('https://explorer.smartcash.cc/',
                         {'tx': 'tx/', 'addr': 'address/'}),
+    'Insight Explorer': ('https://insight.smartcash.cc/',
+                 {'tx': 'tx/', 'addr': 'address/'}),
     'RpcExplorer': ('https://rpcexplorer.smartcash.cc/',
-                        {'tx': 'tx/', 'addr': 'address/'})
+                        {'tx': 'tx/', 'addr': 'address/'}),
+    'Explorer3': ('https://explorer.smartcash.cc/',
+                        {'tx': 'tx/', 'addr': 'address/'}),
 }
 
 testnet_block_explorers = {
