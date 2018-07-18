@@ -567,50 +567,6 @@ class MasternodeDialog(QDialog, PrintError):
         self.print_msg('Sending Smartnode Announce message...')
         util.WaitingDialog(self, _('Broadcasting smartnode...'), send_thread, on_send_successful, on_send_error)
 
-    def create_vote_tab(self):
-        self.proposals_widget = ProposalsWidget(self, self.gui.proposals_list.get_model())
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.proposals_widget)
-
-        w = QWidget()
-        w.setLayout(vbox)
-        return w
-
-    def cast_vote(self, proposal_name, vote_yes):
-        """Vote for a proposal. This is called by ProposalsWidget."""
-        vote_choice = 'yes' if vote_yes else 'no'
-        mn = self.selected_masternode()
-        if not mn.announced:
-            return QMessageBox.critical(self, _('Cannot Vote'), _('Smartnode has not been activated.'))
-        # Check that we can vote before asking for a password.
-        try:
-            self.manager.check_can_vote(mn.alias, proposal_name)
-        except Exception as e:
-            return QMessageBox.critical(self, _('Cannot Vote'), _(str(e)))
-
-        self.proposals_widget.editor.vote_button.setEnabled(False)
-
-        def vote_thread():
-            return self.manager.vote(mn.alias, proposal_name, vote_choice)
-
-        # Show the result.
-        def on_vote_successful(result):
-            errmsg, res = result
-            if res:
-                QMessageBox.information(self, _('Success'), _('Successfully voted'))
-            else:
-                QMessageBox.critical(self, _('Error Voting'), _(errmsg))
-            self.proposals_widget.editor.vote_button.setEnabled(True)
-
-        def on_vote_failed(err):
-            self.print_error('Error sending vote:')
-            # Print traceback information to error log.
-            self.print_error(''.join(traceback.format_tb(err[2])))
-            self.print_error(''.join(traceback.format_exception_only(err[0], err[1])))
-            self.proposals_widget.editor.vote_button.setEnabled(True)
-
-        util.WaitingDialog(self, _('Voting...'), vote_thread, on_vote_successful, on_vote_failed)
-
     def populate_collateral_key(self):
         """Use the selected smartnode's collateral output to determine its collateral key."""
         row = self.mapper.currentIndex()

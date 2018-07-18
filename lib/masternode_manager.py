@@ -218,7 +218,10 @@ class MasternodeManager(object):
         if mn.vin.get('value', 0) != bitcoin.COIN * 10000:
             raise Exception('Smartnode requires a collateral 10000 SMART output.')
 
-        return self.masternode_statuses.get(mn.get_collateral_str())
+        collat = mn.get_collateral_str()
+        status = self.masternode_statuses.get(collat)
+
+        return status
 
     def save(self):
         """Save smartnodes."""
