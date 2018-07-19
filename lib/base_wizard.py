@@ -90,7 +90,7 @@ class BaseWizard(object):
         wallet_kinds = [
             ('standard',  _("Standard wallet")),
             #('2fa', _("Wallet with two-factor authentication")),
-            #('multisig',  _("Multi-signature wallet")),
+            ('multisig',  _("Multi-signature wallet")),
             ('imported',  _("Import SmartCash addresses or private keys")),
         ]
         choices = [pair for pair in wallet_kinds if pair[0] in wallet_types]
@@ -123,8 +123,8 @@ class BaseWizard(object):
         self.multisig_dialog(run_next=on_multisig)
 
     def choose_keystore(self):
-        #assert self.wallet_type in ['standard', 'multisig']
-        assert self.wallet_type in ['standard']
+        assert self.wallet_type in ['standard', 'multisig']
+        #assert self.wallet_type in ['standard']
         i = len(self.keystores)
         title = _('Add cosigner') + ' (%d of %d)'%(i+1, self.n) if self.wallet_type=='multisig' else _('Keystore')
         if self.wallet_type =='standard' or i==0:
@@ -143,8 +143,8 @@ class BaseWizard(object):
                 ('restore_from_key', _('Enter cosigner key')),
                 ('restore_from_seed', _('Enter cosigner seed')),
             ]
-            if not self.is_kivy:
-                choices.append(('choose_hw_device',  _('Cosign with hardware device')))
+            #if not self.is_kivy:
+            #    choices.append(('choose_hw_device',  _('Cosign with hardware device')))
 
         self.choice_dialog(title=title, message=message, choices=choices, run_next=self.run)
 
