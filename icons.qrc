@@ -40,6 +40,9 @@
     <file>icons/tab_contacts.png</file>
     <file>icons/tab_history.png</file>
     <file>icons/tab_receive.png</file>
+    <file>icons/tab_smartnodes.png</file>
+    <file>icons/tab_smartrewards.png</file>
+    <file>icons/tab_smarthive.png</file>
     <file>icons/tab_send.png</file>
     <file>icons/tor_logo.png</file>
     <file>icons/speaker.png</file>

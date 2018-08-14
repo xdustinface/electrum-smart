@@ -136,12 +136,14 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.send_tab = self.create_send_tab()
         self.receive_tab = self.create_receive_tab()
         self.addresses_tab = self.create_addresses_tab()
+        self.smartnode_tab = self.create_smartnode_tab()
         self.utxo_tab = self.create_utxo_tab()
         self.console_tab = self.create_console_tab()
         self.contacts_tab = self.create_contacts_tab()
         tabs.addTab(self.create_history_tab(), QIcon(":icons/tab_history.png"), _('History'))
         tabs.addTab(self.send_tab, QIcon(":icons/tab_send.png"), _('Send'))
         tabs.addTab(self.receive_tab, QIcon(":icons/tab_receive.png"), _('Receive'))
+        tabs.addTab(self.smartnode_tab, QIcon(":icons/tab_smartnodes.png"), _('Smartnodes'))
 
         def add_optional_tab(tabs, tab, icon, description, name):
             tab.tab_icon = icon
@@ -878,6 +880,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         return w
 
+    def create_smartnode_tab(self):
+        from .smartnode import Smartnode
+        self.smartnode = smartnode = Smartnode()
+        return smartnode
 
     def delete_payment_request(self, addr):
         self.wallet.remove_payment_request(addr, self.config)
