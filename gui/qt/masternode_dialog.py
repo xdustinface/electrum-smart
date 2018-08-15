@@ -13,7 +13,6 @@ from electrum_smart.masternode_manager import parse_masternode_conf
 from electrum_smart.util import PrintError, bfh
 
 from .masternode_widgets import *
-from .masternode_budget_widgets import *
 from . import util
 
 # Background color for enabled smartnodes.
@@ -199,6 +198,9 @@ class MasternodesWidget(QWidget):
         self.model = MasternodesModel(self.manager)
         self.proxy_model = QSortFilterProxyModel()
         self.proxy_model.setSourceModel(self.model)
+
+
+
         self.view = QTableView()
         self.view.setModel(self.proxy_model)
         for header in [self.view.horizontalHeader(), self.view.verticalHeader()]:

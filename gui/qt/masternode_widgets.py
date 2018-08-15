@@ -84,7 +84,6 @@ class NetworkAddressWidget(QWidget):
             return False
         return True
 
-
 class PrevOutWidget(QWidget):
     """Widget that represents a previous outpoint."""
     def __init__(self, parent=None):

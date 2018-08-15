@@ -54,6 +54,7 @@ from electrum_smart import paymentrequest
 from electrum_smart.wallet import Multisig_Wallet, AddTransactionException
 from electrum_smart.masternode_manager import MasternodeManager
 
+
 from .amountedit import AmountEdit, BTCAmountEdit, MyLineEdit, FeerateEdit
 from .qrcodewidget import QRCodeWidget, QRDialog
 from .qrtextedit import ShowQRTextEdit, ScanQRTextEdit
@@ -135,15 +136,16 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.tabs = tabs = QTabWidget(self)
         self.send_tab = self.create_send_tab()
         self.receive_tab = self.create_receive_tab()
+        self.masternode_tab = self.create_masternode_tab()
         self.addresses_tab = self.create_addresses_tab()
-        self.smartnode_tab = self.create_smartnode_tab()
         self.utxo_tab = self.create_utxo_tab()
         self.console_tab = self.create_console_tab()
         self.contacts_tab = self.create_contacts_tab()
+
         tabs.addTab(self.create_history_tab(), QIcon(":icons/tab_history.png"), _('History'))
         tabs.addTab(self.send_tab, QIcon(":icons/tab_send.png"), _('Send'))
         tabs.addTab(self.receive_tab, QIcon(":icons/tab_receive.png"), _('Receive'))
-        tabs.addTab(self.smartnode_tab, QIcon(":icons/tab_smartnodes.png"), _('Smartnodes'))
+        tabs.addTab(self.masternode_tab, QIcon(":icons/tab_smartnodes.png"), _('Smartnodes'))
 
         def add_optional_tab(tabs, tab, icon, description, name):
             tab.tab_icon = icon
@@ -173,7 +175,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         QShortcut(QKeySequence("Ctrl+R"), self, self.update_wallet)
         QShortcut(QKeySequence("Ctrl+PgUp"), self, lambda: wrtabs.setCurrentIndex((wrtabs.currentIndex() - 1)%wrtabs.count()))
         QShortcut(QKeySequence("Ctrl+PgDown"), self, lambda: wrtabs.setCurrentIndex((wrtabs.currentIndex() + 1)%wrtabs.count()))
-        QShortcut(QKeySequence("Ctrl+N"), self, self.show_masternode_dialog)
 
         for i in range(wrtabs.count()):
             QShortcut(QKeySequence("Alt+" + str(i + 1)), self, lambda i=i: wrtabs.setCurrentIndex(i))
@@ -349,6 +350,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.masternode_manager.send_subscriptions()
         self.history_list.update()
         self.address_list.update()
+        self.masternode_tab.update_nodes(self.wallet, self.config)
         self.utxo_list.update()
         self.need_update.set()
         # Once GUI has been initialized check if we want to announce something since the callback has been called before the GUI was initialized
@@ -764,6 +766,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.history_list.update()
         self.request_list.update()
         self.address_list.update()
+        self.masternode_tab.update()
         self.utxo_list.update()
         self.contact_list.update()
         self.invoice_list.update()
@@ -879,11 +882,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         vbox.setStretchFactor(self.request_list, 1000)
 
         return w
-
-    def create_smartnode_tab(self):
-        from .smartnode import Smartnode
-        self.smartnode = smartnode = Smartnode()
-        return smartnode
 
     def delete_payment_request(self, addr):
         self.wallet.remove_payment_request(addr, self.config)
@@ -3234,9 +3232,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         d = MasternodeDialog(self.masternode_manager, self)
         d.exec_()
 
-    def proposals_changed(self):
-        """Callback for when proposals change."""
-        if not self.masternode_manager:
-            return
-        self.update_proposals_tab()
+    def create_masternode_tab(self):
+        from .masternode_tab import MasternodeTab
+        self.masternode_tab = masternodetab = MasternodeTab(self)
+        return masternodetab
 
