@@ -16,12 +16,12 @@ from . import util
 class MasternodeModel(QAbstractTableModel):
     """Model for smartnodes."""
     ALIAS = 0
-    STATUS = 1
-    VIN = 2
-    COLLATERAL = 3
-    DELEGATE = 4
-    ADDR = 5
-    PROTOCOL_VERSION = 6
+    ADDR = 1
+    PROTOCOL_VERSION = 2
+    STATUS = 3
+    COLLATERAL = 4
+    DELEGATE = 5
+    VIN = 6
     TOTAL_FIELDS = 7
 
     def __init__(self, manager, parent=None):
@@ -31,12 +31,12 @@ class MasternodeModel(QAbstractTableModel):
 
         headers = [
             {Qt.DisplayRole: 'Alias',},
+            {Qt.DisplayRole: 'Address', },
+            {Qt.DisplayRole: 'Protocol', },
             {Qt.DisplayRole: 'Status',},
-            {Qt.DisplayRole: 'Collateral',},
-            {Qt.DisplayRole: 'Collateral Key',},
-            {Qt.DisplayRole: 'Delegate Key',},
-            {Qt.DisplayRole: 'Address',},
-            {Qt.DisplayRole: 'Version',},
+            {Qt.DisplayRole: 'Payee', },
+            {Qt.DisplayRole: 'Smartnode Key', },
+            {Qt.DisplayRole: 'Transaction',},
         ]
         for d in headers:
             d[Qt.EditRole] = d[Qt.DisplayRole]
@@ -184,38 +184,112 @@ class MasternodeModel(QAbstractTableModel):
         self.dataChanged.emit(self.index(index.row(), index.column()), self.index(index.row(), index.column()))
         return True
 
-class MasternodeTab(QWidget):
-
+class MasternodeWidget(QWidget):
     """Widget that displays smartnodes."""
+    def __init__(self, manager, parent=None):
+        super(MasternodesWidget, self).__init__(parent)
+        self.manager = manager
+        self.model = MasternodesModel(self.manager)
+        self.proxy_model = QSortFilterProxyModel()
+        self.proxy_model.setSourceModel(self.model)
+
+        self.view = QTableView()
+        self.view.setModel(self.proxy_model)
+        for header in [self.view.horizontalHeader(), self.view.verticalHeader()]:
+            header.setHighlightSections(False)
+
+        header = self.view.horizontalHeader()
+        header.setSectionResizeMode(MasternodesModel.ALIAS, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(MasternodesModel.VIN, QHeaderView.Stretch)
+        header.setSectionResizeMode(MasternodesModel.COLLATERAL, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(MasternodesModel.DELEGATE, QHeaderView.ResizeToContents)
+        self.view.verticalHeader().setVisible(False)
+
+        self.view.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.view.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.view.setSortingEnabled(True)
+        self.view.sortByColumn(self.model.ALIAS, Qt.AscendingOrder)
+
+        vbox = QVBoxLayout()
+        vbox.setContentsMargins(0, 0, 0, 0)
+        vbox.addWidget(self.view)
+        self.setLayout(vbox)
+
+    def select_masternode(self, alias):
+        """Select the row that represents alias."""
+        self.view.clearSelection()
+        for i in range(self.proxy_model.rowCount()):
+            idx = self.proxy_model.index(i, 0)
+            mn_alias = str(self.proxy_model.data(idx))
+            if mn_alias == alias:
+                self.view.selectRow(i)
+                break
+
+    def populate_collateral_key(self, row):
+        """Fill in the collateral key for a smartnode based on its collateral output.
+
+        row refers to the desired row in the proxy model, not the actual model.
+        """
+        mn = self.masternode_for_row(row)
+        self.manager.populate_masternode_output(mn.alias)
+        # Emit dataChanged for the collateral key.
+        index = self.model.index(row, self.model.COLLATERAL)
+        self.model.dataChanged.emit(index, index)
+
+    def refresh_items(self):
+        self.model.dataChanged.emit(QModelIndex(), QModelIndex())
+
+    def add_masternode(self, masternode, save = True):
+        self.model.add_masternode(masternode, save=save)
+
+    def remove_masternode(self, alias, save = True):
+        self.model.remove_masternode(alias, save=save)
+
+    def masternode_for_row(self, row):
+        idx = self.proxy_model.mapToSource(self.proxy_model.index(row, 0))
+        return self.model.masternode_for_row(idx.row())
+
+    def import_masternode_conf_lines(self, conf_lines, pw):
+        return self.model.import_masternode_conf_lines(conf_lines, pw)
+
+class MasternodeTab(QWidget):
+    """GUI for smartnodes tab ."""
+
     def __init__(self, parent=None):
         super(MasternodeTab, self).__init__(parent)
-        self.setupUi()
+        self.create_layout()
 
-    def update_nodes(self,wallet,config):
+    def update_nodelist(self, wallet, config):
         self.wallet = wallet
         self.config = config
         self.manager = MasternodeManager(self.wallet, self.config)
         self.masternodes = self.manager.masternodes
-
-        headers = [
-            {Qt.DisplayRole: 'Alias',},
-            {Qt.DisplayRole: 'Status',},
-            {Qt.DisplayRole: 'Collateral',},
-            {Qt.DisplayRole: 'Collateral Key',},
-            {Qt.DisplayRole: 'Delegate Key',},
-            {Qt.DisplayRole: 'Address',},
-            {Qt.DisplayRole: 'Version',},
-        ]
-        for d in headers:
-            d[Qt.EditRole] = d[Qt.DisplayRole]
-        self.headers = headers
-
         self.model = MasternodeModel(self.manager)
         self.proxy_model = QSortFilterProxyModel()
         self.proxy_model.setSourceModel(self.model)
         self.tableWidgetMySmartnodes.setModel(self.proxy_model)
 
-    def setupUi(self):
+        header = self.tableWidgetMySmartnodes.horizontalHeader()
+        header.setSectionResizeMode(MasternodeModel.ALIAS, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(MasternodeModel.ADDR, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(MasternodeModel.COLLATERAL, QHeaderView.Stretch)
+        header.setSectionResizeMode(MasternodeModel.VIN, QHeaderView.Stretch)
+        header.setSectionResizeMode(MasternodeModel.DELEGATE, QHeaderView.Stretch)
+
+        #self.tableWidgetMySmartnodes.selectionModel().selectionChanged.connect(self.on_view_selection_changed)
+
+    def setup_nodelist(self):
+        self.tableWidgetMySmartnodes = QTableView()
+        self.tableWidgetMySmartnodes.setMinimumSize(QSize(695, 0))
+        self.tableWidgetMySmartnodes.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tableWidgetMySmartnodes.setAlternatingRowColors(True)
+        self.tableWidgetMySmartnodes.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.tableWidgetMySmartnodes.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.tableWidgetMySmartnodes.setSortingEnabled(True)
+        self.tableWidgetMySmartnodes.verticalHeader().setVisible(False)
+        self.tableWidgetMySmartnodes.setObjectName("tableWidgetMySmartnodes")
+
+    def create_layout(self):
         self.setObjectName("SmartnodeList")
         self.resize(811, 457)
         self.setMinimumSize(QSize(0, 0))
@@ -248,15 +322,7 @@ class MasternodeTab(QWidget):
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
         self.verticalLayout_2.addWidget(self.widget)
-
-        self.tableWidgetMySmartnodes = QTableView()
-        self.tableWidgetMySmartnodes.setMinimumSize(QSize(695, 0))
-        self.tableWidgetMySmartnodes.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.tableWidgetMySmartnodes.setAlternatingRowColors(True)
-        self.tableWidgetMySmartnodes.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.tableWidgetMySmartnodes.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.tableWidgetMySmartnodes.setObjectName("tableWidgetMySmartnodes")
-
+        self.setup_nodelist()
         self.verticalLayout_2.addWidget(self.tableWidgetMySmartnodes)
         self.horizontalLayout_5 = QHBoxLayout()
         self.horizontalLayout_5.setContentsMargins(-1, -1, -1, 0)
@@ -280,7 +346,6 @@ class MasternodeTab(QWidget):
         self.horizontalLayout_5.addItem(spacerItem1)
         self.verticalLayout_2.addLayout(self.horizontalLayout_5)
         self.gridLayout.addLayout(self.verticalLayout_2, 0, 0, 1, 1)
-
         self.retranslateUi(self)
         QMetaObject.connectSlotsByName(self)
 
@@ -297,6 +362,17 @@ class MasternodeTab(QWidget):
         self.UpdateButton.setText(_translate("SmartnodeList", "&Update status"))
         self.autoupdate_label.setText(_translate("SmartnodeList", "Status will be updated automatically in (sec):"))
         self.secondsLabel.setText(_translate("SmartnodeList", "0"))
+
+    def on_view_selection_changed(self, selected, deselected):
+        """Update the data widget mapper."""
+        row = 0
+        try:
+            row = selected.indexes()[0].row()
+        except Exception:
+            pass
+        self.mapper.setCurrentIndex(row)
+        self.update_mappers_index()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

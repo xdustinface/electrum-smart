@@ -199,8 +199,6 @@ class MasternodesWidget(QWidget):
         self.proxy_model = QSortFilterProxyModel()
         self.proxy_model.setSourceModel(self.model)
 
-
-
         self.view = QTableView()
         self.view.setModel(self.proxy_model)
         for header in [self.view.horizontalHeader(), self.view.verticalHeader()]:
@@ -287,8 +285,6 @@ class MasternodeDialog(QDialog, PrintError):
         self.tabs.addTab(self.create_collateral_tab(), _('Choose Collateral'))
         self.tabs.addTab(self.create_sign_announce_tab(), _('Activate Smartnode'))
         self.tabs.addTab(self.create_masternode_conf_tab(), _('Smartnode.conf'))
-        # Disabled until API is stable.
-#        self.tabs.addTab(self.create_vote_tab(), _('Vote'))
 
         # Connect to the selection signal so we can update the widget mapper.
         self.masternodes_widget.view.selectionModel().selectionChanged.connect(self.on_view_selection_changed)
