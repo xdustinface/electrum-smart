@@ -535,7 +535,6 @@ class MasternodeDialog(QDialog, PrintError):
 
         util.WaitingDialog(self, _('Signing Smartnodenode Announce...'), sign_thread, on_sign_successful, on_sign_error)
 
-
     def send_announce(self, alias):
         """Send an announce for a smartnode."""
         def send_thread():
