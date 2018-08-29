@@ -640,7 +640,7 @@ class Transaction:
             for sig in sigs2:
                 if sig in sigs1:
                     continue
-                pre_hash = Hash(bfh(self.serialize_preimage(i)))
+                pre_hash = Hash_Sha256(bfh(self.serialize_preimage(i)))
                 # der to string
                 order = ecdsa.ecdsa.generator_secp256k1.order()
                 r, s = ecdsa.util.sigdecode_der(bfh(sig[:-2]), order)
