@@ -137,6 +137,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.send_tab = self.create_send_tab()
         self.receive_tab = self.create_receive_tab()
         self.masternode_tab = self.create_masternode_tab()
+        self.smartrewards_tab = self.create_smartrewards_tab()
+        self.smartvote_tab = self.create_smartvote_tab()
         self.addresses_tab = self.create_addresses_tab()
         self.utxo_tab = self.create_utxo_tab()
         self.console_tab = self.create_console_tab()
@@ -146,6 +148,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         tabs.addTab(self.send_tab, QIcon(":icons/tab_send.png"), _('Send'))
         tabs.addTab(self.receive_tab, QIcon(":icons/tab_receive.png"), _('Receive'))
         tabs.addTab(self.masternode_tab, QIcon(":icons/tab_smartnodes.png"), _('Smartnodes'))
+        tabs.addTab(self.smartrewards_tab, QIcon(":icons/tab_smartrewards.png"), _('Smartrewards'))
+        tabs.addTab(self.smartvote_tab, QIcon(":icons/tab_smarthive.png"), _('Smartvote'))
 
         def add_optional_tab(tabs, tab, icon, description, name):
             tab.tab_icon = icon
@@ -3236,4 +3240,14 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         from .masternode_tab import MasternodeTab
         self.masternode_tab = masternodetab = MasternodeTab(self)
         return masternodetab
+
+    def create_smartrewards_tab(self):
+        from .smartrewards_tab import SmartrewardsTab
+        self.smartrewards_tab = smartrewards = SmartrewardsTab(self)
+        return smartrewards
+
+    def create_smartvote_tab(self):
+        from .smartvote_tab import SmartvoteTab
+        self.smartvote_tab = smartvote = SmartvoteTab(self)
+        return smartvote
 
