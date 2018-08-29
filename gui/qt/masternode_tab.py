@@ -244,6 +244,7 @@ class MasternodeTab(QWidget):
         self.horizontalLayout.setContentsMargins(0, -1, -1, -1)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.CreateButton = QPushButton(self.widget)
+        self.CreateButton.clicked.connect(self.show_masternode_controldialog)
         self.CreateButton.setObjectName("CreateButton")
         self.horizontalLayout.addWidget(self.CreateButton)
         self.EditButton = QPushButton(self.widget)
@@ -302,6 +303,11 @@ class MasternodeTab(QWidget):
         self.UpdateButton.setText(_translate("SmartnodeList", "&Update status"))
         #self.autoupdate_label.setText(_translate("SmartnodeList", "Status will be updated automatically in (sec):"))
         #self.secondsLabel.setText(_translate("SmartnodeList", "0"))
+
+    def show_masternode_controldialog(self):
+        from .masternode_controldialog import MasternodeControlDialog
+        d = MasternodeControlDialog(self.manager, self)
+        d.exec_()
 
     def select_masternode(self, alias):
         """Select the row that represents alias."""
