@@ -295,9 +295,9 @@ class BaseWizard(object):
             _('If you are not sure what this is, leave this field unchanged.')
         ])
         presets = (
-            ('legacy BIP44', bip44_derivation(0, bip43_purpose=44)),
-            ('p2sh-segwit BIP49', bip44_derivation(0, bip43_purpose=49)),
-            ('native-segwit BIP84', bip44_derivation(0, bip43_purpose=84)),
+            #('legacy BIP44', bip44_derivation(0, bip43_purpose=44)),
+            #('p2sh-segwit BIP49', bip44_derivation(0, bip43_purpose=49)),
+            #('native-segwit BIP84', bip44_derivation(0, bip43_purpose=84)),
         )
         while True:
             try:
