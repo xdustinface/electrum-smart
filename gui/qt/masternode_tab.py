@@ -184,7 +184,7 @@ class MasternodeModel(QAbstractTableModel):
         self.dataChanged.emit(self.index(index.row(), index.column()), self.index(index.row(), index.column()))
         return True
 
-class MasternodeTab(QWidget):
+class MasternodeTab(QWidget, PrintError):
     """GUI for smartnodes tab ."""
 
     def __init__(self, parent=None):
@@ -251,10 +251,14 @@ class MasternodeTab(QWidget):
         self.EditButton.setEnabled(False)
         self.EditButton.setObjectName("EditButton")
         self.horizontalLayout.addWidget(self.EditButton)
+
+        #Remove Smartnode
         self.RemoveButton = QPushButton(self.widget)
         self.RemoveButton.setEnabled(False)
         self.RemoveButton.setObjectName("RemoveButton")
+        self.RemoveButton.clicked.connect(self.delete_current_masternode)
         self.horizontalLayout.addWidget(self.RemoveButton)
+
         self.ViewButton = QPushButton(self.widget)
         self.ViewButton.setEnabled(False)
         self.ViewButton.setObjectName("ViewButton")
@@ -267,10 +271,15 @@ class MasternodeTab(QWidget):
         self.horizontalLayout_5 = QHBoxLayout()
         self.horizontalLayout_5.setContentsMargins(-1, -1, -1, 0)
         self.horizontalLayout_5.setObjectName("horizontalLayout_5")
+
+        #Start Smartnode
         self.startButton = QPushButton(self)
         self.startButton.setObjectName("startButton")
         self.startButton.setEnabled(False)
+        self.startButton.clicked.connect(self.sign_announce)
         self.horizontalLayout_5.addWidget(self.startButton)
+
+
         #self.startMissingButton = QPushButton(self)
         #self.startMissingButton.setObjectName("startMissingButton")
         #self.horizontalLayout_5.addWidget(self.startMissingButton)
@@ -346,16 +355,16 @@ class MasternodeTab(QWidget):
     def selected_masternode(self):
         """Get the currently-selected smartnode."""
         row = self.mapper.currentIndex()
-        mn = self.masternodes_widget.masternode_for_row(row)
+        mn = self.masternode_for_row(row)
         return mn
 
     def delete_current_masternode(self):
         """Delete the masternode that is being viewed."""
         mn = self.selected_masternode()
-        if QMessageBox.question(self, _('Delete'), _('Do you want to remove the smartnode configuration for') + ' %s?'%mn.alias,
+        if QMessageBox.question(self, ('Remove Smartnode Entry'), ('Remove smartnode') + ' %s?' % mn.alias,
                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No) == QMessageBox.Yes:
-            self.masternodes_widget.remove_masternode(mn.alias)
-            self.masternodes_widget.view.selectRow(0)
+            self.remove_masternode(mn.alias)
+            self.tableWidgetMySmartnodes.selectRow(0)
 
     def save_current_masternode(self, as_new=False):
         """Save the masternode that is being viewed.
@@ -428,34 +437,19 @@ class MasternodeTab(QWidget):
         self.collateral_tab = MasternodeOutputsTab(self)
         return self.collateral_tab
 
-    def create_sign_announce_tab(self):
-        desc = ' '.join(['You can sign a Smartnode Announce message to activate your smartnode.',
-            'First, ensure that all the required data has been entered for this smartnode.',
-            'Then, click "Activate Smartnode" to activate your smartnode.',
-        ])
-        desc = QLabel(_(desc))
-        desc.setWordWrap(True)
-
-        self.sign_announce_widget = SignAnnounceWidget(self)
-
-        vbox = QVBoxLayout()
-        vbox.addWidget(desc)
-        vbox.addWidget(self.sign_announce_widget)
-        vbox.addStretch(1)
-
-        w = QWidget()
-        w.setLayout(vbox)
-        return w
 
     def sign_announce(self, alias):
         """Sign an announce for alias. This is called by SignAnnounceWidget."""
+
+        #put question here
+
         pw = None
         if self.manager.wallet.has_password():
             pw = self.gui.password_dialog(msg=_('Please enter your password to activate smartnode "%s".' % alias))
             if pw is None:
                 return
 
-        self.sign_announce_widget.sign_button.setEnabled(False)
+        #self.sign_announce_widget.sign_button.setEnabled(False)
 
         def sign_thread():
             return self.manager.sign_announce(alias, pw)
@@ -465,13 +459,13 @@ class MasternodeTab(QWidget):
             self.send_announce(alias)
         # Proceed to broadcasting the announcement, or re-enable the button.
         def on_sign_error(err):
-            self.print_error('Error signing SmartnodeAnnounce:')
+            self.print_error('Error signing Smartnode Announce:')
             # Print traceback information to error log.
             self.print_error(''.join(traceback.format_tb(err[2])))
             self.print_error(''.join(traceback.format_exception_only(err[0], err[1])))
-            self.sign_announce_widget.sign_button.setEnabled(True)
+            # show error on the screen
 
-        util.WaitingDialog(self, _('Signing Smartnodenode Announce...'), sign_thread, on_sign_successful, on_sign_error)
+        util.WaitingDialog(self, ('Signing Smartnodenode Announce...'), sign_thread, on_sign_successful, on_sign_error)
 
     def send_announce(self, alias):
         """Send an announce for a smartnode."""
@@ -507,7 +501,6 @@ class MasternodeTab(QWidget):
         row = self.mapper.currentIndex()
         self.masternodes_widget.populate_collateral_key(row)
         self.update_mappers_index()
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
