@@ -194,10 +194,10 @@ class MasternodeTab(QWidget, PrintError):
         super(MasternodeTab, self).__init__(parent)
         self.create_layout()
 
-    def update_nodelist(self, wallet, config):
+    def update_nodelist(self, wallet, config, manager):
         self.wallet = wallet
         self.config = config
-        self.manager = MasternodeManager(self.wallet, self.config)
+        self.manager = manager
         self.masternodes = self.manager.masternodes
         self.model = MasternodeModel(self.manager)
         self.proxy_model = model = QSortFilterProxyModel()
@@ -349,7 +349,6 @@ class MasternodeTab(QWidget, PrintError):
         self.model.dataChanged.emit(index, index)
 
     def refresh_items(self):
-        #self.update_nodelist()
         self.model.dataChanged.emit(QModelIndex(), QModelIndex())
 
     def add_masternode(self, masternode, save = True):

@@ -354,7 +354,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.masternode_manager.send_subscriptions()
         self.history_list.update()
         self.address_list.update()
-        self.masternode_tab.update_nodelist(self.wallet, self.config)
+        self.masternode_tab.update_nodelist(self.wallet, self.config, self.masternode_manager)
         self.utxo_list.update()
         self.need_update.set()
         # Once GUI has been initialized check if we want to announce something since the callback has been called before the GUI was initialized

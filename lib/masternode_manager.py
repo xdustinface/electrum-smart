@@ -83,7 +83,7 @@ class MasternodeManager(object):
             if self.masternode_statuses.get(collateral) is None:
                 req = ('masternode.subscribe', [collateral])
                 self.wallet.network.send([req], self.masternode_subscription_response)
-                self.masternode_statuses[collateral] = ''
+                #self.masternode_statuses[collateral] = ''
 
     def get_masternode(self, alias):
         """Get the smartnode labelled as alias."""
