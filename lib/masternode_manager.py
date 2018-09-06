@@ -174,9 +174,9 @@ class MasternodeManager(object):
         if not mn:
             raise Exception('Nonexistent smartnode')
         if not mn.vin.get('prevout_hash'):
-            raise Exception('Collateral payment is not specified')
+            raise Exception('Collateral TxId is not specified')
         if not mn.collateral_key:
-            raise Exception('Collateral key is not specified')
+            raise Exception('Could not allocate outpoint. Collateral TxId is not specified')
         if not mn.delegate_key:
             raise Exception('Smartnode delegate key is not specified')
         if not mn.addr.ip:
