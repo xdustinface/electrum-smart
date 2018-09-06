@@ -13,6 +13,9 @@ from .masternode_widgets import *
 from electrum_smart.masternode_manager import MasternodeManager
 from . import util
 
+# Background color for enabled smartnodes.
+ENABLED_MASTERNODE_BG = '#80ff80'
+
 class MasternodeModel(QAbstractTableModel):
     """Model for smartnodes."""
     ALIAS = 0
@@ -228,6 +231,12 @@ class MasternodeTab(QWidget, PrintError):
         self.tableWidgetMySmartnodes.verticalHeader().setVisible(False)
         self.tableWidgetMySmartnodes.setObjectName("tableWidgetMySmartnodes")
 
+    def disable_node_buttons(self):
+        self.EditButton.setEnabled(False)
+        self.RemoveButton.setEnabled(False)
+        self.ViewButton.setEnabled(False)
+        self.startButton.setEnabled(False)
+
     def create_layout(self):
         self.setObjectName("SmartnodeList")
         self.resize(811, 457)
@@ -276,7 +285,7 @@ class MasternodeTab(QWidget, PrintError):
         self.startButton = QPushButton(self)
         self.startButton.setObjectName("startButton")
         self.startButton.setEnabled(False)
-        self.startButton.clicked.connect(self.sign_announce)
+        self.startButton.clicked.connect(self.start_current_masternode)
         self.horizontalLayout_5.addWidget(self.startButton)
 
 
@@ -320,7 +329,7 @@ class MasternodeTab(QWidget, PrintError):
 
     def select_masternode(self, alias):
         """Select the row that represents alias."""
-        self.view.clearSelection()
+        self.clearSelection()
         for i in range(self.proxy_model.rowCount()):
             idx = self.proxy_model.index(i, 0)
             mn_alias = str(self.proxy_model.data(idx))
@@ -340,6 +349,7 @@ class MasternodeTab(QWidget, PrintError):
         self.model.dataChanged.emit(index, index)
 
     def refresh_items(self):
+        #self.update_nodelist()
         self.model.dataChanged.emit(QModelIndex(), QModelIndex())
 
     def add_masternode(self, masternode, save = True):
@@ -437,19 +447,22 @@ class MasternodeTab(QWidget, PrintError):
         self.collateral_tab = MasternodeOutputsTab(self)
         return self.collateral_tab
 
+    def start_current_masternode(self):
+        """Start the masternode that is being viewed."""
+        mn = self.selected_masternode()
+        if QMessageBox.question(self, ('Confirm Smartnode Start'), ('Are you sure you want to start Smartnode') + ' %s? This will reset your node in the payment queue.' % mn.alias,
+                                QMessageBox.Yes | QMessageBox.No, QMessageBox.No) == QMessageBox.Yes:
+            self.sign_announce(mn.alias)
+
 
     def sign_announce(self, alias):
         """Sign an announce for alias. This is called by SignAnnounceWidget."""
-
-        #put question here
 
         pw = None
         if self.manager.wallet.has_password():
             pw = self.gui.password_dialog(msg=_('Please enter your password to activate smartnode "%s".' % alias))
             if pw is None:
                 return
-
-        #self.sign_announce_widget.sign_button.setEnabled(False)
 
         def sign_thread():
             return self.manager.sign_announce(alias, pw)
@@ -463,9 +476,11 @@ class MasternodeTab(QWidget, PrintError):
             # Print traceback information to error log.
             self.print_error(''.join(traceback.format_tb(err[2])))
             self.print_error(''.join(traceback.format_exception_only(err[0], err[1])))
-            # show error on the screen
+            errmsg = ''.join(traceback.format_exception_only(err[0], err[1]))
+            QMessageBox.critical(self, ('Error signing Smartnode Announce'), (errmsg))
 
         util.WaitingDialog(self, ('Signing Smartnodenode Announce...'), sign_thread, on_sign_successful, on_sign_error)
+
 
     def send_announce(self, alias):
         """Send an announce for a smartnode."""
@@ -478,10 +493,10 @@ class MasternodeTab(QWidget, PrintError):
                 self.print_error('Failed to broadcast SmartnodeAnnounce: %s' % errmsg)
                 QMessageBox.critical(self, _('Error Sending'), _(errmsg))
             elif was_announced:
-                self.print_msg('Successfully broadcasted SmartnodeAnnounce for "%s"' % alias)
-                QMessageBox.information(self, _('Success'), _('Smartnode activated successfully.'))
-            self.masternodes_widget.refresh_items()
-            self.masternodes_widget.select_masternode(alias)
+                self.print_msg('Successfully broadcasted SmartnodeAnnounce for "%s"' )
+                QMessageBox.information(self, ('Success'), ('Successfully started smartnode "%s"' % alias))
+            self.refresh_items()
+            #self.select_masternode(alias)
 
 
         def on_send_error(err):
@@ -494,7 +509,7 @@ class MasternodeTab(QWidget, PrintError):
             self.masternodes_widget.select_masternode(alias)
 
         self.print_msg('Sending Smartnode Announce message...')
-        util.WaitingDialog(self, _('Broadcasting smartnode...'), send_thread, on_send_successful, on_send_error)
+        util.WaitingDialog(self, ('Broadcasting smartnode...'), send_thread, on_send_successful, on_send_error)
 
     def populate_collateral_key(self):
         """Use the selected smartnode's collateral output to determine its collateral key."""
