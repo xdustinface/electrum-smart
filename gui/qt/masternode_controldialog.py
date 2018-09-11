@@ -15,6 +15,8 @@ from electrum_smart.util import PrintError, bfh
 from .masternode_widgets import *
 from . import util
 
+MASTERNODE_DEFAULT_PORT = '9678'
+
 class MasternodeControlDialog(QDialog, PrintError):
 
     def __init__(self, manager, parent):
@@ -25,6 +27,8 @@ class MasternodeControlDialog(QDialog, PrintError):
 
         self.waiting_dialog = None
         self.setupUi()
+
+        self.scan_for_outputs(True)
 
     def setupUi(self):
         self.setObjectName("SmartnodeControlDialog")
@@ -80,23 +84,23 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.label_4.setFont(font)
         self.label_4.setObjectName("label_4")
         self.verticalLayout_3.addWidget(self.label_4)
+
+        #List Txs
         self.collateralTable = QTableWidget(self.stackedWidgetPage1)
         font = QFont()
-        font.setPointSize(12)
+        font.setPointSize(10)
         self.collateralTable.setFont(font)
+        self.collateralTable.setColumnCount(3)
+        self.collateralTable.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.collateralTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.collateralTable.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.collateralTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.collateralTable.verticalHeader().hide()
         self.collateralTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.collateralTable.setObjectName("collateralTable")
-        self.collateralTable.setColumnCount(4)
-        self.collateralTable.setRowCount(0)
-        item = QTableWidgetItem()
-        self.collateralTable.setHorizontalHeaderItem(0, item)
-        item = QTableWidgetItem()
-        self.collateralTable.setHorizontalHeaderItem(1, item)
-        item = QTableWidgetItem()
-        self.collateralTable.setHorizontalHeaderItem(2, item)
-        item = QTableWidgetItem()
-        self.collateralTable.setHorizontalHeaderItem(3, item)
         self.verticalLayout_3.addWidget(self.collateralTable)
+
+
         self.collateralView.addWidget(self.stackedWidgetPage1)
         self.page = QWidget()
         self.page.setObjectName("page")
@@ -206,16 +210,19 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.verticalLayout.addLayout(self.verticalLayout_2)
         spacerItem9 = QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Fixed)
         self.verticalLayout.addItem(spacerItem9)
-        self.viewButtonBox = QDialogButtonBox(self)
-        sizePolicy = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.viewButtonBox.sizePolicy().hasHeightForWidth())
-        self.viewButtonBox.setSizePolicy(sizePolicy)
-        self.viewButtonBox.setOrientation(Qt.Horizontal)
-        self.viewButtonBox.setStandardButtons(QDialogButtonBox.Close)
-        self.viewButtonBox.setObjectName("viewButtonBox")
-        self.verticalLayout.addWidget(self.viewButtonBox)
+
+        #self.viewButtonBox = QDialogButtonBox(self)
+        #sizePolicy = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        #sizePolicy.setHorizontalStretch(0)
+        #sizePolicy.setVerticalStretch(0)
+        #sizePolicy.setHeightForWidth(self.viewButtonBox.sizePolicy().hasHeightForWidth())
+        #self.viewButtonBox.setSizePolicy(sizePolicy)
+        #self.viewButtonBox.setOrientation(Qt.Horizontal)
+        #self.viewButtonBox.setStandardButtons(QDialogButtonBox.Close)
+        #self.viewButtonBox.setObjectName("viewButtonBox")
+        #self.verticalLayout.addWidget(self.viewButtonBox)
+
+        #Apply or Cancel
         self.defaultButtonBox = QDialogButtonBox(self)
         sizePolicy = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -226,6 +233,7 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.defaultButtonBox.setStandardButtons(QDialogButtonBox.Apply | QDialogButtonBox.Cancel)
         self.defaultButtonBox.setObjectName("defaultButtonBox")
         self.verticalLayout.addWidget(self.defaultButtonBox)
+        self.defaultButtonBox.clicked.connect(self.handle_apply_cancel)
 
         self.retranslateUi(self)
         QMetaObject.connectSlotsByName(self)
@@ -242,14 +250,6 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.label_2.setText(_translate("SmartnodeControlDialog", "Alias"))
         self.label_4.setText(_translate("SmartnodeControlDialog", "Select a collateral for your new node"))
         self.collateralTable.setSortingEnabled(False)
-        item = self.collateralTable.horizontalHeaderItem(0)
-        item.setText(_translate("SmartnodeControlDialog", "Label"))
-        item = self.collateralTable.horizontalHeaderItem(1)
-        item.setText(_translate("SmartnodeControlDialog", "Address"))
-        item = self.collateralTable.horizontalHeaderItem(2)
-        item.setText(_translate("SmartnodeControlDialog", "TX-Hash"))
-        item = self.collateralTable.horizontalHeaderItem(3)
-        item.setText(_translate("SmartnodeControlDialog", "TX-Index"))
         self.label_7.setText(_translate("SmartnodeControlDialog", "Collateral"))
         self.addressViewLabel.setText(_translate("SmartnodeControlDialog", "0000000000000000000000000"))
         self.label_8.setText(_translate("SmartnodeControlDialog", "Address"))
@@ -266,15 +266,85 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.label_6.setText(_translate("SmartnodeControlDialog",
                                         "Its required to use the \"Smartnode Key\" above when you install your new node. You can manually insert it into your node\'s smartcash.conf or provide it to the bash installer when prompted."))
 
-#if __name__ == "__main__":
-    import sys
-    #self.gui = parent
-    #self.setWindowTitle(_('Smartnode'))
-    #self.waiting_dialog = None
-    #self.setupUi()
-    #app = QApplication(sys.argv)
-    #SmartnodeControlDialog = QDialog()
-    #ui = Ui_SmartnodeControlDialog()
-    #ui.setupUi(self)
-    #self.show()
-    #sys.exit(app.exec_())
+    def handle_apply_cancel(self, button):
+        sb = self.defaultButtonBox.standardButton(button)
+        if sb == QDialogButtonBox.Apply:
+            self.save_node()
+        elif sb == QDialogButtonBox.Cancel:
+            self.close()
+
+    def save_node(self):
+
+        alias = self.aliasField.text()
+        if not alias:
+            QMessageBox.critical(self, _('Error'), _("Alias missing."))
+            return
+
+        addr = self.get_addr()
+
+        selectedItem = self.collateralTable.selectedItems()
+        if not selectedItem:
+            QMessageBox.critical(self, _('Error'), _("You need to select a collateral."))
+
+        #QMessageBox.warning(self, _('Warning'), _(self.ipField.text()))
+
+    def get_addr(self):
+        """Get a NetworkAddress instance from this widget's data."""
+
+        ip_field = str(self.ipField.text())
+        port = MASTERNODE_DEFAULT_PORT
+
+        if not ip_field:
+            self.show_invalid_ip_message()
+            return
+
+        ip_port = ip_field.split(':')
+        ip = ip_port[0]
+
+        if len(ip_port) > 1:
+            port = ip_port[1]
+
+        if self.validate_ip(ip, port):
+            return NetworkAddress(ip=ip, port=port)
+        else:
+            self.show_invalid_ip_message()
+            return
+
+    def validate_ip(self, s, p):
+        try:
+            ip = s.split('.')
+            if len(ip) != 4:
+                raise Exception('Invalid length')
+            for i in ip:
+                if int(i) < 0 or int(i) > 255:
+                    raise ValueError('Invalid IP byte')
+            port = int(p)
+        except Exception:
+            return False
+        return True
+
+    def show_invalid_ip_message(self):
+        QMessageBox.critical(self, _('Error'),
+                             _("Invalid IP-Address\n\nRequired format: xxx.xxx.xxx.xxx or xxx.xxx.xxx.xxx:port"))
+
+    def scan_for_outputs(self, include_frozen):
+        """Scan for 10000 SMART outputs.
+
+        If one or more is found, populate the list and enable the sign button.
+        """
+        self.collateralTable.clear()
+        exclude_frozen = not include_frozen
+        coins = list(self.manager.get_masternode_outputs(exclude_frozen=exclude_frozen))
+
+        if len(coins) > 0:
+            self.add_outputs(coins)
+
+    def add_outputs(self, coins):
+
+        self.collateralTable.setRowCount(len(coins))
+        self.collateralTable.setHorizontalHeaderLabels(("Address;TX-Index;TX-Hash").split(";"))
+
+        for idx, val in enumerate(coins):
+            self.collateralTable.setItem(idx, 0, QTableWidgetItem(val.get('address')))
+            self.collateralTable.setItem(idx, 1, QTableWidgetItem(str(val.get('prevout_n'))))
+            self.collateralTable.setItem(idx, 2, QTableWidgetItem(val.get('prevout_hash')))

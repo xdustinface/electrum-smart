@@ -194,7 +194,7 @@ class MasternodeManager(object):
         if mn.announced:
             status = self.masternode_statuses.get(mn.get_collateral_str())
             if status in ['PRE_ENABLED', 'ENABLED']:
-                raise Exception('Smartnode has already been activated')
+                raise Exception('Smartnode has already been started')
 
     def check_masternode_status(self, alias):
         """Raise an exception if alias can't be signed and announced to the network."""

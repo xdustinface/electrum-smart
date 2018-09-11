@@ -495,7 +495,7 @@ class MasternodeTab(QWidget, PrintError):
                 self.print_msg('Successfully broadcasted SmartnodeAnnounce for "%s"' )
                 QMessageBox.information(self, ('Success'), ('Successfully started smartnode "%s"' % alias))
             self.refresh_items()
-            #self.select_masternode(alias)
+            self.select_masternode(alias)
 
 
         def on_send_error(err):
