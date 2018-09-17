@@ -191,10 +191,10 @@ class MasternodeManager(object):
             raise Exception('Smartnode requires a collateral 10000 SMART output.')
 
         # If the masternode has been announced, it can be announced again if it has been disabled.
-        if mn.announced:
-            status = self.masternode_statuses.get(mn.get_collateral_str())
-            if status in ['PRE_ENABLED', 'ENABLED']:
-                raise Exception('Smartnode has already been started')
+        #if mn.announced:
+        #    status = self.masternode_statuses.get(mn.get_collateral_str())
+        #   if status in ['PRE_ENABLED', 'ENABLED']:
+        #        raise Exception('Smartnode has already been started')
 
     def check_masternode_status(self, alias):
         """Raise an exception if alias can't be signed and announced to the network."""

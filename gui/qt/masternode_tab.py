@@ -334,7 +334,7 @@ class MasternodeTab(QWidget, PrintError):
             idx = self.proxy_model.index(i, 0)
             mn_alias = str(self.proxy_model.data(idx))
             if mn_alias == alias:
-                self.view.selectRow(i)
+                self.tableWidgetMySmartnodes.selectRow(i)
                 break
 
     def populate_collateral_key(self, row):
@@ -492,7 +492,7 @@ class MasternodeTab(QWidget, PrintError):
                 self.print_error('Failed to broadcast SmartnodeAnnounce: %s' % errmsg)
                 QMessageBox.critical(self, _('Error Sending'), _(errmsg))
             elif was_announced:
-                self.print_msg('Successfully broadcasted SmartnodeAnnounce for "%s"' )
+                self.print_msg('Successfully broadcasted SmartnodeAnnounce for "%s"' % alias)
                 QMessageBox.information(self, ('Success'), ('Successfully started smartnode "%s"' % alias))
             self.refresh_items()
             self.select_masternode(alias)
