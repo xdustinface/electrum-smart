@@ -77,8 +77,8 @@ class MasternodeManager(object):
 
     def subscribe_to_masternodes(self):
         for mn in self.masternodes:
-            if not mn.announced:
-                continue
+            #if not mn.announced:
+            #    continue
             collateral = mn.get_collateral_str()
             if self.masternode_statuses.get(collateral) is None:
                 req = ('masternode.subscribe', [collateral])

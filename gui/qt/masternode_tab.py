@@ -324,12 +324,12 @@ class MasternodeTab(QWidget, PrintError):
 
     def show_masternode_controldialog(self):
         from .masternode_controldialog import MasternodeControlDialog
-        d = MasternodeControlDialog(self.manager, self)
+        d = MasternodeControlDialog(self.manager, self.mapper, self.model, self)
         d.exec_()
 
     def select_masternode(self, alias):
         """Select the row that represents alias."""
-        self.clearSelection()
+        self.tableWidgetMySmartnodes.clearSelection()
         for i in range(self.proxy_model.rowCount()):
             idx = self.proxy_model.index(i, 0)
             mn_alias = str(self.proxy_model.data(idx))

@@ -15,19 +15,29 @@ from electrum_smart.util import PrintError, bfh
 from .masternode_widgets import *
 from . import util
 
-MASTERNODE_DEFAULT_PORT = '9678'
+from electrum_smart import constants
+
+import ecdsa
+from lib.bitcoin import (generator_secp256k1, EncodeBase58Check, DecodeBase58Check, BitcoinException)
+from electrum_smart import constants
+
+SMARTNODE_MIN_VERSION = '90026'
+SMARTNODE_DEFAULT_PORT = '9678'
 
 class MasternodeControlDialog(QDialog, PrintError):
 
-    def __init__(self, manager, parent):
+    def __init__(self, manager, mapper, model, parent):
         super(MasternodeControlDialog, self).__init__(parent)
         self.gui = parent
         self.manager = manager
+        self.mapper = mapper
+        self.model = model
         self.setWindowTitle(_('Smartnode Manager'))
 
         self.waiting_dialog = None
         self.setupUi()
 
+        self.setup_smartnodekey_label()
         self.scan_for_outputs(True)
 
     def setupUi(self):
@@ -85,21 +95,7 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.label_4.setObjectName("label_4")
         self.verticalLayout_3.addWidget(self.label_4)
 
-        #List Txs
-        self.collateralTable = QTableWidget(self.stackedWidgetPage1)
-        font = QFont()
-        font.setPointSize(10)
-        self.collateralTable.setFont(font)
-        self.collateralTable.setColumnCount(3)
-        self.collateralTable.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.collateralTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.collateralTable.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.collateralTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
-        self.collateralTable.verticalHeader().hide()
-        self.collateralTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.collateralTable.setObjectName("collateralTable")
-        self.verticalLayout_3.addWidget(self.collateralTable)
-
+        self.create_collateral_table()
 
         self.collateralView.addWidget(self.stackedWidgetPage1)
         self.page = QWidget()
@@ -112,7 +108,6 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.verticalLayout_4.addItem(spacerItem2)
         self.label_7 = QLabel(self.page)
         font = QFont()
-        font.setPointSize(14)
         font.setBold(True)
         font.setWeight(75)
         self.label_7.setFont(font)
@@ -178,29 +173,36 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.label_5.setFont(font)
         self.label_5.setObjectName("label_5")
         self.horizontalLayout.addWidget(self.label_5)
+
+        #Smartnode Key Label
         self.smartnodeKeyLabel = QLabel(self)
         font = QFont()
-        font.setPointSize(14)
         self.smartnodeKeyLabel.setFont(font)
         self.smartnodeKeyLabel.setStyleSheet("color: rgb(120, 18, 25);")
         self.smartnodeKeyLabel.setTextInteractionFlags(
             Qt.LinksAccessibleByMouse | Qt.TextSelectableByKeyboard | Qt.TextSelectableByMouse)
         self.smartnodeKeyLabel.setObjectName("smartnodeKeyLabel")
         self.horizontalLayout.addWidget(self.smartnodeKeyLabel)
+
+        #Copy Smartnode Key Button
         spacerItem7 = QSpacerItem(20, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem7)
         self.copySmartnodeKeyButton = QPushButton(self)
         self.copySmartnodeKeyButton.setObjectName("copySmartnodeKeyButton")
         self.horizontalLayout.addWidget(self.copySmartnodeKeyButton)
+        self.copySmartnodeKeyButton.clicked.connect(self.copy_smartnodekey_label)
+
+        #Custom Smartnode Key Button
         self.customSmartnodeKeyButton = QPushButton(self)
         self.customSmartnodeKeyButton.setObjectName("customSmartnodeKeyButton")
         self.horizontalLayout.addWidget(self.customSmartnodeKeyButton)
+        self.customSmartnodeKeyButton.clicked.connect(self.custom_smartnode_key)
+
         spacerItem8 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem8)
         self.verticalLayout_2.addLayout(self.horizontalLayout)
         self.label_6 = QLabel(self)
         font = QFont()
-        font.setPointSize(12)
         font.setItalic(True)
         self.label_6.setFont(font)
         self.label_6.setAlignment(Qt.AlignLeading | Qt.AlignLeft | Qt.AlignTop)
@@ -241,6 +243,21 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.setTabOrder(self.ipField, self.collateralTable)
         self.setTabOrder(self.collateralTable, self.copySmartnodeKeyButton)
 
+    def create_collateral_table(self):
+        self.collateralTable = QTableWidget(self.stackedWidgetPage1)
+        font = QFont()
+        self.collateralTable.setFont(font)
+        self.collateralTable.setColumnCount(3)
+        self.collateralTable.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.collateralTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.collateralTable.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.collateralTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.collateralTable.horizontalHeader().hide()
+        self.collateralTable.verticalHeader().hide()
+        self.collateralTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.collateralTable.setObjectName("collateralTable")
+        self.verticalLayout_3.addWidget(self.collateralTable)
+
     def retranslateUi(self, SmartnodeControlDialog):
         _translate = QCoreApplication.translate
         self.setWindowTitle(_translate("SmartnodeControlDialog", "Create new Smartnode"))
@@ -273,7 +290,7 @@ class MasternodeControlDialog(QDialog, PrintError):
         elif sb == QDialogButtonBox.Cancel:
             self.close()
 
-    def save_node(self):
+    def save_node(self, edit = False):
 
         alias = self.aliasField.text()
         if not alias:
@@ -281,21 +298,85 @@ class MasternodeControlDialog(QDialog, PrintError):
             return
 
         addr = self.get_addr()
+        if not addr:
+            QMessageBox.critical(self, _('Error'),
+                                 _("Invalid IP-Address\n\nRequired format: xxx.xxx.xxx.xxx or xxx.xxx.xxx.xxx:port"))
+            return
 
-        selectedItem = self.collateralTable.selectedItems()
-        if not selectedItem:
+        collateralTableSelectedItem = self.collateralTable.selectedItems()
+        if not collateralTableSelectedItem:
             QMessageBox.critical(self, _('Error'), _("You need to select a collateral."))
+            return
 
-        #QMessageBox.warning(self, _('Warning'), _(self.ipField.text()))
+        output_index = self.collateralTable.selectedItems()[1].text()
+        txId = self.collateralTable.selectedItems()[2].text()
+        vin = {'prevout_hash': txId, 'prevout_n': int(output_index)}
+
+        smartnode_privkey = str(self.smartnodeKeyLabel.text())
+        if not smartnode_privkey:
+            QMessageBox.warning(self, _('Warning'), _('Smartnode privkey is empty.'))
+            return
+
+        try:
+            smartnode_pubkey = self.manager.import_masternode_delegate(smartnode_privkey)
+        except Exception:
+            # Show an error if the private key is invalid and not an empty string.
+            if smartnode_privkey:
+                QMessageBox.warning(self, _('Warning'), _('Ignoring invalid smartnode private key.'))
+            delegate_pubkey = ''
+
+        #create masternode
+        smartnode = MasternodeAnnounce(alias=alias, vin=vin, delegate_key=smartnode_pubkey, addr=addr)
+        self.model.add_masternode(smartnode)
+        self.manager.populate_masternode_output(alias)
+        self.close()
+
+    def setup_smartnodekey_label(self):
+        smartnodeKey = self.generate_smartnode_key()
+        self.smartnodeKeyLabel.setText(str(smartnodeKey))
+
+    def copy_smartnodekey_label(self):
+        smartnodeKey = self.smartnodeKeyLabel.text()
+        cb = QApplication.clipboard()
+        cb.clear(mode=cb.Clipboard)
+        cb.setText(smartnodeKey, mode=cb.Clipboard)
+
+    def custom_smartnode_key(self):
+        smartnodeKey, ok = QInputDialog.getText(self, 'Custom Smartnode Key', 'Insert your key here...')
+        if ok:
+            if self.validate_smartnode_key(smartnodeKey):
+                self.smartnodeKeyLabel.setText(str(smartnodeKey))
+            else:
+                QMessageBox.critical(self, _('Error'), _("Invalid Smartnode Key provided\n\n" + smartnodeKey))
+
+        else:
+            return
+
+    def generate_smartnode_key(self):
+        G = generator_secp256k1
+        _r = G.order()
+        pvk = ecdsa.util.randrange(pow(2, 256)) % _r
+        privateKey = secret = '%064x'%pvk
+        prefix = bytes([constants.net.WIF_PREFIX])
+        suffix = b''
+        vchIn = prefix + bfh(secret) + suffix
+        base58_wif = EncodeBase58Check(vchIn)
+        return base58_wif
+
+    def validate_smartnode_key(self, key):
+        try:
+            vch = DecodeBase58Check(key)
+            return True
+        except BaseException:
+            return False
 
     def get_addr(self):
         """Get a NetworkAddress instance from this widget's data."""
 
         ip_field = str(self.ipField.text())
-        port = MASTERNODE_DEFAULT_PORT
+        port = SMARTNODE_DEFAULT_PORT
 
         if not ip_field:
-            self.show_invalid_ip_message()
             return
 
         ip_port = ip_field.split(':')
@@ -307,7 +388,6 @@ class MasternodeControlDialog(QDialog, PrintError):
         if self.validate_ip(ip, port):
             return NetworkAddress(ip=ip, port=port)
         else:
-            self.show_invalid_ip_message()
             return
 
     def validate_ip(self, s, p):
@@ -323,10 +403,6 @@ class MasternodeControlDialog(QDialog, PrintError):
             return False
         return True
 
-    def show_invalid_ip_message(self):
-        QMessageBox.critical(self, _('Error'),
-                             _("Invalid IP-Address\n\nRequired format: xxx.xxx.xxx.xxx or xxx.xxx.xxx.xxx:port"))
-
     def scan_for_outputs(self, include_frozen):
         """Scan for 10000 SMART outputs.
 
@@ -341,10 +417,12 @@ class MasternodeControlDialog(QDialog, PrintError):
 
     def add_outputs(self, coins):
 
-        self.collateralTable.setRowCount(len(coins))
-        self.collateralTable.setHorizontalHeaderLabels(("Address;TX-Index;TX-Hash").split(";"))
+        if len(coins) > 0:
+            self.collateralTable.horizontalHeader().show()
+            self.collateralTable.setRowCount(len(coins))
+            self.collateralTable.setHorizontalHeaderLabels(("Address;TX-Index;TX-Hash").split(";"))
 
-        for idx, val in enumerate(coins):
-            self.collateralTable.setItem(idx, 0, QTableWidgetItem(val.get('address')))
-            self.collateralTable.setItem(idx, 1, QTableWidgetItem(str(val.get('prevout_n'))))
-            self.collateralTable.setItem(idx, 2, QTableWidgetItem(val.get('prevout_hash')))
+            for idx, val in enumerate(coins):
+                self.collateralTable.setItem(idx, 0, QTableWidgetItem(val.get('address')))
+                self.collateralTable.setItem(idx, 1, QTableWidgetItem(str(val.get('prevout_n'))))
+                self.collateralTable.setItem(idx, 2, QTableWidgetItem(val.get('prevout_hash')))
