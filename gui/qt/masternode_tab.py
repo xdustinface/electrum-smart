@@ -252,26 +252,34 @@ class MasternodeTab(QWidget, PrintError):
         self.horizontalLayout = QHBoxLayout(self.widget)
         self.horizontalLayout.setContentsMargins(0, -1, -1, -1)
         self.horizontalLayout.setObjectName("horizontalLayout")
+
+        # Create Smartnode
         self.CreateButton = QPushButton(self.widget)
-        self.CreateButton.clicked.connect(self.show_masternode_controldialog)
         self.CreateButton.setObjectName("CreateButton")
         self.horizontalLayout.addWidget(self.CreateButton)
+        self.CreateButton.clicked.connect(lambda: self.show_masternode_controldialog('CREATE'))
+
+        # Edit Smartnode
         self.EditButton = QPushButton(self.widget)
         self.EditButton.setEnabled(False)
         self.EditButton.setObjectName("EditButton")
         self.horizontalLayout.addWidget(self.EditButton)
+        self.EditButton.clicked.connect(lambda: self.show_masternode_controldialog('EDIT'))
 
-        #Remove Smartnode
+        # Remove Smartnode
         self.RemoveButton = QPushButton(self.widget)
         self.RemoveButton.setEnabled(False)
         self.RemoveButton.setObjectName("RemoveButton")
-        self.RemoveButton.clicked.connect(self.delete_current_masternode)
         self.horizontalLayout.addWidget(self.RemoveButton)
+        self.RemoveButton.clicked.connect(self.delete_current_masternode)
 
+        # View Smartnode
         self.ViewButton = QPushButton(self.widget)
         self.ViewButton.setEnabled(False)
         self.ViewButton.setObjectName("ViewButton")
         self.horizontalLayout.addWidget(self.ViewButton)
+        self.ViewButton.clicked.connect(lambda: self.show_masternode_controldialog('VIEW'))
+
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
         self.verticalLayout_2.addWidget(self.widget)
@@ -322,9 +330,9 @@ class MasternodeTab(QWidget, PrintError):
         #self.autoupdate_label.setText(_translate("SmartnodeList", "Status will be updated automatically in (sec):"))
         #self.secondsLabel.setText(_translate("SmartnodeList", "0"))
 
-    def show_masternode_controldialog(self):
+    def show_masternode_controldialog(self, action):
         from .masternode_controldialog import MasternodeControlDialog
-        d = MasternodeControlDialog(self.manager, self.mapper, self.model, self)
+        d = MasternodeControlDialog(self.manager, self.mapper, self.model, action, self.selected_masternode(), self)
         d.exec_()
 
     def select_masternode(self, alias):

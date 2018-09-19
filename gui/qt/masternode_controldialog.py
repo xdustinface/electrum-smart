@@ -26,12 +26,14 @@ SMARTNODE_DEFAULT_PORT = '9678'
 
 class MasternodeControlDialog(QDialog, PrintError):
 
-    def __init__(self, manager, mapper, model, parent):
+    def __init__(self, manager, mapper, model, action, selectedSmartnode, parent):
         super(MasternodeControlDialog, self).__init__(parent)
         self.gui = parent
         self.manager = manager
         self.mapper = mapper
         self.model = model
+        self.action = action
+        self.selectedSmartnode = selectedSmartnode
         self.setWindowTitle(_('Smartnode Manager'))
 
         self.waiting_dialog = None
@@ -39,6 +41,23 @@ class MasternodeControlDialog(QDialog, PrintError):
 
         self.setup_smartnodekey_label()
         self.scan_for_outputs(True)
+
+        if (self.action == 'VIEW'):
+            self.fill_smartnode_info()
+            self.collateralView.removeWidget(self.stackedWidgetPage1)
+            self.customSmartnodeKeyButton.hide()
+            self.ipField.setDisabled(True)
+            self.aliasField.setDisabled(True)
+            self.viewButtonBox.show()
+            self.defaultButtonBox.hide()
+
+        elif (self.action == 'EDIT'):
+            self.fill_smartnode_info()
+            self.collateralView.removeWidget(self.page)
+
+        elif (self.action == 'CREATE'):
+            self.collateralView.removeWidget(self.page)
+
 
     def setupUi(self):
         self.setObjectName("SmartnodeControlDialog")
@@ -51,6 +70,8 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.verticalLayout = QVBoxLayout(self)
         self.verticalLayout.setContentsMargins(20, 20, 20, 20)
         self.verticalLayout.setObjectName("verticalLayout")
+
+        # Alias and IP
         self.gridLayout = QGridLayout()
         self.gridLayout.setObjectName("gridLayout")
         self.ipField = QLineEdit(self)
@@ -80,8 +101,107 @@ class MasternodeControlDialog(QDialog, PrintError):
         spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.gridLayout.addItem(spacerItem1, 0, 2, 1, 1)
         self.verticalLayout.addLayout(self.gridLayout)
+
+        # List or view collateral
         self.collateralView = QStackedWidget(self)
         self.collateralView.setObjectName("collateralView")
+        self.create_collateral_list_table()
+        self.create_collateral_view_table()
+        self.verticalLayout.addWidget(self.collateralView)
+
+        # Smartnode Key
+        self.verticalLayout_2 = QVBoxLayout()
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.label_5 = QLabel(self)
+        font = QFont()
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_5.setFont(font)
+        self.label_5.setObjectName("label_5")
+        self.horizontalLayout.addWidget(self.label_5)
+        self.smartnodeKeyLabel = QLabel(self)
+        font = QFont()
+        self.smartnodeKeyLabel.setFont(font)
+        self.smartnodeKeyLabel.setStyleSheet("color: rgb(120, 18, 25);")
+        self.smartnodeKeyLabel.setTextInteractionFlags(
+            Qt.LinksAccessibleByMouse | Qt.TextSelectableByKeyboard | Qt.TextSelectableByMouse)
+        self.smartnodeKeyLabel.setObjectName("smartnodeKeyLabel")
+        self.horizontalLayout.addWidget(self.smartnodeKeyLabel)
+
+        #Copy Smartnode Key Button
+        spacerItem7 = QSpacerItem(20, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem7)
+        self.copySmartnodeKeyButton = QPushButton(self)
+        self.copySmartnodeKeyButton.setObjectName("copySmartnodeKeyButton")
+        self.horizontalLayout.addWidget(self.copySmartnodeKeyButton)
+        self.copySmartnodeKeyButton.clicked.connect(self.copy_smartnodekey_label)
+
+        # Custom Smartnode Key Button
+        self.customSmartnodeKeyButton = QPushButton(self)
+        self.customSmartnodeKeyButton.setObjectName("customSmartnodeKeyButton")
+        self.horizontalLayout.addWidget(self.customSmartnodeKeyButton)
+        self.customSmartnodeKeyButton.clicked.connect(self.custom_smartnode_key)
+
+        # Smartnode Message
+        spacerItem8 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem8)
+        self.verticalLayout_2.addLayout(self.horizontalLayout)
+        self.label_6 = QLabel(self)
+        font = QFont()
+        font.setItalic(True)
+        self.label_6.setFont(font)
+        self.label_6.setAlignment(Qt.AlignLeading | Qt.AlignLeft | Qt.AlignTop)
+        self.label_6.setWordWrap(True)
+        self.label_6.setObjectName("label_6")
+        self.verticalLayout_2.addWidget(self.label_6)
+        self.verticalLayout.addLayout(self.verticalLayout_2)
+        spacerItem9 = QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.verticalLayout.addItem(spacerItem9)
+
+        # Close Button
+        self.viewButtonBox = QDialogButtonBox(self)
+        sizePolicy = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.viewButtonBox.sizePolicy().hasHeightForWidth())
+        self.viewButtonBox.setSizePolicy(sizePolicy)
+        self.viewButtonBox.setOrientation(Qt.Horizontal)
+        self.viewButtonBox.setStandardButtons(QDialogButtonBox.Close)
+        self.viewButtonBox.setObjectName("viewButtonBox")
+        self.verticalLayout.addWidget(self.viewButtonBox)
+        self.viewButtonBox.hide()
+        self.viewButtonBox.clicked.connect(self.close)
+
+        # Apply or Cancel
+        self.defaultButtonBox = QDialogButtonBox(self)
+        sizePolicy = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.defaultButtonBox.sizePolicy().hasHeightForWidth())
+        self.defaultButtonBox.setSizePolicy(sizePolicy)
+        self.defaultButtonBox.setOrientation(Qt.Horizontal)
+        self.defaultButtonBox.setStandardButtons(QDialogButtonBox.Apply | QDialogButtonBox.Cancel)
+        self.defaultButtonBox.setObjectName("defaultButtonBox")
+        self.verticalLayout.addWidget(self.defaultButtonBox)
+        self.defaultButtonBox.clicked.connect(self.handle_apply_cancel)
+
+        self.retranslateUi(self)
+        QMetaObject.connectSlotsByName(self)
+        self.setTabOrder(self.aliasField, self.ipField)
+        self.setTabOrder(self.ipField, self.collateralTable)
+        self.setTabOrder(self.collateralTable, self.copySmartnodeKeyButton)
+
+    def fill_smartnode_info(self):
+        self.addressViewLabel.setText(self.selectedSmartnode.vin['address'])
+        self.txIndexViewLabel.setText(str(self.selectedSmartnode.vin['prevout_n']))
+        self.txHashViewLabel.setText(self.selectedSmartnode.vin['prevout_hash'])
+        self.ipField.setText(str(self.selectedSmartnode.addr))
+        self.aliasField.setText(self.selectedSmartnode.alias)
+        self.smartnodeKeyLabel.setText(self.manager.get_delegate_privkey(self.selectedSmartnode.delegate_key))
+
+    def create_collateral_list_table(self):
         self.stackedWidgetPage1 = QWidget()
         self.stackedWidgetPage1.setObjectName("stackedWidgetPage1")
         self.verticalLayout_3 = QVBoxLayout(self.stackedWidgetPage1)
@@ -94,10 +214,23 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.label_4.setFont(font)
         self.label_4.setObjectName("label_4")
         self.verticalLayout_3.addWidget(self.label_4)
-
-        self.create_collateral_table()
-
+        self.collateralTable = QTableWidget(self.stackedWidgetPage1)
+        font = QFont()
+        self.collateralTable.setFont(font)
+        self.collateralTable.setColumnCount(3)
+        self.collateralTable.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.collateralTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.collateralTable.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.collateralTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.collateralTable.horizontalHeader().hide()
+        self.collateralTable.verticalHeader().hide()
+        self.collateralTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.collateralTable.setObjectName("collateralTable")
+        self.collateralTable.setSortingEnabled(False)
+        self.verticalLayout_3.addWidget(self.collateralTable)
         self.collateralView.addWidget(self.stackedWidgetPage1)
+
+    def create_collateral_view_table(self):
         self.page = QWidget()
         self.page.setObjectName("page")
         self.verticalLayout_4 = QVBoxLayout(self.page)
@@ -161,102 +294,6 @@ class MasternodeControlDialog(QDialog, PrintError):
         spacerItem6 = QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.verticalLayout_4.addItem(spacerItem6)
         self.collateralView.addWidget(self.page)
-        self.verticalLayout.addWidget(self.collateralView)
-        self.verticalLayout_2 = QVBoxLayout()
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.horizontalLayout = QHBoxLayout()
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        self.label_5 = QLabel(self)
-        font = QFont()
-        font.setBold(True)
-        font.setWeight(75)
-        self.label_5.setFont(font)
-        self.label_5.setObjectName("label_5")
-        self.horizontalLayout.addWidget(self.label_5)
-
-        #Smartnode Key Label
-        self.smartnodeKeyLabel = QLabel(self)
-        font = QFont()
-        self.smartnodeKeyLabel.setFont(font)
-        self.smartnodeKeyLabel.setStyleSheet("color: rgb(120, 18, 25);")
-        self.smartnodeKeyLabel.setTextInteractionFlags(
-            Qt.LinksAccessibleByMouse | Qt.TextSelectableByKeyboard | Qt.TextSelectableByMouse)
-        self.smartnodeKeyLabel.setObjectName("smartnodeKeyLabel")
-        self.horizontalLayout.addWidget(self.smartnodeKeyLabel)
-
-        #Copy Smartnode Key Button
-        spacerItem7 = QSpacerItem(20, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem7)
-        self.copySmartnodeKeyButton = QPushButton(self)
-        self.copySmartnodeKeyButton.setObjectName("copySmartnodeKeyButton")
-        self.horizontalLayout.addWidget(self.copySmartnodeKeyButton)
-        self.copySmartnodeKeyButton.clicked.connect(self.copy_smartnodekey_label)
-
-        #Custom Smartnode Key Button
-        self.customSmartnodeKeyButton = QPushButton(self)
-        self.customSmartnodeKeyButton.setObjectName("customSmartnodeKeyButton")
-        self.horizontalLayout.addWidget(self.customSmartnodeKeyButton)
-        self.customSmartnodeKeyButton.clicked.connect(self.custom_smartnode_key)
-
-        spacerItem8 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem8)
-        self.verticalLayout_2.addLayout(self.horizontalLayout)
-        self.label_6 = QLabel(self)
-        font = QFont()
-        font.setItalic(True)
-        self.label_6.setFont(font)
-        self.label_6.setAlignment(Qt.AlignLeading | Qt.AlignLeft | Qt.AlignTop)
-        self.label_6.setWordWrap(True)
-        self.label_6.setObjectName("label_6")
-        self.verticalLayout_2.addWidget(self.label_6)
-        self.verticalLayout.addLayout(self.verticalLayout_2)
-        spacerItem9 = QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Fixed)
-        self.verticalLayout.addItem(spacerItem9)
-
-        #self.viewButtonBox = QDialogButtonBox(self)
-        #sizePolicy = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        #sizePolicy.setHorizontalStretch(0)
-        #sizePolicy.setVerticalStretch(0)
-        #sizePolicy.setHeightForWidth(self.viewButtonBox.sizePolicy().hasHeightForWidth())
-        #self.viewButtonBox.setSizePolicy(sizePolicy)
-        #self.viewButtonBox.setOrientation(Qt.Horizontal)
-        #self.viewButtonBox.setStandardButtons(QDialogButtonBox.Close)
-        #self.viewButtonBox.setObjectName("viewButtonBox")
-        #self.verticalLayout.addWidget(self.viewButtonBox)
-
-        #Apply or Cancel
-        self.defaultButtonBox = QDialogButtonBox(self)
-        sizePolicy = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.defaultButtonBox.sizePolicy().hasHeightForWidth())
-        self.defaultButtonBox.setSizePolicy(sizePolicy)
-        self.defaultButtonBox.setOrientation(Qt.Horizontal)
-        self.defaultButtonBox.setStandardButtons(QDialogButtonBox.Apply | QDialogButtonBox.Cancel)
-        self.defaultButtonBox.setObjectName("defaultButtonBox")
-        self.verticalLayout.addWidget(self.defaultButtonBox)
-        self.defaultButtonBox.clicked.connect(self.handle_apply_cancel)
-
-        self.retranslateUi(self)
-        QMetaObject.connectSlotsByName(self)
-        self.setTabOrder(self.aliasField, self.ipField)
-        self.setTabOrder(self.ipField, self.collateralTable)
-        self.setTabOrder(self.collateralTable, self.copySmartnodeKeyButton)
-
-    def create_collateral_table(self):
-        self.collateralTable = QTableWidget(self.stackedWidgetPage1)
-        font = QFont()
-        self.collateralTable.setFont(font)
-        self.collateralTable.setColumnCount(3)
-        self.collateralTable.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.collateralTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.collateralTable.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.collateralTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
-        self.collateralTable.horizontalHeader().hide()
-        self.collateralTable.verticalHeader().hide()
-        self.collateralTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.collateralTable.setObjectName("collateralTable")
-        self.verticalLayout_3.addWidget(self.collateralTable)
 
     def retranslateUi(self, SmartnodeControlDialog):
         _translate = QCoreApplication.translate
@@ -266,7 +303,6 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.label_3.setText(_translate("SmartnodeControlDialog", "IP-Address"))
         self.label_2.setText(_translate("SmartnodeControlDialog", "Alias"))
         self.label_4.setText(_translate("SmartnodeControlDialog", "Select a collateral for your new node"))
-        self.collateralTable.setSortingEnabled(False)
         self.label_7.setText(_translate("SmartnodeControlDialog", "Collateral"))
         self.addressViewLabel.setText(_translate("SmartnodeControlDialog", "0000000000000000000000000"))
         self.label_8.setText(_translate("SmartnodeControlDialog", "Address"))
