@@ -53,11 +53,11 @@ class MasternodeControlDialog(QDialog, PrintError):
 
         elif (self.action == 'EDIT'):
             self.fill_smartnode_info()
+            self.add_current_output()
             self.collateralView.removeWidget(self.page)
 
         elif (self.action == 'CREATE'):
             self.collateralView.removeWidget(self.page)
-
 
     def setupUi(self):
         self.setObjectName("SmartnodeControlDialog")
@@ -333,6 +333,10 @@ class MasternodeControlDialog(QDialog, PrintError):
             QMessageBox.critical(self, _('Error'), _("Alias missing."))
             return
 
+        # Edit Smartnode
+        if self.action == 'EDIT':
+            self.manager.remove_masternode(self.selectedSmartnode.alias)
+
         addr = self.get_addr()
         if not addr:
             QMessageBox.critical(self, _('Error'),
@@ -361,10 +365,12 @@ class MasternodeControlDialog(QDialog, PrintError):
                 QMessageBox.warning(self, _('Warning'), _('Ignoring invalid smartnode private key.'))
             delegate_pubkey = ''
 
-        #create masternode
+        # Create Smartnode
         smartnode = MasternodeAnnounce(alias=alias, vin=vin, delegate_key=smartnode_pubkey, addr=addr)
         self.model.add_masternode(smartnode)
         self.manager.populate_masternode_output(alias)
+        self.mapper.submit()
+        #self.manager.save()
         self.close()
 
     def setup_smartnodekey_label(self):
@@ -462,3 +468,13 @@ class MasternodeControlDialog(QDialog, PrintError):
                 self.collateralTable.setItem(idx, 0, QTableWidgetItem(val.get('address')))
                 self.collateralTable.setItem(idx, 1, QTableWidgetItem(str(val.get('prevout_n'))))
                 self.collateralTable.setItem(idx, 2, QTableWidgetItem(val.get('prevout_hash')))
+
+    def add_current_output(self):
+
+        idx = self.collateralTable.rowCount()
+        val = self.selectedSmartnode.vin
+        self.collateralTable.setRowCount(idx+1)
+        self.collateralTable.setItem(idx, 0, QTableWidgetItem(val.get('address')))
+        self.collateralTable.setItem(idx, 1, QTableWidgetItem(str(val.get('prevout_n'))))
+        self.collateralTable.setItem(idx, 2, QTableWidgetItem(val.get('prevout_hash')))
+        self.collateralTable.selectRow(idx)

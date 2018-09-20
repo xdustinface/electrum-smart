@@ -498,7 +498,7 @@ class MasternodeTab(QWidget, PrintError):
             errmsg, was_announced = result
             if errmsg:
                 self.print_error('Failed to broadcast SmartnodeAnnounce: %s' % errmsg)
-                QMessageBox.critical(self, _('Error Sending'), _(errmsg))
+                QMessageBox.critical(self, ('Error Sending'), errmsg)
             elif was_announced:
                 self.print_msg('Successfully broadcasted SmartnodeAnnounce for "%s"' % alias)
                 QMessageBox.information(self, ('Success'), ('Successfully started smartnode "%s"' % alias))
