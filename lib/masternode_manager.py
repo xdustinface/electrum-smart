@@ -85,6 +85,8 @@ class MasternodeManager(object):
                 self.wallet.network.send([req], self.masternode_subscription_response)
                 #self.masternode_statuses[collateral] = ''
 
+
+
     def get_masternode(self, alias):
         """Get the smartnode labelled as alias."""
         for mn in self.masternodes:
@@ -147,6 +149,29 @@ class MasternodeManager(object):
         return True
 
     def get_masternode_outputs(self, domain = None, exclude_frozen = True):
+        """Get spendable coins that can be used as smartnode collateral."""
+        coins = self.wallet.get_utxos(domain, exclude_frozen,
+                                      mature=True, confirmed_only=True)
+
+        coins[:] = [c for c in coins if c.get('value') == 10000 * bitcoin.COIN]
+
+        avaliable_vins = []
+        for coin in coins:
+            avaliable_vins.append('%s:%d' % (coin.get('prevout_hash'), coin.get('prevout_n', 0xffffffff)))
+
+        used_vins = []
+        for mn in self.masternodes:
+            used_vins.append('%s:%d' % (mn.vin.get('prevout_hash'), mn.vin.get('prevout_n', 0xffffffff)))
+
+        unavaliable_vins = set(avaliable_vins).intersection(used_vins)
+
+        for vin in unavaliable_vins:
+            prevout_hash, prevout_n = vin.split(':')
+            coins[:] = [c for c in coins if (c.get('prevout_hash') != prevout_hash and c.get('prevout_n') != prevout_n)]
+
+        return coins
+
+    def get_masternode_outputs_old(self, domain = None, exclude_frozen = True):
         """Get spendable coins that can be used as smartnode collateral."""
         coins = self.wallet.get_utxos(domain, exclude_frozen,
                                       mature=True, confirmed_only=True)
