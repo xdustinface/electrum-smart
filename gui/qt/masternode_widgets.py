@@ -28,8 +28,8 @@ def masternode_status(status):
     if statuses.get(status):
         return statuses[status]
     elif status is False:
-        return (False, _('N/A'), _('Smartnode has not been seen on the network.'))
-    return (False, _('Unknown'), _('Smartnode status not loaded yet'))
+        return (False, _('MISSING'), _('Smartnode has not been seen on the network.'))
+    return (False, _(' '), _('Smartnode status not loaded yet'))
 
 class NetworkAddressWidget(QWidget):
     """Widget that represents a network address."""

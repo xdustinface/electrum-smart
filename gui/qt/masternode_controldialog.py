@@ -194,9 +194,9 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.setTabOrder(self.collateralTable, self.copySmartnodeKeyButton)
 
     def fill_smartnode_info(self):
-        self.addressViewLabel.setText(self.selectedSmartnode.vin['address'])
-        self.txIndexViewLabel.setText(str(self.selectedSmartnode.vin['prevout_n']))
-        self.txHashViewLabel.setText(self.selectedSmartnode.vin['prevout_hash'])
+        self.addressViewLabel.setText(self.selectedSmartnode.vin.get('address', ""))
+        self.txIndexViewLabel.setText(str(self.selectedSmartnode.vin.get('prevout_n', "")))
+        self.txHashViewLabel.setText(self.selectedSmartnode.vin.get('prevout_hash', ""))
         self.ipField.setText(str(self.selectedSmartnode.addr))
         self.aliasField.setText(self.selectedSmartnode.alias)
         self.smartnodeKeyLabel.setText(self.manager.get_delegate_privkey(self.selectedSmartnode.delegate_key))
