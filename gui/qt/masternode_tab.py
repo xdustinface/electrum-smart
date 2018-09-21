@@ -296,13 +296,16 @@ class MasternodeTab(QWidget, PrintError):
         self.startButton.clicked.connect(self.start_current_masternode)
         self.horizontalLayout_5.addWidget(self.startButton)
 
-
         #self.startMissingButton = QPushButton(self)
         #self.startMissingButton.setObjectName("startMissingButton")
         #self.horizontalLayout_5.addWidget(self.startMissingButton)
+
+        # Update Smartnodes
         self.UpdateButton = QPushButton(self)
         self.UpdateButton.setObjectName("UpdateButton")
         self.horizontalLayout_5.addWidget(self.UpdateButton)
+        self.UpdateButton.clicked.connect(self.update_smartnodes_status)
+
         #self.autoupdate_label = QLabel(self)
         #self.autoupdate_label.setObjectName("autoupdate_label")
         #self.horizontalLayout_5.addWidget(self.autoupdate_label)
@@ -439,7 +442,6 @@ class MasternodeTab(QWidget, PrintError):
         self.RemoveButton.setEnabled(True)
         self.startButton.setEnabled(True)
 
-
     def on_editor_alias_changed(self, text):
         """Enable or disable the 'Save As New Smartnode' button.
 
@@ -460,7 +462,6 @@ class MasternodeTab(QWidget, PrintError):
         if QMessageBox.question(self, ('Confirm Smartnode Start'), ('Are you sure you want to start Smartnode') + ' %s? This will reset your node in the payment queue.' % mn.alias,
                                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No) == QMessageBox.Yes:
             self.sign_announce(mn.alias)
-
 
     def sign_announce(self, alias):
         """Sign an announce for alias. This is called by SignAnnounceWidget."""
@@ -487,7 +488,6 @@ class MasternodeTab(QWidget, PrintError):
             QMessageBox.critical(self, ('Error signing Smartnode Announce'), (errmsg))
 
         util.WaitingDialog(self, ('Signing Smartnodenode Announce...'), sign_thread, on_sign_successful, on_sign_error)
-
 
     def send_announce(self, alias):
         """Send an announce for a smartnode."""
@@ -523,6 +523,10 @@ class MasternodeTab(QWidget, PrintError):
         row = self.mapper.currentIndex()
         self.masternodes_widget.populate_collateral_key(row)
         self.update_mappers_index()
+
+    def update_smartnodes_status(self):
+        self.manager.subscribe_to_all_masternodes()
+        QMessageBox.information(self, ('Success'), ('Successfully requested %s smartnodes status' % str(len(self.masternodes))))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

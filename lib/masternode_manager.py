@@ -6,8 +6,7 @@ from decimal import Decimal
 from . import bitcoin
 from .blockchain import hash_header
 from .masternode import MasternodeAnnounce, NetworkAddress
-from .util import AlreadyHaveAddress, print_error, bfh
-from .util import format_satoshis_plain
+from .util import AlreadyHaveAddress, print_error, bfh, print_msg, format_satoshis_plain
 
 BUDGET_FEE_CONFIRMATIONS = 6
 BUDGET_FEE_TX = 5 * bitcoin.COIN
@@ -83,9 +82,12 @@ class MasternodeManager(object):
             if self.masternode_statuses.get(collateral) is None:
                 req = ('masternode.subscribe', [collateral])
                 self.wallet.network.send([req], self.masternode_subscription_response)
-                #self.masternode_statuses[collateral] = ''
 
-
+    def subscribe_to_all_masternodes(self):
+        for mn in self.masternodes:
+            collateral = mn.get_collateral_str()
+            req = ('masternode.subscribe', [collateral])
+            self.wallet.network.send([req], self.masternode_subscription_response)
 
     def get_masternode(self, alias):
         """Get the smartnode labelled as alias."""
@@ -396,5 +398,5 @@ class MasternodeManager(object):
         status = response['result']
         if status is None:
             status = False
-        print_error('Received updated status for smartnode %s: "%s"' % (mn.alias, status))
+        print_msg('Received updated status for smartnode %s: "%s"' % (mn.alias, status))
         self.masternode_statuses[collateral] = status
