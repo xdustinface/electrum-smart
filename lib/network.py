@@ -676,7 +676,11 @@ class Network(util.DaemonThread):
                         l.append(callback)
                     self.subscriptions[k] = l
                     # check cached response for subscriptions
-                    r = self.sub_cache.get(k)
+                    # ignore check to smartnodes
+                    if method in "masternode.subscribe":
+                        r = None
+                    else:
+                        r = self.sub_cache.get(k)
                 if r is not None:
                     self.print_error("cache hit", k)
                     callback(r)

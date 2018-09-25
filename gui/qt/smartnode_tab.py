@@ -1,36 +1,57 @@
-import os
 import traceback
-
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
 
 from electrum_smart import bitcoin
 from electrum_smart.util import PrintError, bfh
 from electrum_smart.masternode import MasternodeAnnounce
+from .smartnode_controldialog import *
 
-from .masternode_widgets import *
-from electrum_smart.masternode_manager import MasternodeManager
 from . import util
 
 # Background color for enabled smartnodes.
-ENABLED_MASTERNODE_BG = '#80ff80'
+ENABLED_SMARTNODE_BG = '#80ff80'
 
-class MasternodeModel(QAbstractTableModel):
+def smartnode_status(status):
+    """Get a human-friendly representation of status.
+
+    Returns a 3-tuple of (enabled, one_word_description, description).
+    """
+    statuses = {
+        'PRE_ENABLED': (True, ('PRE_ENABLED'), ('Waiting for smartnode to enable itself.')),
+        'ENABLED': (True, ('ENABLED'), ('Smartnode is enabled.')),
+        'EXPIRED': (False, ('EXPIRED'), ('Smartnode failed to ping the network and was disabled.')),
+        'NEW_START_REQUIRED': (False, ('NEW_START_REQUIRED'), ('Must start smartnode again.')),
+        'UPDATE_REQUIRED': (False, ('UPDATE_REQUIRED'), ('Smartnode failed to ping the network and was disabled.')),
+        'POSE_BAN': (False, ('POSE_BAN'), ('Smartnode failed to ping the network and was disabled.')),
+        'OUTPOINT_SPENT': (False, ('OUTPOINT_SPENT'), ('Collateral payment has been spent.'))
+    }
+    if statuses.get(status):
+        return statuses[status]
+    elif status is False:
+        return (False, ('MISSING'), ('Smartnode has not been seen on the network.'))
+    return (False, (' '), ('Smartnode status not loaded yet'))
+
+class SmartnodeModel(QAbstractTableModel):
+
     """Model for smartnodes."""
+
     ALIAS = 0
     ADDR = 1
     PROTOCOL_VERSION = 2
     STATUS = 3
     COLLATERAL = 4
     DELEGATE = 5
-    VIN = 6
-    TOTAL_FIELDS = 7
+    VIN_PREVOUT_HASH = 6
+    VIN_PREVOUT_N = 7
+    VIN_ADDRESS = 8
+    VIN_VALUE = 9
+    VIN_SCRIPTSIG  = 10
+    TOTAL_FIELDS = 11
 
     def __init__(self, manager, parent=None):
-        super(MasternodeModel, self).__init__(parent)
+        super(SmartnodeModel, self).__init__(parent)
+
         self.manager = manager
-        self.masternodes = self.manager.masternodes
+        self.smartnodes = self.manager.masternodes
 
         headers = [
             {Qt.DisplayRole: 'Alias',},
@@ -39,27 +60,33 @@ class MasternodeModel(QAbstractTableModel):
             {Qt.DisplayRole: 'Status',},
             {Qt.DisplayRole: 'Payee', },
             {Qt.DisplayRole: 'Smartnode Key', },
-            {Qt.DisplayRole: 'Transaction',},
+            {Qt.DisplayRole: 'Collateral Hash',},
+            {Qt.DisplayRole: 'Collateral Index', },
+            {Qt.DisplayRole: 'Collateral Address', },
+            {Qt.DisplayRole: 'Collateral Value', },
+            {Qt.DisplayRole: 'Collateral ScriptSig', },
         ]
+
         for d in headers:
             d[Qt.EditRole] = d[Qt.DisplayRole]
+
         self.headers = headers
 
-    def add_masternode(self, masternode, save = True):
+    def add_smartnode(self, smartnode, save=True):
         self.beginResetModel()
-        self.manager.add_masternode(masternode, save)
+        self.manager.add_masternode(smartnode, save)
         self.endResetModel()
 
-    def remove_masternode(self, alias, save = True):
+    def remove_smartnode(self, alias, save=True):
         self.beginResetModel()
         self.manager.remove_masternode(alias, save)
         self.endResetModel()
 
-    def masternode_for_row(self, row):
-        mn = self.masternodes[row]
+    def smartnode_for_row(self, row):
+        mn = self.smartnodes[row]
         return mn
 
-    def import_masternode_conf_lines(self, conf_lines, pw):
+    def import_smartnode_conf_lines(self, conf_lines, pw):
         self.beginResetModel()
         num = self.manager.import_masternode_conf_lines(conf_lines, pw)
         self.endResetModel()
@@ -69,7 +96,7 @@ class MasternodeModel(QAbstractTableModel):
         return self.TOTAL_FIELDS
 
     def rowCount(self, parent=QModelIndex()):
-        return len(self.masternodes)
+        return len(self.smartnodes)
 
     def headerData(self, section, orientation, role = Qt.DisplayRole):
         if role not in [Qt.DisplayRole, Qt.EditRole]: return None
@@ -90,36 +117,31 @@ class MasternodeModel(QAbstractTableModel):
         if role not in [Qt.DisplayRole, Qt.EditRole, Qt.ToolTipRole, Qt.FontRole, Qt.BackgroundRole]:
             return None
 
-        mn = self.masternodes[index.row()]
+        mn = self.smartnodes[index.row()]
         i = index.column()
 
         if i == self.ALIAS:
             data = mn.alias
         elif i == self.STATUS:
             status = self.manager.masternode_statuses.get(mn.get_collateral_str())
-            data = masternode_status(status)
+            data = smartnode_status(status)
             if role == Qt.BackgroundRole:
-                data = QBrush(QColor(ENABLED_MASTERNODE_BG)) if data[0] else None
+                data = QBrush(QColor(ENABLED_SMARTNODE_BG)) if data[0] else None
             # Return the long description for data widget mappers.
             elif role == Qt.EditRole:
                 data = data[2]
             else:
                 data = data[1]
-        elif i == self.VIN:
-            txid = mn.vin.get('prevout_hash', '')
-            out_n = str(mn.vin.get('prevout_n', ''))
-            addr = mn.vin.get('address', '')
-            value = str(mn.vin.get('value', ''))
-            scriptsig = mn.vin.get('scriptSig', '')
-            if role == Qt.EditRole:
-                data = ':'.join([txid, out_n, addr, value, scriptsig])
-            elif role == Qt.FontRole:
-                data = util.MONOSPACE_FONT
-            else:
-                if all(attr for attr in [txid, out_n, addr]):
-                    data = '%s:%s' % (txid, out_n)
-                else:
-                    data = ''
+        elif i == self.VIN_PREVOUT_HASH:
+            data = mn.vin.get('prevout_hash', '')
+        elif i == self.VIN_PREVOUT_N:
+            data = str(mn.vin.get('prevout_n', ''))
+        elif i == self.VIN_ADDRESS:
+            data = mn.vin.get('address', '')
+        elif i == self.VIN_VALUE:
+            data = str(mn.vin.get('value', ''))
+        elif i == self.VIN_SCRIPTSIG:
+            data = mn.vin.get('scriptSig', '')
         elif i == self.COLLATERAL:
             data = mn.collateral_key
             if role in [Qt.EditRole, Qt.DisplayRole, Qt.ToolTipRole] and data:
@@ -144,22 +166,28 @@ class MasternodeModel(QAbstractTableModel):
     def setData(self, index, value, role = Qt.EditRole):
         if not index.isValid(): return False
 
-        mn = self.masternodes[index.row()]
+        mn = self.smartnodes[index.row()]
         i = index.column()
 
         if i == self.ALIAS:
             mn.alias = value
         elif i == self.STATUS:
             return True
-        elif i == self.VIN:
-            s = value.split(':')
-            mn.vin['prevout_hash'] = s[0]
-            mn.vin['prevout_n'] = int(s[1]) if s[1] else 0
-            mn.vin['address'] = s[2]
-            mn.vin['value'] = int(s[3]) if s[3] else 0
-            mn.vin['scriptSig'] = s[4]
+        elif i == self.VIN_PREVOUT_HASH:
+            mn.vin['prevout_hash'] = value
+        elif i == self.VIN_PREVOUT_N:
+            mn.vin['prevout_n'] = int(value)
+        elif i == self.VIN_ADDRESS:
+            mn.vin['address'] = value
+        elif i == self.VIN_VALUE:
+            if value == '1000000000000':
+                mn.vin['value'] = 10000 * bitcoin.COIN
+            else:
+                mn.vin['value'] = 0
+        elif i == self.VIN_SCRIPTSIG:
+            mn.vin['scriptSig'] = value
         elif i == self.COLLATERAL:
-            return True
+            mn.collateral_key = value
         elif i == self.DELEGATE:
             privkey = value
             pubkey = ''
@@ -174,7 +202,11 @@ class MasternodeModel(QAbstractTableModel):
         elif i == self.ADDR:
             s = value.split(':')
             mn.addr.ip = s[0]
-            mn.addr.port = int(s[1])
+
+            if len(s) > 1:
+                mn.addr.port = int(s[1])
+            else:
+                mn.addr.port = SMARTNODE_DEFAULT_PORT
         elif i == self.PROTOCOL_VERSION:
             try:
                 version = int(value)
@@ -187,36 +219,57 @@ class MasternodeModel(QAbstractTableModel):
         self.dataChanged.emit(self.index(index.row(), index.column()), self.index(index.row(), index.column()))
         return True
 
-class MasternodeTab(QWidget, PrintError):
+class SmartnodeTab(QWidget, PrintError):
     """GUI for smartnodes tab ."""
 
+    CREATE = 0
+    EDIT = 1
+    VIEW = 2
+
     def __init__(self, parent=None):
-        super(MasternodeTab, self).__init__(parent)
+        super(SmartnodeTab, self).__init__(parent)
         self.create_layout()
 
     def update_nodelist(self, wallet, config, manager):
         self.wallet = wallet
         self.config = config
         self.manager = manager
-        self.masternodes = self.manager.masternodes
-        self.model = MasternodeModel(self.manager)
+
+        self.smartnodes = self.manager.masternodes
+        self.model = SmartnodeModel(self.manager)
+
         self.proxy_model = model = QSortFilterProxyModel()
         self.proxy_model.setSourceModel(self.model)
         self.tableWidgetMySmartnodes.setModel(self.proxy_model)
 
         header = self.tableWidgetMySmartnodes.horizontalHeader()
-        header.setSectionResizeMode(MasternodeModel.ALIAS, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(MasternodeModel.ADDR, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(MasternodeModel.COLLATERAL, QHeaderView.Stretch)
-        header.setSectionResizeMode(MasternodeModel.VIN, QHeaderView.Stretch)
-        header.setSectionResizeMode(MasternodeModel.DELEGATE, QHeaderView.Stretch)
+        header.setSectionResizeMode(SmartnodeModel.ALIAS, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(SmartnodeModel.ADDR, QHeaderView.Stretch)
+        header.setSectionResizeMode(SmartnodeModel.PROTOCOL_VERSION, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(SmartnodeModel.STATUS, QHeaderView.Stretch)
+        header.setSectionResizeMode(SmartnodeModel.COLLATERAL, QHeaderView.ResizeToContents)
 
-        self.masternode_editor = editor = MasternodeEditor()
+        self.tableWidgetMySmartnodes.setColumnHidden(5, True)
+        self.tableWidgetMySmartnodes.setColumnHidden(6, True)
+        self.tableWidgetMySmartnodes.setColumnHidden(7, True)
+        self.tableWidgetMySmartnodes.setColumnHidden(8, True)
+        self.tableWidgetMySmartnodes.setColumnHidden(9, True)
+        self.tableWidgetMySmartnodes.setColumnHidden(10, True)
+
+        self.smartnode_editor = editor = SmartnodeControlDialog()
         self.mapper = mapper = QDataWidgetMapper()
         mapper.setSubmitPolicy(QDataWidgetMapper.ManualSubmit)
         mapper.setModel(model)
-        mapper.addMapping(editor.alias_edit, MasternodeModel.ALIAS)
-        mapper.addMapping(editor.status_edit, MasternodeModel.STATUS)
+        mapper.addMapping(editor.aliasField, SmartnodeModel.ALIAS)
+        mapper.addMapping(editor.statusField, SmartnodeModel.STATUS)
+        mapper.addMapping(editor.ipField, SmartnodeModel.ADDR)
+        mapper.addMapping(editor.txCollateralKeyLabel, SmartnodeModel.COLLATERAL, b"text")
+        mapper.addMapping(editor.smartnodeKeyLabel, SmartnodeModel.DELEGATE, b"text")
+        mapper.addMapping(editor.addressViewLabel, SmartnodeModel.VIN_ADDRESS, b"text")
+        mapper.addMapping(editor.txIndexViewLabel, SmartnodeModel.VIN_PREVOUT_N, b"text")
+        mapper.addMapping(editor.txHashViewLabel, SmartnodeModel.VIN_PREVOUT_HASH, b"text")
+        mapper.addMapping(editor.txValueViewLabel, SmartnodeModel.VIN_VALUE, b"text")
+        mapper.addMapping(editor.txScriptSigViewLabel, SmartnodeModel.VIN_SCRIPTSIG, b"text")
 
         self.tableWidgetMySmartnodes.selectionModel().selectionChanged.connect(self.on_view_selection_changed)
 
@@ -257,28 +310,28 @@ class MasternodeTab(QWidget, PrintError):
         self.CreateButton = QPushButton(self.widget)
         self.CreateButton.setObjectName("CreateButton")
         self.horizontalLayout.addWidget(self.CreateButton)
-        self.CreateButton.clicked.connect(lambda: self.show_masternode_controldialog('CREATE'))
+        self.CreateButton.clicked.connect(lambda: self.show_smartnode_controldialog(self.CREATE))
 
         # Edit Smartnode
         self.EditButton = QPushButton(self.widget)
         self.EditButton.setEnabled(False)
         self.EditButton.setObjectName("EditButton")
         self.horizontalLayout.addWidget(self.EditButton)
-        self.EditButton.clicked.connect(lambda: self.show_masternode_controldialog('EDIT'))
+        self.EditButton.clicked.connect(lambda: self.show_smartnode_controldialog(self.EDIT))
 
         # Remove Smartnode
         self.RemoveButton = QPushButton(self.widget)
         self.RemoveButton.setEnabled(False)
         self.RemoveButton.setObjectName("RemoveButton")
         self.horizontalLayout.addWidget(self.RemoveButton)
-        self.RemoveButton.clicked.connect(self.delete_current_masternode)
+        self.RemoveButton.clicked.connect(self.delete_current_smartnode)
 
         # View Smartnode
         self.ViewButton = QPushButton(self.widget)
         self.ViewButton.setEnabled(False)
         self.ViewButton.setObjectName("ViewButton")
         self.horizontalLayout.addWidget(self.ViewButton)
-        self.ViewButton.clicked.connect(lambda: self.show_masternode_controldialog('VIEW'))
+        self.ViewButton.clicked.connect(lambda: self.show_smartnode_controldialog(self.VIEW))
 
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
@@ -293,25 +346,25 @@ class MasternodeTab(QWidget, PrintError):
         self.startButton = QPushButton(self)
         self.startButton.setObjectName("startButton")
         self.startButton.setEnabled(False)
-        self.startButton.clicked.connect(self.start_current_masternode)
+        self.startButton.clicked.connect(self.start_current_smartnode)
         self.horizontalLayout_5.addWidget(self.startButton)
-
-        #self.startMissingButton = QPushButton(self)
-        #self.startMissingButton.setObjectName("startMissingButton")
-        #self.horizontalLayout_5.addWidget(self.startMissingButton)
 
         # Update Smartnodes
         self.UpdateButton = QPushButton(self)
         self.UpdateButton.setObjectName("UpdateButton")
         self.horizontalLayout_5.addWidget(self.UpdateButton)
-        self.UpdateButton.clicked.connect(self.update_smartnodes_status)
+        self.UpdateButton.clicked.connect(lambda: self.update_smartnodes_status(True))
 
+        #self.startMissingButton = QPushButton(self)
+        #self.startMissingButton.setObjectName("startMissingButton")
+        #self.horizontalLayout_5.addWidget(self.startMissingButton)
         #self.autoupdate_label = QLabel(self)
         #self.autoupdate_label.setObjectName("autoupdate_label")
         #self.horizontalLayout_5.addWidget(self.autoupdate_label)
         #self.secondsLabel = QLabel(self)
         #self.secondsLabel.setObjectName("secondsLabel")
         #self.horizontalLayout_5.addWidget(self.secondsLabel)
+
         spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout_5.addItem(spacerItem1)
         self.verticalLayout_2.addLayout(self.horizontalLayout_5)
@@ -328,17 +381,35 @@ class MasternodeTab(QWidget, PrintError):
         self.ViewButton.setText(_translate("SmartnodeList", "View selected"))
         self.tableWidgetMySmartnodes.setSortingEnabled(True)
         self.startButton.setText(_translate("SmartnodeList", "S&tart alias"))
-        #self.startMissingButton.setText(_translate("SmartnodeList", "Start &MISSING"))
         self.UpdateButton.setText(_translate("SmartnodeList", "&Update status"))
+        # self.startMissingButton.setText(_translate("SmartnodeList", "Start &MISSING"))
         #self.autoupdate_label.setText(_translate("SmartnodeList", "Status will be updated automatically in (sec):"))
         #self.secondsLabel.setText(_translate("SmartnodeList", "0"))
 
-    def show_masternode_controldialog(self, action):
-        from .masternode_controldialog import MasternodeControlDialog
-        d = MasternodeControlDialog(self.manager, self.mapper, self.model, action, self.selected_masternode(), self)
+    def show_smartnode_controldialog(self, action):
+        d = self.smartnode_editor
+
+        if(action == self.CREATE):
+            self.add_empty_smartnode()
+
+        d.setAction(action, self.manager, self.mapper)
         d.exec_()
 
-    def select_masternode(self, alias):
+        if (action == self.CREATE):
+            self.remove_empty_smartnode()
+
+    def add_empty_smartnode(self):
+        self.add_smartnode(MasternodeAnnounce(alias=''), save=False)
+        self.select_smartnode('')
+
+    def remove_empty_smartnode(self):
+        try:
+            self.remove_smartnode('', save=False)
+        except:
+            self.print_error("Cannot remove_empty smartnode")
+        self.disable_node_buttons()
+
+    def select_smartnode(self, alias):
         """Select the row that represents alias."""
         self.tableWidgetMySmartnodes.clearSelection()
         for i in range(self.proxy_model.rowCount()):
@@ -348,83 +419,33 @@ class MasternodeTab(QWidget, PrintError):
                 self.tableWidgetMySmartnodes.selectRow(i)
                 break
 
-    def populate_collateral_key(self, row):
-        """Fill in the collateral key for a smartnode based on its collateral output.
-
-        row refers to the desired row in the proxy model, not the actual model.
-        """
-        mn = self.masternode_for_row(row)
-        self.manager.populate_masternode_output(mn.alias)
-        # Emit dataChanged for the collateral key.
-        index = self.model.index(row, self.model.COLLATERAL)
-        self.model.dataChanged.emit(index, index)
-
     def refresh_items(self):
         self.model.dataChanged.emit(QModelIndex(), QModelIndex())
 
-    def add_masternode(self, masternode, save = True):
-        self.model.add_masternode(masternode, save=save)
+    def add_smartnode(self, smartnode, save = True):
+        self.model.add_smartnode(smartnode, save=save)
 
-    def remove_masternode(self, alias, save = True):
-        self.model.remove_masternode(alias, save=save)
+    def remove_smartnode(self, alias, save = True):
+        self.model.remove_smartnode(alias, save=save)
 
-    def masternode_for_row(self, row):
+    def smartnode_for_row(self, row):
         idx = self.proxy_model.mapToSource(self.proxy_model.index(row, 0))
-        return self.model.masternode_for_row(idx.row())
+        return self.model.smartnode_for_row(idx.row())
 
-    def selected_masternode(self):
+    def selected_smartnode(self):
         """Get the currently-selected smartnode."""
         row = self.mapper.currentIndex()
-        mn = self.masternode_for_row(row)
+        mn = self.smartnode_for_row(row)
         return mn
 
-    def delete_current_masternode(self):
-        """Delete the masternode that is being viewed."""
-        mn = self.selected_masternode()
+    def delete_current_smartnode(self):
+        """Delete the smartnode that is being viewed."""
+        mn = self.selected_smartnode()
         if QMessageBox.question(self, ('Remove Smartnode Entry'), ('Remove smartnode') + ' %s?' % mn.alias,
                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No) == QMessageBox.Yes:
-            self.remove_masternode(mn.alias)
-            self.tableWidgetMySmartnodes.selectRow(0)
-
-    def save_current_masternode(self, as_new=False):
-        """Save the masternode that is being viewed.
-
-        If as_new is True, a new smartnode will be created.
-        """
-        delegate_privkey = str(self.masternode_editor.delegate_key_edit.text())
-        if not delegate_privkey:
-            QMessageBox.warning(self, _('Warning'), _('Delegate private key is empty.'))
-            return
-
-        try:
-            delegate_pubkey = self.manager.import_masternode_delegate(delegate_privkey)
-        except Exception:
-            # Show an error if the private key is invalid and not an empty string.
-            if delegate_privkey:
-                QMessageBox.warning(self, _('Warning'), _('Ignoring invalid delegate private key.'))
-            delegate_pubkey = ''
-
-        alias = str(self.masternode_editor.alias_edit.text())
-        # Construct a new smartnode.
-        if as_new:
-            kwargs = self.masternode_editor.get_masternode_args()
-            kwargs['delegate_key'] = delegate_pubkey
-            del kwargs['vin']
-            self.mapper.revert()
-            self.masternodes_widget.add_masternode(MasternodeAnnounce(**kwargs))
-        else:
-            self.mapper.submit()
-        self.manager.save()
-        self.masternodes_widget.select_masternode(alias)
-
-    def update_mappers_index(self):
-        """Update the current index for data widget mappers.
-
-        This updates mappers for the SignAnnounceWidget, etc.
-        """
-        row = self.mapper.currentIndex()
-        #self.collateral_tab.set_mapper_index(row)
-        #self.sign_announce_widget.set_mapper_index(row)
+            self.remove_smartnode(mn.alias)
+            #self.tableWidgetMySmartnodes.selectRow(0)
+            self.tableWidgetMySmartnodes.clearSelection()
 
     def on_view_selection_changed(self, selected, deselected):
         """Update the data widget mapper."""
@@ -434,34 +455,19 @@ class MasternodeTab(QWidget, PrintError):
         except Exception:
             pass
         self.mapper.setCurrentIndex(row)
-        self.update_mappers_index()
-
         self.EditButton.setEnabled(True)
         self.CreateButton.setEnabled(True)
         self.ViewButton.setEnabled(True)
         self.RemoveButton.setEnabled(True)
         self.startButton.setEnabled(True)
 
-    def on_editor_alias_changed(self, text):
-        """Enable or disable the 'Save As New Smartnode' button.
-
-        Aliases must be unique and have at least one character.
-        """
-        text = str(text)
-        # Check if the alias already exists.
-        enable = len(text) > 0 and self.manager.get_masternode(text) is None
-        self.save_new_masternode_button.setEnabled(enable)
-
-    def create_collateral_tab(self):
-        self.collateral_tab = MasternodeOutputsTab(self)
-        return self.collateral_tab
-
-    def start_current_masternode(self):
-        """Start the masternode that is being viewed."""
-        mn = self.selected_masternode()
+    def start_current_smartnode(self):
+        """Start the smartnode that is being viewed."""
+        mn = self.selected_smartnode()
         if QMessageBox.question(self, ('Confirm Smartnode Start'), ('Are you sure you want to start Smartnode') + ' %s? This will reset your node in the payment queue.' % mn.alias,
                                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No) == QMessageBox.Yes:
             self.sign_announce(mn.alias)
+            self.update_smartnodes_status(False)
 
     def sign_announce(self, alias):
         """Sign an announce for alias. This is called by SignAnnounceWidget."""
@@ -503,7 +509,7 @@ class MasternodeTab(QWidget, PrintError):
                 self.print_msg('Successfully broadcasted SmartnodeAnnounce for "%s"' % alias)
                 QMessageBox.information(self, ('Success'), ('Successfully started smartnode "%s"' % alias))
             self.refresh_items()
-            self.select_masternode(alias)
+            self.select_smartnode(alias)
 
 
         def on_send_error(err):
@@ -511,22 +517,16 @@ class MasternodeTab(QWidget, PrintError):
             # Print traceback information to error log.
             self.print_error(''.join(traceback.format_tb(err[2])))
             self.print_error(''.join(traceback.format_exception_only(err[0], err[1])))
-
-            self.masternodes_widget.refresh_items()
-            self.masternodes_widget.select_masternode(alias)
+            #self.masternodes_widget.refresh_items()
+            #self.masternodes_widget.select_masternode(alias)
 
         self.print_msg('Sending Smartnode Announce message...')
         util.WaitingDialog(self, ('Broadcasting smartnode...'), send_thread, on_send_successful, on_send_error)
 
-    def populate_collateral_key(self):
-        """Use the selected smartnode's collateral output to determine its collateral key."""
-        row = self.mapper.currentIndex()
-        self.masternodes_widget.populate_collateral_key(row)
-        self.update_mappers_index()
-
-    def update_smartnodes_status(self):
+    def update_smartnodes_status(self, show_message = True):
         self.manager.subscribe_to_all_masternodes()
-        QMessageBox.information(self, ('Success'), ('Successfully requested %s smartnodes status' % str(len(self.masternodes))))
+        if(show_message):
+            QMessageBox.information(self, ('Success'), ('Successfully requested %s smartnodes status' % str(len(self.smartnodes))))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

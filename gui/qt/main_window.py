@@ -59,7 +59,6 @@ from .amountedit import AmountEdit, BTCAmountEdit, MyLineEdit, FeerateEdit
 from .qrcodewidget import QRCodeWidget, QRDialog
 from .qrtextedit import ShowQRTextEdit, ScanQRTextEdit
 from .transaction_dialog import show_transaction
-from .masternode_dialog import MasternodeDialog
 #from .fee_slider import FeeSlider
 from .util import *
 
@@ -136,10 +135,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.tabs = tabs = QTabWidget(self)
         self.send_tab = self.create_send_tab()
         self.receive_tab = self.create_receive_tab()
-        self.masternode_tab = self.create_masternode_tab()
-        self.smartrewards_tab = self.create_smartrewards_tab()
-        self.smartvote_tab = self.create_smartvote_tab()
         self.addresses_tab = self.create_addresses_tab()
+        self.smartnode_tab = self.create_smartnode_tab()
+        #self.smartrewards_tab = self.create_smartrewards_tab()
+        #self.smartvote_tab = self.create_smartvote_tab()
         self.utxo_tab = self.create_utxo_tab()
         self.console_tab = self.create_console_tab()
         self.contacts_tab = self.create_contacts_tab()
@@ -147,9 +146,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         tabs.addTab(self.create_history_tab(), QIcon(":icons/tab_history.png"), _('History'))
         tabs.addTab(self.send_tab, QIcon(":icons/tab_send.png"), _('Send'))
         tabs.addTab(self.receive_tab, QIcon(":icons/tab_receive.png"), _('Receive'))
-        tabs.addTab(self.masternode_tab, QIcon(":icons/tab_smartnodes.png"), _('Smartnodes'))
-        tabs.addTab(self.smartrewards_tab, QIcon(":icons/tab_smartrewards.png"), _('Smartrewards'))
-        tabs.addTab(self.smartvote_tab, QIcon(":icons/tab_smarthive.png"), _('Smartvote'))
+        tabs.addTab(self.smartnode_tab, QIcon(":icons/tab_smartnodes.png"), _('Smartnodes'))
+        #tabs.addTab(self.smartrewards_tab, QIcon(":icons/tab_smartrewards.png"), _('Smartrewards'))
+        #tabs.addTab(self.smartvote_tab, QIcon(":icons/tab_smarthive.png"), _('Smartvote'))
 
         def add_optional_tab(tabs, tab, icon, description, name):
             tab.tab_icon = icon
@@ -348,13 +347,16 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def load_wallet(self, wallet):
         wallet.thread = TaskThread(self, self.on_error)
         self.wallet = wallet
+
         self.masternode_manager = MasternodeManager(self.wallet, self.config)
+        self.smartnode_tab.update_nodelist(self.wallet, self.config, self.masternode_manager)
+        #self.masternode_manager.send_subscriptions()
+
         self.update_recently_visited(wallet.storage.path)
         # address used to create a dummy transaction and estimate transaction fee
-        self.masternode_manager.send_subscriptions()
         self.history_list.update()
         self.address_list.update()
-        self.masternode_tab.update_nodelist(self.wallet, self.config, self.masternode_manager)
+
         self.utxo_list.update()
         self.need_update.set()
         # Once GUI has been initialized check if we want to announce something since the callback has been called before the GUI was initialized
@@ -528,9 +530,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         add_toggle_action(view_menu, self.utxo_tab)
         add_toggle_action(view_menu, self.contacts_tab)
         add_toggle_action(view_menu, self.console_tab)
-
-        wallet_menu.addSeparator()
-        wallet_menu.addAction(_("Smartnode Manager"), self.show_masternode_dialog)
 
         tools_menu = menubar.addMenu(_("&Tools"))
 
@@ -725,6 +724,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             icon = QIcon(":icons/status_disconnected.png")
 
         elif self.network.is_connected():
+            self.masternode_manager.send_subscriptions()
             server_height = self.network.get_server_height()
             server_lag = self.network.get_local_height() - server_height
             # Server height can be 0 after switching to a new server
@@ -770,7 +770,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.history_list.update()
         self.request_list.update()
         self.address_list.update()
-        self.masternode_tab.update()
+        self.smartnode_tab.update()
         self.utxo_list.update()
         self.contact_list.update()
         self.invoice_list.update()
@@ -1792,7 +1792,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         from .address_list import AddressList
         self.address_list = l = AddressList(self)
         toolbar = l.create_toolbar(self.config)
-        toolbar_shown = self.config.get('show_toolbar_addresses', False)
+        toolbar_shown = self.config.get('show_toolbar_addresses', True)
         l.show_toolbar(toolbar_shown)
         return self.create_list_tab(l, toolbar)
 
@@ -3232,14 +3232,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.msg_box(QPixmap(":icons/offline_tx.png"), None, _('Success'), _("Transaction added to wallet history"))
             return True
 
-    def show_masternode_dialog(self):
-        d = MasternodeDialog(self.masternode_manager, self)
-        d.exec_()
-
-    def create_masternode_tab(self):
-        from .masternode_tab import MasternodeTab
-        self.masternode_tab = masternodetab = MasternodeTab(self)
-        return masternodetab
+    def create_smartnode_tab(self):
+        from .smartnode_tab import SmartnodeTab
+        self.smartnode_tab = smartnodetab = SmartnodeTab(self)
+        return smartnodetab
 
     def create_smartrewards_tab(self):
         from .smartrewards_tab import SmartrewardsTab

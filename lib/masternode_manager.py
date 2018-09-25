@@ -150,6 +150,9 @@ class MasternodeManager(object):
         self.save()
         return True
 
+    def get_masternode_collateral_key(self, addr):
+        return self.wallet.get_public_keys(addr)[0]
+
     def get_masternode_outputs(self, domain = None, exclude_frozen = True):
         """Get spendable coins that can be used as smartnode collateral."""
         coins = self.wallet.get_utxos(domain, exclude_frozen,
@@ -163,7 +166,7 @@ class MasternodeManager(object):
 
         used_vins = []
         for mn in self.masternodes:
-            used_vins.append('%s:%d' % (mn.vin.get('prevout_hash'), mn.vin.get('prevout_n', 0xffffffff)))
+            used_vins.append('%s:%d' % (mn.vin.get('prevout_hash'), int(mn.vin.get('prevout_n', 0xffffffff))))
 
         unavaliable_vins = set(avaliable_vins).intersection(used_vins)
 

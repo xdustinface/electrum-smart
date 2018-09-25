@@ -1,63 +1,61 @@
-from base64 import b64encode
-from datetime import datetime
-import os
-import traceback
+import ecdsa
 
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 
-from electrum_smart import bitcoin
 from electrum_smart.i18n import _
-from electrum_smart.masternode import MasternodeAnnounce
-from electrum_smart.masternode_manager import parse_masternode_conf
 from electrum_smart.util import PrintError, bfh
-
-from .masternode_widgets import *
-from . import util
-
 from electrum_smart import constants
+from electrum_smart.masternode import NetworkAddress
 
-import ecdsa
-from lib.bitcoin import (generator_secp256k1, EncodeBase58Check, DecodeBase58Check, BitcoinException)
-from electrum_smart import constants
+from lib.bitcoin import (generator_secp256k1, EncodeBase58Check, DecodeBase58Check)
 
 SMARTNODE_MIN_VERSION = '90026'
 SMARTNODE_DEFAULT_PORT = '9678'
 
-class MasternodeControlDialog(QDialog, PrintError):
+class SmartnodeControlDialog(QDialog, PrintError):
 
-    def __init__(self, manager, mapper, model, action, selectedSmartnode, parent):
-        super(MasternodeControlDialog, self).__init__(parent)
+    CREATE = 0
+    EDIT = 1
+    VIEW = 2
+
+    def __init__(self, parent=None):
+        super(SmartnodeControlDialog, self).__init__(parent)
         self.gui = parent
-        self.manager = manager
-        self.mapper = mapper
-        self.model = model
-        self.action = action
-        self.selectedSmartnode = selectedSmartnode
         self.setWindowTitle(_('Smartnode Manager'))
-
         self.waiting_dialog = None
         self.setupUi()
 
-        self.setup_smartnodekey_label()
-        self.scan_for_outputs(True)
+    def setAction(self, action, manager, mapper):
 
-        if (self.action == 'VIEW'):
-            self.fill_smartnode_info()
+        self.mapper = mapper
+        self.manager = manager
+        self.action = action
+
+        self.collateralTable.setRowCount(0)
+        self.collateralView.removeWidget(self.page)
+        self.collateralView.addWidget(self.stackedWidgetPage1)
+        self.customSmartnodeKeyButton.show()
+        self.ipField.setDisabled(False)
+        self.aliasField.setDisabled(False)
+        self.viewButtonBox.hide()
+        self.defaultButtonBox.show()
+
+        if (action == self.VIEW):
             self.collateralView.removeWidget(self.stackedWidgetPage1)
             self.customSmartnodeKeyButton.hide()
             self.ipField.setDisabled(True)
             self.aliasField.setDisabled(True)
             self.viewButtonBox.show()
             self.defaultButtonBox.hide()
-
-        elif (self.action == 'EDIT'):
-            self.fill_smartnode_info()
+            self.collateralView.addWidget(self.page)
+        elif (action == self.EDIT):
+            self.scan_for_outputs(True)
             self.add_current_output()
-            self.collateralView.removeWidget(self.page)
-
-        elif (self.action == 'CREATE'):
-            self.collateralView.removeWidget(self.page)
+        elif (action == self.CREATE):
+            self.scan_for_outputs(True)
+            self.setup_smartnodekey_label()
 
     def setupUi(self):
         self.setObjectName("SmartnodeControlDialog")
@@ -71,31 +69,58 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.verticalLayout.setContentsMargins(20, 20, 20, 20)
         self.verticalLayout.setObjectName("verticalLayout")
 
-        # Alias and IP
+        # Grid Layout
         self.gridLayout = QGridLayout()
         self.gridLayout.setObjectName("gridLayout")
-        self.ipField = QLineEdit(self)
-        self.ipField.setAlignment(Qt.AlignCenter)
-        self.ipField.setObjectName("ipField")
-        self.gridLayout.addWidget(self.ipField, 1, 1, 1, 1)
+
+        # Alias Label
+        self.label_Alias = QLabel(self)
+        font = QFont()
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_Alias.setFont(font)
+        self.label_Alias.setObjectName("label_Alias")
+        self.gridLayout.addWidget(self.label_Alias, 0, 0, 1, 1)
+
+        # Alias Field
         self.aliasField = QLineEdit(self)
         self.aliasField.setAlignment(Qt.AlignCenter)
         self.aliasField.setObjectName("aliasField")
         self.gridLayout.addWidget(self.aliasField, 0, 1, 1, 1)
-        self.label_3 = QLabel(self)
+
+        # IP Label
+        self.label_ipAddress = QLabel(self)
         font = QFont()
         font.setBold(True)
         font.setWeight(75)
-        self.label_3.setFont(font)
-        self.label_3.setObjectName("label_3")
-        self.gridLayout.addWidget(self.label_3, 1, 0, 1, 1)
-        self.label_2 = QLabel(self)
+        self.label_ipAddress.setFont(font)
+        self.label_ipAddress.setObjectName("label_ipAddress")
+        self.gridLayout.addWidget(self.label_ipAddress, 1, 0, 1, 1)
+
+        # IP Field
+        self.ipField = QLineEdit(self)
+        self.ipField.setAlignment(Qt.AlignCenter)
+        self.ipField.setObjectName("ipField")
+        self.gridLayout.addWidget(self.ipField, 1, 1, 1, 1)
+
+        # Status Label
+        self.label_status = QLabel(self)
         font = QFont()
         font.setBold(True)
         font.setWeight(75)
-        self.label_2.setFont(font)
-        self.label_2.setObjectName("label_2")
-        self.gridLayout.addWidget(self.label_2, 0, 0, 1, 1)
+        self.label_status.setFont(font)
+        self.label_status.setObjectName("label_status")
+        self.gridLayout.addWidget(self.label_status, 2, 0, 1, 1)
+        self.label_status.hide()
+
+        # Status Field
+        self.statusField = QLineEdit(self)
+        self.statusField.setAlignment(Qt.AlignCenter)
+        self.statusField.setObjectName("statusField")
+        self.statusField.setReadOnly(True)
+        self.gridLayout.addWidget(self.statusField, 2, 1, 1, 1)
+        self.statusField.hide()
+
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.gridLayout.addItem(spacerItem, 1, 2, 1, 1)
         spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -172,7 +197,7 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.viewButtonBox.setObjectName("viewButtonBox")
         self.verticalLayout.addWidget(self.viewButtonBox)
         self.viewButtonBox.hide()
-        self.viewButtonBox.clicked.connect(self.close)
+        self.viewButtonBox.clicked.connect(self.reject)
 
         # Apply or Cancel
         self.defaultButtonBox = QDialogButtonBox(self)
@@ -189,17 +214,9 @@ class MasternodeControlDialog(QDialog, PrintError):
 
         self.retranslateUi(self)
         QMetaObject.connectSlotsByName(self)
-        self.setTabOrder(self.aliasField, self.ipField)
-        self.setTabOrder(self.ipField, self.collateralTable)
-        self.setTabOrder(self.collateralTable, self.copySmartnodeKeyButton)
-
-    def fill_smartnode_info(self):
-        self.addressViewLabel.setText(self.selectedSmartnode.vin.get('address', ""))
-        self.txIndexViewLabel.setText(str(self.selectedSmartnode.vin.get('prevout_n', "")))
-        self.txHashViewLabel.setText(self.selectedSmartnode.vin.get('prevout_hash', ""))
-        self.ipField.setText(str(self.selectedSmartnode.addr))
-        self.aliasField.setText(self.selectedSmartnode.alias)
-        self.smartnodeKeyLabel.setText(self.manager.get_delegate_privkey(self.selectedSmartnode.delegate_key))
+        #self.setTabOrder(self.aliasField, self.ipField)
+        #self.setTabOrder(self.ipField, self.collateralTable)
+        #self.setTabOrder(self.collateralTable, self.copySmartnodeKeyButton)
 
     def create_collateral_list_table(self):
         self.stackedWidgetPage1 = QWidget()
@@ -207,17 +224,17 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.verticalLayout_3 = QVBoxLayout(self.stackedWidgetPage1)
         self.verticalLayout_3.setContentsMargins(0, -1, 0, -1)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
-        self.label_4 = QLabel(self.stackedWidgetPage1)
+        self.label_selectCollateral = QLabel(self.stackedWidgetPage1)
         font = QFont()
         font.setBold(True)
         font.setWeight(75)
-        self.label_4.setFont(font)
-        self.label_4.setObjectName("label_4")
-        self.verticalLayout_3.addWidget(self.label_4)
+        self.label_selectCollateral.setFont(font)
+        self.label_selectCollateral.setObjectName("label_4")
+        self.verticalLayout_3.addWidget(self.label_selectCollateral)
         self.collateralTable = QTableWidget(self.stackedWidgetPage1)
         font = QFont()
         self.collateralTable.setFont(font)
-        self.collateralTable.setColumnCount(3)
+        self.collateralTable.setColumnCount(5)
         self.collateralTable.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.collateralTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.collateralTable.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
@@ -239,20 +256,17 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         spacerItem2 = QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Maximum)
         self.verticalLayout_4.addItem(spacerItem2)
-        self.label_7 = QLabel(self.page)
+        self.label_Collateral = QLabel(self.page)
         font = QFont()
         font.setBold(True)
         font.setWeight(75)
-        self.label_7.setFont(font)
-        self.label_7.setObjectName("label_7")
-        self.verticalLayout_4.addWidget(self.label_7)
+        self.label_Collateral.setFont(font)
+        self.label_Collateral.setObjectName("label_7")
+        self.verticalLayout_4.addWidget(self.label_Collateral)
         self.gridLayout_2 = QGridLayout()
         self.gridLayout_2.setObjectName("gridLayout_2")
-        self.addressViewLabel = QLabel(self.page)
-        self.addressViewLabel.setTextInteractionFlags(
-            Qt.LinksAccessibleByMouse | Qt.TextSelectableByKeyboard | Qt.TextSelectableByMouse)
-        self.addressViewLabel.setObjectName("addressViewLabel")
-        self.gridLayout_2.addWidget(self.addressViewLabel, 0, 1, 1, 1)
+
+        # Tx Address label
         self.label_8 = QLabel(self.page)
         font = QFont()
         font.setBold(True)
@@ -260,11 +274,15 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.label_8.setFont(font)
         self.label_8.setObjectName("label_8")
         self.gridLayout_2.addWidget(self.label_8, 0, 0, 1, 1)
-        self.txIndexViewLabel = QLabel(self.page)
-        self.txIndexViewLabel.setTextInteractionFlags(
+
+        # Tx Address Value
+        self.addressViewLabel = QLabel(self.page)
+        self.addressViewLabel.setTextInteractionFlags(
             Qt.LinksAccessibleByMouse | Qt.TextSelectableByKeyboard | Qt.TextSelectableByMouse)
-        self.txIndexViewLabel.setObjectName("txIndexViewLabel")
-        self.gridLayout_2.addWidget(self.txIndexViewLabel, 2, 1, 1, 1)
+        self.addressViewLabel.setObjectName("addressViewLabel")
+        self.gridLayout_2.addWidget(self.addressViewLabel, 0, 1, 1, 1)
+
+        # Tx Hash Label
         self.label_9 = QLabel(self.page)
         font = QFont()
         font.setBold(True)
@@ -272,11 +290,15 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.label_9.setFont(font)
         self.label_9.setObjectName("label_9")
         self.gridLayout_2.addWidget(self.label_9, 1, 0, 1, 1)
+
+        # Tx Hash Value
         self.txHashViewLabel = QLabel(self.page)
         self.txHashViewLabel.setTextInteractionFlags(
             Qt.LinksAccessibleByMouse | Qt.TextSelectableByKeyboard | Qt.TextSelectableByMouse)
         self.txHashViewLabel.setObjectName("txHashViewLabel")
         self.gridLayout_2.addWidget(self.txHashViewLabel, 1, 1, 1, 1)
+
+        # Tx output index Label
         self.label_10 = QLabel(self.page)
         font = QFont()
         font.setBold(True)
@@ -284,6 +306,68 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.label_10.setFont(font)
         self.label_10.setObjectName("label_10")
         self.gridLayout_2.addWidget(self.label_10, 2, 0, 1, 1)
+
+        # Tx output index Value
+        self.txIndexViewLabel = QLabel(self.page)
+        self.txIndexViewLabel.setTextInteractionFlags(
+            Qt.LinksAccessibleByMouse | Qt.TextSelectableByKeyboard | Qt.TextSelectableByMouse)
+        self.txIndexViewLabel.setObjectName("txIndexViewLabel")
+        self.gridLayout_2.addWidget(self.txIndexViewLabel, 2, 1, 1, 1)
+
+        # Tx value Label
+        self.label_txValue = QLabel(self.page)
+        font = QFont()
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_txValue.setFont(font)
+        self.label_txValue.setObjectName("label_txValue")
+        self.gridLayout_2.addWidget(self.label_txValue, 3, 0, 1, 1)
+        self.label_txValue.hide()
+
+        # Tx value Value
+        self.txValueViewLabel = QLabel(self.page)
+        self.txValueViewLabel.setTextInteractionFlags(
+            Qt.LinksAccessibleByMouse | Qt.TextSelectableByKeyboard | Qt.TextSelectableByMouse)
+        self.txValueViewLabel.setObjectName("txValueViewLabel")
+        self.gridLayout_2.addWidget(self.txValueViewLabel, 3, 1, 1, 1)
+        self.txValueViewLabel.hide()
+
+        # Tx ScriptSig index Label
+        self.label_scriptSig = QLabel(self.page)
+        font = QFont()
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_scriptSig.setFont(font)
+        self.label_scriptSig.setObjectName("label_scriptSig")
+        self.gridLayout_2.addWidget(self.label_scriptSig, 4, 0, 1, 1)
+        self.label_scriptSig.hide()
+
+        # Tx ScriptSig index Value
+        self.txScriptSigViewLabel = QLabel(self.page)
+        self.txScriptSigViewLabel.setTextInteractionFlags(
+            Qt.LinksAccessibleByMouse | Qt.TextSelectableByKeyboard | Qt.TextSelectableByMouse)
+        self.txScriptSigViewLabel.setObjectName("txScriptSigViewLabel")
+        self.gridLayout_2.addWidget(self.txScriptSigViewLabel, 4, 1, 1, 1)
+        self.txScriptSigViewLabel.hide()
+
+        # Collateral Key Label
+        self.label_collateralKey = QLabel(self.page)
+        font = QFont()
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_collateralKey.setFont(font)
+        self.label_collateralKey.setObjectName("label_scriptSig")
+        self.gridLayout_2.addWidget(self.label_collateralKey, 5, 0, 1, 1)
+        self.label_collateralKey.hide()
+
+        # Collateral Key Value
+        self.txCollateralKeyLabel = QLabel(self.page)
+        self.txCollateralKeyLabel.setTextInteractionFlags(
+            Qt.LinksAccessibleByMouse | Qt.TextSelectableByKeyboard | Qt.TextSelectableByMouse)
+        self.txCollateralKeyLabel.setObjectName("txCollateralKeyLabel")
+        self.gridLayout_2.addWidget(self.txCollateralKeyLabel, 5, 1, 1, 1)
+        self.txCollateralKeyLabel.hide()
+
         spacerItem3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.gridLayout_2.addItem(spacerItem3, 0, 2, 1, 1)
         spacerItem4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -300,10 +384,11 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.setWindowTitle(_translate("SmartnodeControlDialog", "Create new Smartnode"))
         self.ipField.setPlaceholderText(_translate("SmartnodeControlDialog", "000.000.000.000"))
         self.aliasField.setPlaceholderText(_translate("SmartnodeControlDialog", "MyNode1"))
-        self.label_3.setText(_translate("SmartnodeControlDialog", "IP-Address"))
-        self.label_2.setText(_translate("SmartnodeControlDialog", "Alias"))
-        self.label_4.setText(_translate("SmartnodeControlDialog", "Select a collateral for your new node"))
-        self.label_7.setText(_translate("SmartnodeControlDialog", "Collateral"))
+        self.label_ipAddress.setText(_translate("SmartnodeControlDialog", "IP-Address"))
+        self.label_Alias.setText(_translate("SmartnodeControlDialog", "Alias"))
+        self.label_status.setText(_translate("SmartnodeControlDialog", "Status"))
+        self.label_selectCollateral.setText(_translate("SmartnodeControlDialog", "Select a collateral for your new node"))
+        self.label_Collateral.setText(_translate("SmartnodeControlDialog", "Collateral"))
         self.addressViewLabel.setText(_translate("SmartnodeControlDialog", "0000000000000000000000000"))
         self.label_8.setText(_translate("SmartnodeControlDialog", "Address"))
         self.txIndexViewLabel.setText(_translate("SmartnodeControlDialog", "1"))
@@ -311,6 +396,11 @@ class MasternodeControlDialog(QDialog, PrintError):
         self.txHashViewLabel.setText(
             _translate("SmartnodeControlDialog", "00000000000000000000000000000000000000000000"))
         self.label_10.setText(_translate("SmartnodeControlDialog", "Transaction output id"))
+        self.label_txValue.setText(_translate("SmartnodeControlDialog", "Transaction value"))
+        self.txValueViewLabel.setText(
+            _translate("SmartnodeControlDialog", "00000000"))
+        self.label_scriptSig.setText(_translate("SmartnodeControlDialog", "Transaction ScriptSig"))
+        self.label_collateralKey.setText(_translate("SmartnodeControlDialog", "Collateral Key"))
         self.label_5.setText(_translate("SmartnodeControlDialog", "Smartnode Key"))
         self.smartnodeKeyLabel.setText(
             _translate("SmartnodeControlDialog", "00000000000000000000000000000000000000000"))
@@ -324,18 +414,14 @@ class MasternodeControlDialog(QDialog, PrintError):
         if sb == QDialogButtonBox.Apply:
             self.save_node()
         elif sb == QDialogButtonBox.Cancel:
-            self.close()
+            self.reject()
 
-    def save_node(self, edit = False):
+    def save_node(self):
 
         alias = self.aliasField.text()
         if not alias:
             QMessageBox.critical(self, _('Error'), _("Alias missing."))
             return
-
-        # Edit Smartnode
-        if self.action == 'EDIT':
-            self.manager.remove_masternode(self.selectedSmartnode.alias)
 
         addr = self.get_addr()
         if not addr:
@@ -348,9 +434,19 @@ class MasternodeControlDialog(QDialog, PrintError):
             QMessageBox.critical(self, _('Error'), _("You need to select a collateral."))
             return
 
-        output_index = self.collateralTable.selectedItems()[1].text()
-        txId = self.collateralTable.selectedItems()[2].text()
-        vin = {'prevout_hash': txId, 'prevout_n': int(output_index)}
+        row_index = self.collateralTable.currentRow()
+        tx_addr = self.collateralTable.item(row_index,0).text()
+        tx_prevout_n = self.collateralTable.item(row_index,1).text()
+        tx_hash = self.collateralTable.item(row_index,2).text()
+        tx_value = self.collateralTable.item(row_index,3).text()
+        tx_collateral_key = self.manager.get_masternode_collateral_key(tx_addr)
+
+        self.txCollateralKeyLabel.setText(tx_collateral_key)
+        self.addressViewLabel.setText(tx_addr)
+        self.txIndexViewLabel.setText(tx_prevout_n)
+        self.txHashViewLabel.setText(tx_hash)
+        self.txValueViewLabel.setText(tx_value)
+        self.txScriptSigViewLabel.setText('')
 
         smartnode_privkey = str(self.smartnodeKeyLabel.text())
         if not smartnode_privkey:
@@ -363,15 +459,12 @@ class MasternodeControlDialog(QDialog, PrintError):
             # Show an error if the private key is invalid and not an empty string.
             if smartnode_privkey:
                 QMessageBox.warning(self, _('Warning'), _('Ignoring invalid smartnode private key.'))
-            delegate_pubkey = ''
+            smartnode_pubkey = ''
 
-        # Create Smartnode
-        smartnode = MasternodeAnnounce(alias=alias, vin=vin, delegate_key=smartnode_pubkey, addr=addr)
-        self.model.add_masternode(smartnode)
-        self.manager.populate_masternode_output(alias)
+        # Save Smartnode
         self.mapper.submit()
-        #self.manager.save()
-        self.close()
+        self.manager.save()
+        self.accept()
 
     def setup_smartnodekey_label(self):
         smartnodeKey = self.generate_smartnode_key()
@@ -462,19 +555,24 @@ class MasternodeControlDialog(QDialog, PrintError):
         if len(coins) > 0:
             self.collateralTable.horizontalHeader().show()
             self.collateralTable.setRowCount(len(coins))
-            self.collateralTable.setHorizontalHeaderLabels(("Address;TX-Index;TX-Hash").split(";"))
+            self.collateralTable.setHorizontalHeaderLabels(("Address;TX-Index;TX-Hash;Value;Height").split(";"))
 
             for idx, val in enumerate(coins):
                 self.collateralTable.setItem(idx, 0, QTableWidgetItem(val.get('address')))
                 self.collateralTable.setItem(idx, 1, QTableWidgetItem(str(val.get('prevout_n'))))
                 self.collateralTable.setItem(idx, 2, QTableWidgetItem(val.get('prevout_hash')))
+                self.collateralTable.setItem(idx, 3, QTableWidgetItem(str(val.get('value'))))
+                self.collateralTable.setItem(idx, 4, QTableWidgetItem(str(val.get('height'))))
+
+            self.collateralTable.hideColumn(3)
+            self.collateralTable.hideColumn(4)
 
     def add_current_output(self):
-
         idx = self.collateralTable.rowCount()
-        val = self.selectedSmartnode.vin
         self.collateralTable.setRowCount(idx+1)
-        self.collateralTable.setItem(idx, 0, QTableWidgetItem(val.get('address')))
-        self.collateralTable.setItem(idx, 1, QTableWidgetItem(str(val.get('prevout_n'))))
-        self.collateralTable.setItem(idx, 2, QTableWidgetItem(val.get('prevout_hash')))
+        self.collateralTable.setItem(idx, 0, QTableWidgetItem(self.addressViewLabel.text()))
+        self.collateralTable.setItem(idx, 1, QTableWidgetItem(self.txIndexViewLabel.text()))
+        self.collateralTable.setItem(idx, 2, QTableWidgetItem(self.txHashViewLabel.text()))
+        self.collateralTable.setItem(idx, 3, QTableWidgetItem(self.txValueViewLabel.text()))
+        self.collateralTable.setItem(idx, 4, QTableWidgetItem('0'))
         self.collateralTable.selectRow(idx)

@@ -302,7 +302,7 @@ class MasternodeAnnounce(object):
             return
         if not 'prevout_hash' in self.vin or not 'prevout_n' in self.vin:
             return
-        return 'COutPoint(%s, %d)' % (self.vin['prevout_hash'],self.vin['prevout_n'])
+        return 'COutPoint(%s, %d)' % (self.vin['prevout_hash'],int(self.vin['prevout_n']))
 
     @classmethod
     def from_dict(cls, d):
