@@ -1,11 +1,11 @@
-import sys
-import traceback
 import os
+import traceback
 
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
+from electrum_smart.i18n import _
 from electrum_smart import bitcoin
 from electrum_smart.util import PrintError, bfh
 from electrum_smart.masternode import MasternodeAnnounce, NetworkAddress

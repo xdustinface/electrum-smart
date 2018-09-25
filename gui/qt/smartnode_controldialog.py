@@ -1,6 +1,5 @@
-import sys
-import traceback
 import os
+import traceback
 import ecdsa
 
 from PyQt5.QtGui import *
@@ -10,7 +9,6 @@ from PyQt5.QtWidgets import *
 from electrum_smart.i18n import _
 from electrum_smart.util import PrintError, bfh
 from electrum_smart import constants
-from electrum_smart.masternode import NetworkAddress
 
 from lib.bitcoin import (generator_secp256k1, EncodeBase58Check, DecodeBase58Check)
 
