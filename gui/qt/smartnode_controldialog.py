@@ -214,9 +214,9 @@ class SmartnodeControlDialog(QDialog, PrintError):
 
         self.retranslateUi(self)
         QMetaObject.connectSlotsByName(self)
-        #self.setTabOrder(self.aliasField, self.ipField)
-        #self.setTabOrder(self.ipField, self.collateralTable)
-        #self.setTabOrder(self.collateralTable, self.copySmartnodeKeyButton)
+        self.setTabOrder(self.aliasField, self.ipField)
+        self.setTabOrder(self.ipField, self.collateralTable)
+        self.setTabOrder(self.collateralTable, self.copySmartnodeKeyButton)
 
     def create_collateral_list_table(self):
         self.stackedWidgetPage1 = QWidget()
@@ -423,8 +423,9 @@ class SmartnodeControlDialog(QDialog, PrintError):
             QMessageBox.critical(self, _('Error'), _("Alias missing."))
             return
 
-        addr = self.get_addr()
-        if not addr:
+        addr = self.ipField.text()
+        valid_address = self.validate_addr(addr)
+        if not valid_address:
             QMessageBox.critical(self, _('Error'),
                                  _("Invalid IP-Address\n\nRequired format: xxx.xxx.xxx.xxx or xxx.xxx.xxx.xxx:port"))
             return
@@ -505,25 +506,24 @@ class SmartnodeControlDialog(QDialog, PrintError):
         except BaseException:
             return False
 
-    def get_addr(self):
+    def validate_addr(self, addr):
         """Get a NetworkAddress instance from this widget's data."""
 
-        ip_field = str(self.ipField.text())
+        ip_field = str(addr)
         port = SMARTNODE_DEFAULT_PORT
 
         if not ip_field:
-            return
+            return False
 
         ip_port = ip_field.split(':')
         ip = ip_port[0]
 
         if len(ip_port) > 1:
             port = ip_port[1]
-
-        if self.validate_ip(ip, port):
-            return NetworkAddress(ip=ip, port=port)
         else:
-            return
+            port = SMARTNODE_DEFAULT_PORT
+
+        return self.validate_ip(ip, port)
 
     def validate_ip(self, s, p):
         try:
@@ -547,16 +547,17 @@ class SmartnodeControlDialog(QDialog, PrintError):
         exclude_frozen = not include_frozen
         coins = list(self.manager.get_masternode_outputs(exclude_frozen=exclude_frozen))
 
-        if len(coins) > 0:
-            self.add_outputs(coins)
+        self.add_outputs(coins)
 
     def add_outputs(self, coins):
 
-        if len(coins) > 0:
-            self.collateralTable.horizontalHeader().show()
-            self.collateralTable.setRowCount(len(coins))
-            self.collateralTable.setHorizontalHeaderLabels(("Address;TX-Index;TX-Hash;Value;Height").split(";"))
+        self.collateralTable.horizontalHeader().show()
+        self.collateralTable.setRowCount(len(coins))
+        self.collateralTable.setHorizontalHeaderLabels(("Address;TX-Index;TX-Hash;Value;Height").split(";"))
+        self.collateralTable.hideColumn(3)
+        self.collateralTable.hideColumn(4)
 
+        if len(coins) > 0:
             for idx, val in enumerate(coins):
                 self.collateralTable.setItem(idx, 0, QTableWidgetItem(val.get('address')))
                 self.collateralTable.setItem(idx, 1, QTableWidgetItem(str(val.get('prevout_n'))))
@@ -564,8 +565,6 @@ class SmartnodeControlDialog(QDialog, PrintError):
                 self.collateralTable.setItem(idx, 3, QTableWidgetItem(str(val.get('value'))))
                 self.collateralTable.setItem(idx, 4, QTableWidgetItem(str(val.get('height'))))
 
-            self.collateralTable.hideColumn(3)
-            self.collateralTable.hideColumn(4)
 
     def add_current_output(self):
         idx = self.collateralTable.rowCount()

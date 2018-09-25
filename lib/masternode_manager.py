@@ -84,6 +84,9 @@ class MasternodeManager(object):
                 self.wallet.network.send([req], self.masternode_subscription_response)
 
     def subscribe_to_all_masternodes(self):
+        if not self.wallet.network.is_connected():
+            print_error("Cannot update smartnode status. Wallet not connected")
+            return
         for mn in self.masternodes:
             collateral = mn.get_collateral_str()
             req = ('masternode.subscribe', [collateral])

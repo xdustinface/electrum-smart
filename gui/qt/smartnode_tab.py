@@ -2,7 +2,7 @@ import traceback
 
 from electrum_smart import bitcoin
 from electrum_smart.util import PrintError, bfh
-from electrum_smart.masternode import MasternodeAnnounce
+from electrum_smart.masternode import MasternodeAnnounce, NetworkAddress
 from .smartnode_controldialog import *
 
 from . import util
@@ -202,7 +202,6 @@ class SmartnodeModel(QAbstractTableModel):
         elif i == self.ADDR:
             s = value.split(':')
             mn.addr.ip = s[0]
-
             if len(s) > 1:
                 mn.addr.port = int(s[1])
             else:
@@ -395,16 +394,18 @@ class SmartnodeTab(QWidget, PrintError):
         d.setAction(action, self.manager, self.mapper)
         d.exec_()
 
-        if (action == self.CREATE):
+        if action == self.CREATE and d.result() == QDialog.Rejected:
             self.remove_empty_smartnode()
 
     def add_empty_smartnode(self):
-        self.add_smartnode(MasternodeAnnounce(alias=''), save=False)
+        empty_smartnode = MasternodeAnnounce(alias='', addr=NetworkAddress())
+        self.add_smartnode(empty_smartnode, save=False)
         self.select_smartnode('')
 
     def remove_empty_smartnode(self):
         try:
             self.remove_smartnode('', save=False)
+            self.tableWidgetMySmartnodes.clearSelection()
         except:
             self.print_error("Cannot remove_empty smartnode")
         self.disable_node_buttons()
@@ -422,10 +423,10 @@ class SmartnodeTab(QWidget, PrintError):
     def refresh_items(self):
         self.model.dataChanged.emit(QModelIndex(), QModelIndex())
 
-    def add_smartnode(self, smartnode, save = True):
+    def add_smartnode(self, smartnode, save=True):
         self.model.add_smartnode(smartnode, save=save)
 
-    def remove_smartnode(self, alias, save = True):
+    def remove_smartnode(self, alias, save=True):
         self.model.remove_smartnode(alias, save=save)
 
     def smartnode_for_row(self, row):
