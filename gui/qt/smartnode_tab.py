@@ -212,7 +212,7 @@ class SmartnodeModel(QAbstractTableModel):
             if len(s) > 1:
                 mn.addr.port = int(s[1])
             else:
-                mn.addr.port = SMARTNODE_DEFAULT_PORT
+                mn.addr.port = int(SMARTNODE_DEFAULT_PORT)
         elif i == self.PROTOCOL_VERSION:
             try:
                 version = int(value)
@@ -403,7 +403,7 @@ class SmartnodeTab(QWidget, PrintError):
 
         if action == self.CREATE and d.result() == QDialog.Rejected:
             self.remove_empty_smartnode()
-        elif action == self.CREATE and d.result() == QDialog.Accepted:
+        elif (action == self.CREATE or self.EDIT) and d.result() == QDialog.Accepted:
             self.update_smartnodes_status(False)
 
     def add_empty_smartnode(self):
