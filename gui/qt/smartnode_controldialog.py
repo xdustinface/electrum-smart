@@ -1,3 +1,6 @@
+import sys
+import traceback
+import os
 import ecdsa
 
 from PyQt5.QtGui import *
