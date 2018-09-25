@@ -396,6 +396,8 @@ class SmartnodeTab(QWidget, PrintError):
 
         if action == self.CREATE and d.result() == QDialog.Rejected:
             self.remove_empty_smartnode()
+        elif action == self.CREATE and d.result() == QDialog.Accepted:
+            self.update_smartnodes_status(False)
 
     def add_empty_smartnode(self):
         empty_smartnode = MasternodeAnnounce(alias='', addr=NetworkAddress())
@@ -528,6 +530,7 @@ class SmartnodeTab(QWidget, PrintError):
         self.manager.subscribe_to_all_masternodes()
         if(show_message):
             QMessageBox.information(self, ('Success'), ('Successfully requested %s smartnodes status' % str(len(self.smartnodes))))
+        self.refresh_items()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
