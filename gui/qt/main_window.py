@@ -61,7 +61,6 @@ from .qrtextedit import ShowQRTextEdit, ScanQRTextEdit
 from .transaction_dialog import show_transaction
 #from .fee_slider import FeeSlider
 from .util import *
-from .smartnode_tab import SmartnodeTab
 
 
 class StatusBarButton(QPushButton):
@@ -771,7 +770,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.history_list.update()
         self.request_list.update()
         self.address_list.update()
-        self.smartnode_tab.update()
+        #self.smartnode_tab.update()
         self.utxo_list.update()
         self.contact_list.update()
         self.invoice_list.update()
@@ -3234,6 +3233,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             return True
 
     def create_smartnode_tab(self):
+        from .smartnode_tab import SmartnodeTab
         self.smartnode_tab = smartnodetab = SmartnodeTab(self)
         return smartnodetab
 

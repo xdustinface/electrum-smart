@@ -42,8 +42,7 @@ from .transaction import Transaction, multisig_script
 from .paymentrequest import PR_PAID, PR_UNPAID, PR_UNKNOWN, PR_EXPIRED
 from .plugins import run_hook
 from .masternode import MasternodeAnnounce
-from .masternode_budget import BudgetProposal
-from .masternode_manager import MasternodeManager, parse_masternode_conf, BUDGET_FEE_CONFIRMATIONS
+from .masternode_manager import MasternodeManager, parse_masternode_conf
 
 known_commands = {}
 

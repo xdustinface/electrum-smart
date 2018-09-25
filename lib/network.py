@@ -42,7 +42,6 @@ from .interface import Connection, Interface
 from . import blockchain
 from .version import ELECTRUM_VERSION, PROTOCOL_VERSION
 from .i18n import _
-from . import masternode_manager
 
 NODES_RETRY_INTERVAL = 60
 SERVER_RETRY_INTERVAL = 10

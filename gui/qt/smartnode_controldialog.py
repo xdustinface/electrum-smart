@@ -10,7 +10,8 @@ from electrum_smart.i18n import _
 from electrum_smart.util import PrintError, bfh
 from electrum_smart import constants
 
-from lib.bitcoin import (generator_secp256k1, EncodeBase58Check, DecodeBase58Check)
+from ecdsa.ecdsa import generator_secp256k1
+from electrum_smart.bitcoin import EncodeBase58Check, DecodeBase58Check
 
 SMARTNODE_MIN_VERSION = '90026'
 SMARTNODE_DEFAULT_PORT = '9678'

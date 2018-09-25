@@ -1,4 +1,3 @@
-import os
 import traceback
 
 from PyQt5.QtGui import *
