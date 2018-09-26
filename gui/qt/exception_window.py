@@ -53,7 +53,29 @@ issue_template = """<h2>Traceback</h2>
   <li>Locale: {locale}</li>
 </ul>
 """
-report_server = "https://crashhub.electrum.org/crash"
+
+automated_issue_template = """## Description
+{description}
+
+## Stack
+```
+{stack}
+```
+## Environment
+
+ - file: {id[file]}
+ - name: {id[name]}
+ - type: {id[type]}
+
+## Additional information
+
+ - app_version: {app_version}
+ - os: {os}
+ - wallet_type: {wallet_type}
+ - locale: {locale}
+"""
+
+report_url = "https://github.com/SmartCash/electrum-smart/issues/new"
 
 
 class Exception_Window(QWidget, MessageBoxMixin):
@@ -77,31 +99,29 @@ class Exception_Window(QWidget, MessageBoxMixin):
               'information:')))
 
         collapse_info = QPushButton(_("Show report contents"))
-        collapse_info.clicked.connect(
-            lambda: self.msg_box(QMessageBox.NoIcon,
-                                 self, "Report contents", self.get_report_string()))
+        collapse_info.clicked.connect(lambda: self.msg_box(QMessageBox.NoIcon, self, "Report contents", self.get_report_string()))
         main_box.addWidget(collapse_info)
 
-        #main_box.addWidget(QLabel(_("Please briefly describe what led to the error (optional):")))
+        main_box.addWidget(QLabel(_("Please describe the steps to reproduce this error (optional):")))
 
-        #self.description_textfield = QTextEdit()
-        #self.description_textfield.setFixedHeight(50)
-        #main_box.addWidget(self.description_textfield)
+        self.description_textfield = QTextEdit()
+        self.description_textfield.setFixedHeight(50)
+        main_box.addWidget(self.description_textfield)
 
         main_box.addWidget(QLabel(_("Do you want to report this?")))
 
         buttons = QHBoxLayout()
 
-        report_button = QPushButton(_('Create a Issue'))
+        report_button = QPushButton(_('Report on Github'))
         report_button.clicked.connect(self.send_report)
         report_button.setIcon(QIcon(":icons/tab_send.png"))
         buttons.addWidget(report_button)
 
-        never_button = QPushButton(_('Never'))
-        never_button.clicked.connect(self.show_never)
-        buttons.addWidget(never_button)
+        #never_button = QPushButton(_('Never'))
+        #never_button.clicked.connect(self.show_never)
+        #buttons.addWidget(never_button)
 
-        close_button = QPushButton(_('Not Now'))
+        close_button = QPushButton(_('Do not report :('))
         close_button.clicked.connect(self.close)
         buttons.addWidget(close_button)
 
@@ -111,26 +131,18 @@ class Exception_Window(QWidget, MessageBoxMixin):
         self.show()
 
     def send_report(self):
-        if constants.net.GENESIS[-4:] not in ["4943", "e26f"] and ".electrum.org" in report_server:
-            # Gah! Some kind of altcoin wants to send us crash reports.
-            import webbrowser
-            webbrowser.open('https://github.com/SmartCash/electrum-smart/issues/new')
-            #self.main_window.show_critical(_("Please report this issue manually."))
-            return
+        import webbrowser
+        import urllib
+
         report = self.get_traceback_info()
         report.update(self.get_additional_info())
-        report = json.dumps(report)
-        try:
-            response = requests.post(report_server, data=report, timeout=20)
-        except BaseException as e:
-            traceback.print_exc(file=sys.stderr)
-            self.main_window.show_critical(_('There was a problem with the automatic reporting:') + '\n' +
-                                           str(e) + '\n' +
-                                           _("Please report this issue manually."))
-            return
-        else:
-            QMessageBox.about(self, "Crash report", response.text)
-            self.close()
+        report_querystring = self.get_markdown_report(report)
+
+        url = '{}?title=Automated+bug+report: {}&body={}'.format(report_url, urllib.parse.quote_plus(report.get('exc_string')), urllib.parse.quote_plus(report_querystring))
+
+        webbrowser.open(url)
+
+        self.close()
 
     def on_close(self):
         Exception_Window._active_window = None
@@ -184,6 +196,10 @@ class Exception_Window(QWidget, MessageBoxMixin):
         info = self.get_additional_info()
         info["traceback"] = "".join(traceback.format_exception(*self.exc_args))
         return issue_template.format(**info)
+
+    def get_markdown_report(self, report):
+        issue = automated_issue_template.format(**report)
+        return issue
 
     @staticmethod
     def get_git_version():
