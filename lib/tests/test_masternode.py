@@ -1,8 +1,8 @@
 import unittest
 import base64
 
-from lib.masternode import MasternodeAnnounce, MasternodePing, NetworkAddress
-from lib.masternode_manager import parse_masternode_conf, MasternodeConfLine
+from lib.smartnode import MasternodeAnnounce, MasternodePing, NetworkAddress
+from lib.smartnode_manager import parse_masternode_conf, MasternodeConfLine
 from lib import bitcoin
 from lib.util import bfh, to_bytes
 

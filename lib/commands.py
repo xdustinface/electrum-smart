@@ -41,8 +41,8 @@ from .i18n import _
 from .transaction import Transaction, multisig_script
 from .paymentrequest import PR_PAID, PR_UNPAID, PR_UNKNOWN, PR_EXPIRED
 from .plugins import run_hook
-from .masternode import MasternodeAnnounce
-from .masternode_manager import MasternodeManager, parse_masternode_conf
+from .smartnode import MasternodeAnnounce
+from .smartnode_manager import MasternodeManager, parse_masternode_conf
 
 known_commands = {}
 

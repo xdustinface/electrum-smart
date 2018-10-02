@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from . import bitcoin
 from .blockchain import hash_header
-from .masternode import MasternodeAnnounce, NetworkAddress
+from .smartnode import MasternodeAnnounce, NetworkAddress
 from .util import AlreadyHaveAddress, print_error, bfh, print_msg, format_satoshis_plain
 
 BUDGET_FEE_CONFIRMATIONS = 6
