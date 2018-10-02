@@ -1,7 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from electrum_smart import bitcoin
 
 class Ui_SmartProposalWidget(object):
-    def setupUi(self, SmartProposalWidget):
+    def setupUi(self, SmartProposalWidget, proposal):
         SmartProposalWidget.setObjectName("SmartProposalWidget")
         SmartProposalWidget.resize(768, 203)
         SmartProposalWidget.setStyleSheet("#SmartProposalWidget{\n"
@@ -175,20 +176,20 @@ class Ui_SmartProposalWidget(object):
         self.verticalLayout.addWidget(self.progressAbstain)
         self.horizontalLayout_3.addLayout(self.verticalLayout)
 
-        self.retranslateUi(SmartProposalWidget)
+        self.retranslateUi(SmartProposalWidget, proposal)
         QtCore.QMetaObject.connectSlotsByName(SmartProposalWidget)
         SmartProposalWidget.setTabOrder(self.viewProposalButton, self.disabledButton)
         SmartProposalWidget.setTabOrder(self.disabledButton, self.yesButton)
         SmartProposalWidget.setTabOrder(self.yesButton, self.noButton)
         SmartProposalWidget.setTabOrder(self.noButton, self.abstainButton)
 
-    def retranslateUi(self, SmartProposalWidget):
+    def retranslateUi(self, SmartProposalWidget, proposal):
         _translate = QtCore.QCoreApplication.translate
         SmartProposalWidget.setWindowTitle(_translate("SmartProposalWidget", "Form"))
-        self.titleLabel.setText(_translate("SmartProposalWidget", "# 1000 - SmartCash 360 Video Editor & Creation Tool rtCash 360 Video Editor & Creation Tool"))
+        self.titleLabel.setText(_translate("SmartProposalWidget", proposal.get('title')))
         self.groupBox_4.setTitle(_translate("SmartProposalWidget", "Requested funds"))
-        self.amountSmartLabel.setText(_translate("SmartProposalWidget", "Σ 245,145.93"))
-        self.amountUSDLabel.setText(_translate("SmartProposalWidget", "US$ 20,950.00"))
+        self.amountSmartLabel.setText(_translate("SmartProposalWidget", "{} SMART".format(self.litering_by_three(proposal.get('amountSmart')))))
+        self.amountUSDLabel.setText(_translate("SmartProposalWidget", "{} USD".format(self.litering_by_three(proposal.get('amountUSD')))))
         self.groupBox_3.setTitle(_translate("SmartProposalWidget", "Voting deadline"))
         self.deadlineLabel.setText(_translate("SmartProposalWidget", "06 days 20:49:08"))
         self.groupBox_2.setTitle(_translate("SmartProposalWidget", "You voted"))
@@ -199,9 +200,23 @@ class Ui_SmartProposalWidget(object):
         self.yesButton.setText(_translate("SmartProposalWidget", "Yes"))
         self.noButton.setText(_translate("SmartProposalWidget", "No"))
         self.abstainButton.setText(_translate("SmartProposalWidget", "Abstain"))
-        self.yesLabel.setText(_translate("SmartProposalWidget", "Yes ( 0000000.0000  )"))
-        self.noLabel.setText(_translate("SmartProposalWidget", "No ( 0000000.0000  )"))
-        self.abstainLabel.setText(_translate("SmartProposalWidget", "Abstain ( 0000000.0000  )"))
+
+        voteYes = self.litering_by_three(proposal.get('voteYes'))
+        voteNo = self.litering_by_three(proposal.get('voteNo'))
+        voteAbstain = self.litering_by_three(proposal.get('voteAbstain'))
+
+        percentYes = "%.2f" % proposal.get('percentYes')
+        percentNo = "%.2f" % proposal.get('percentNo')
+        percentAbstain = "%.2f" % proposal.get('percentAbstain')
+
+        self.yesLabel.setText(_translate("SmartProposalWidget", 'Yes {}%( {} SMART  )'.format(percentYes, voteYes)))
+        self.noLabel.setText(_translate("SmartProposalWidget", 'No {}% ( {} SMART  )'.format(percentNo, voteNo)))
+        self.abstainLabel.setText(_translate("SmartProposalWidget", 'Abstain {}% ( {} SMART  )'.format(percentAbstain, voteAbstain)))
+
+    def litering_by_three(self, a):
+        a = int(a)
+        return format(a, ',').replace(',', ' ').replace('.', ',')
+
 
 
 if __name__ == "__main__":

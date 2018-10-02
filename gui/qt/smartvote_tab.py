@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import *
 
 from electrum_smart import bitcoin
 from electrum_smart.util import PrintError, bfh
+from electrum_smart.smartvote_manager import SmartvoteManager
+from .smartproposal import Ui_SmartProposalWidget
 
 from . import util
 
@@ -172,6 +174,19 @@ class SmartvoteTab(QWidget):
         self.selectAddressesButton.setText(_translate("SmartVotingPage", "Select addresses"))
         self.refreshButton.setText(_translate("SmartVotingPage", "Refresh List"))
         self.castVotesButton.setText(_translate("SmartVotingPage", "Vote for X proposals"))
+
+    def update_all_proposals(self):
+        self.smartvote_manager = SmartvoteManager()
+        open_proposals = self.smartvote_manager.update_proposals().get("result")
+
+        open_proposals_qtd = len(open_proposals)
+        self.openProposalsLabel.setText(str(open_proposals_qtd))
+
+        for proposal in open_proposals:
+            SmartProposalWidget = QWidget()
+            ui = Ui_SmartProposalWidget()
+            ui.setupUi(SmartProposalWidget, proposal)
+            self.verticalLayout_6.addWidget(SmartProposalWidget)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

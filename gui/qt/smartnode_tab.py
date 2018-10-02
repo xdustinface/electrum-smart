@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import *
 from electrum_smart.i18n import _
 from electrum_smart import bitcoin
 from electrum_smart.util import PrintError, bfh
-from electrum_smart.masternode import MasternodeAnnounce, NetworkAddress
+from electrum_smart.smartnode import MasternodeAnnounce, NetworkAddress
 from .smartnode_controldialog import SmartnodeControlDialog
 
 from . import util

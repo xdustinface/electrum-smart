@@ -52,7 +52,7 @@ from electrum_smart import Transaction
 from electrum_smart import util, bitcoin, commands, coinchooser
 from electrum_smart import paymentrequest
 from electrum_smart.wallet import Multisig_Wallet, AddTransactionException
-from electrum_smart.masternode_manager import MasternodeManager
+from electrum_smart.smartnode_manager import MasternodeManager
 
 
 from .amountedit import AmountEdit, BTCAmountEdit, MyLineEdit, FeerateEdit
@@ -138,7 +138,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.addresses_tab = self.create_addresses_tab()
         self.smartnode_tab = self.create_smartnode_tab()
         #self.smartrewards_tab = self.create_smartrewards_tab()
-        #self.smartvote_tab = self.create_smartvote_tab()
+        self.smartvote_tab = self.create_smartvote_tab()
         self.utxo_tab = self.create_utxo_tab()
         self.console_tab = self.create_console_tab()
         self.contacts_tab = self.create_contacts_tab()
@@ -148,7 +148,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         tabs.addTab(self.receive_tab, QIcon(":icons/tab_receive.png"), _('Receive'))
         tabs.addTab(self.smartnode_tab, QIcon(":icons/tab_smartnodes.png"), _('Smartnodes'))
         #tabs.addTab(self.smartrewards_tab, QIcon(":icons/tab_smartrewards.png"), _('Smartrewards'))
-        #tabs.addTab(self.smartvote_tab, QIcon(":icons/tab_smarthive.png"), _('Smartvote'))
+        tabs.addTab(self.smartvote_tab, QIcon(":icons/tab_smarthive.png"), _('Smartvote'))
 
         def add_optional_tab(tabs, tab, icon, description, name):
             tab.tab_icon = icon
@@ -351,6 +351,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.masternode_manager = MasternodeManager(self.wallet, self.config)
         self.smartnode_tab.update_nodelist(self.wallet, self.config, self.masternode_manager)
         #self.masternode_manager.send_subscriptions()
+
+        self.update_smartvote_tab()
 
         self.update_recently_visited(wallet.storage.path)
         # address used to create a dummy transaction and estimate transaction fee
@@ -770,11 +772,11 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.history_list.update()
         self.request_list.update()
         self.address_list.update()
-        #self.smartnode_tab.update()
         self.utxo_list.update()
         self.contact_list.update()
         self.invoice_list.update()
         self.update_completions()
+        #self.update_smartvote_tab()
 
     def create_history_tab(self):
         from .history_list import HistoryList
@@ -1805,18 +1807,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         from .contact_list import ContactList
         self.contact_list = l = ContactList(self)
         return self.create_list_tab(l)
-
-    def create_proposals_tab(self):
-        from masternode_budget_widgets import ProposalsTab
-        self.proposals_list = ProposalsTab(self)
-        return self.proposals_list
-
-    def update_proposals_tab(self):
-        # Disabled until API is stable.
-        return
-        if not self.masternode_manager:
-            return
-        self.proposals_list.update(list(self.network.all_proposals))
 
     def remove_address(self, addr):
         if self.question(_("Do you want to remove")+" %s "%addr +_("from your wallet?")):
@@ -3246,4 +3236,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         from .smartvote_tab import SmartvoteTab
         self.smartvote_tab = smartvote = SmartvoteTab(self)
         return smartvote
+
+    def update_smartvote_tab(self):
+        self.smartvote_tab.update_all_proposals()
 
