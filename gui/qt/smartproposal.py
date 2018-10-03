@@ -191,7 +191,7 @@ class Ui_SmartProposalWidget(object):
         self.amountSmartLabel.setText(_translate("SmartProposalWidget", "{} SMART".format(self.litering_by_three(proposal.get('amountSmart')))))
         self.amountUSDLabel.setText(_translate("SmartProposalWidget", "{} USD".format(self.litering_by_three(proposal.get('amountUSD')))))
         self.groupBox_3.setTitle(_translate("SmartProposalWidget", "Voting deadline"))
-        self.deadlineLabel.setText(_translate("SmartProposalWidget", "06 days 20:49:08"))
+
         self.groupBox_2.setTitle(_translate("SmartProposalWidget", "You voted"))
         self.votedLabel.setText(_translate("SmartProposalWidget", "Nothing"))
         self.viewProposalButton.setText(_translate("SmartProposalWidget", "View in browser"))
@@ -209,15 +209,45 @@ class Ui_SmartProposalWidget(object):
         percentNo = "%.2f" % proposal.get('percentNo')
         percentAbstain = "%.2f" % proposal.get('percentAbstain')
 
+        self.progressYes.setProperty("value", int(proposal.get('percentYes')))
+        self.progressNo.setProperty("value", int(proposal.get('percentNo')))
+        self.progressAbstain.setProperty("value", int(proposal.get('percentAbstain')))
+
         self.yesLabel.setText(_translate("SmartProposalWidget", 'Yes {}%( {} SMART  )'.format(percentYes, voteYes)))
         self.noLabel.setText(_translate("SmartProposalWidget", 'No {}% ( {} SMART  )'.format(percentNo, voteNo)))
         self.abstainLabel.setText(_translate("SmartProposalWidget", 'Abstain {}% ( {} SMART  )'.format(percentAbstain, voteAbstain)))
+
+        self.viewProposalButton.clicked.connect(lambda: self.open_proposal_in_browser(proposal.get('url')))
+
+
+        from datetime import datetime
+        d = proposal.get('votingDeadline')
+        votingDeadline = datetime.strptime(d, '%Y-%m-%dT%H:%M:%S')
+        self.deadlineLabel.setText(_translate("SmartProposalWidget", votingDeadline.strftime("%b %d %Y %H:%M:%S UTC")))
+
+        d = proposal.get('createdDate')
+        createdDate = datetime.strptime(d, '%Y-%m-%dT%H:%M:%S')
+
+        percent_time = self.percent_time(createdDate,votingDeadline,datetime.utcnow())
+        self.deadlineProgress.setProperty("value", int(percent_time))
 
     def litering_by_three(self, a):
         a = int(a)
         return format(a, ',').replace(',', ' ').replace('.', ',')
 
+    def open_proposal_in_browser(self, proposal_url):
+        import webbrowser
+        url = 'https://vote.smartcash.cc/Proposal/Details/{}'.format(proposal_url)
+        webbrowser.open(url)
 
+    def t(self, dt):
+        import time
+        return time.mktime(dt.timetuple())
+
+    def percent_time(self, start_time, end_time, current_time):
+        total = self.t(end_time) - self.t(start_time)
+        current = self.t(current_time) - self.t(start_time)
+        return (100.0 * current) / total
 
 if __name__ == "__main__":
     import sys
