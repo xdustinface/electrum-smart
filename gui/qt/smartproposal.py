@@ -219,7 +219,6 @@ class Ui_SmartProposalWidget(object):
 
         self.viewProposalButton.clicked.connect(lambda: self.open_proposal_in_browser(proposal.get('url')))
 
-
         from datetime import datetime
         d = proposal.get('votingDeadline')
         votingDeadline = datetime.strptime(d, '%Y-%m-%dT%H:%M:%S')

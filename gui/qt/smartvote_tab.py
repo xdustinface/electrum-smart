@@ -145,6 +145,7 @@ class SmartvoteTab(QWidget):
         self.horizontalLayout_2.addItem(spacerItem)
         self.refreshButton = QPushButton(self.rewardsPage)
         self.refreshButton.setObjectName("refreshButton")
+        self.refreshButton.clicked.connect(self.refresh_proposals)
         self.horizontalLayout_2.addWidget(self.refreshButton)
         spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem1)
@@ -187,6 +188,14 @@ class SmartvoteTab(QWidget):
             ui = Ui_SmartProposalWidget()
             ui.setupUi(SmartProposalWidget, proposal)
             self.verticalLayout_6.addWidget(SmartProposalWidget)
+
+    def refresh_proposals(self):
+
+        layout = self.verticalLayout_6
+        for i in reversed(range(layout.count())):
+            layout.itemAt(i).widget().setParent(None)
+
+        self.update_all_proposals()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
