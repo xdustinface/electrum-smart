@@ -1,8 +1,13 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from datetime import datetime
 from electrum_smart import bitcoin
 
 class Ui_SmartProposalWidget(object):
-    def setupUi(self, SmartProposalWidget, proposal):
+    def setupUi(self, SmartProposalWidget, proposal, selected_voting_option_map):
+
+        self.selected_voting_option_map = selected_voting_option_map
+        self.proposal = proposal
+
         SmartProposalWidget.setObjectName("SmartProposalWidget")
         SmartProposalWidget.resize(768, 203)
         SmartProposalWidget.setStyleSheet("#SmartProposalWidget{\n"
@@ -176,22 +181,25 @@ class Ui_SmartProposalWidget(object):
         self.verticalLayout.addWidget(self.progressAbstain)
         self.horizontalLayout_3.addLayout(self.verticalLayout)
 
-        self.retranslateUi(SmartProposalWidget, proposal)
+        self.retranslateUi(SmartProposalWidget)
+
+        self.update_proposal_details()
+
         QtCore.QMetaObject.connectSlotsByName(SmartProposalWidget)
         SmartProposalWidget.setTabOrder(self.viewProposalButton, self.disabledButton)
         SmartProposalWidget.setTabOrder(self.disabledButton, self.yesButton)
         SmartProposalWidget.setTabOrder(self.yesButton, self.noButton)
         SmartProposalWidget.setTabOrder(self.noButton, self.abstainButton)
 
-    def retranslateUi(self, SmartProposalWidget, proposal):
+    def retranslateUi(self, SmartProposalWidget):
         _translate = QtCore.QCoreApplication.translate
         SmartProposalWidget.setWindowTitle(_translate("SmartProposalWidget", "Form"))
-        self.titleLabel.setText(_translate("SmartProposalWidget", proposal.get('title')))
+        self.titleLabel.setText(_translate("SmartProposalWidget", "# 1000 - SmartCash 360 Video Editor & Creation Tool rtCash 360 Video Editor & Creation Tool"))
         self.groupBox_4.setTitle(_translate("SmartProposalWidget", "Requested funds"))
-        self.amountSmartLabel.setText(_translate("SmartProposalWidget", "{} SMART".format(self.litering_by_three(proposal.get('amountSmart')))))
-        self.amountUSDLabel.setText(_translate("SmartProposalWidget", "{} USD".format(self.litering_by_three(proposal.get('amountUSD')))))
+        self.amountSmartLabel.setText(_translate("SmartProposalWidget", "Σ 245,145.93"))
+        self.amountUSDLabel.setText(_translate("SmartProposalWidget", "US$ 20,950.00"))
         self.groupBox_3.setTitle(_translate("SmartProposalWidget", "Voting deadline"))
-
+        self.deadlineLabel.setText(_translate("SmartProposalWidget", "06 days 20:49:08"))
         self.groupBox_2.setTitle(_translate("SmartProposalWidget", "You voted"))
         self.votedLabel.setText(_translate("SmartProposalWidget", "Nothing"))
         self.viewProposalButton.setText(_translate("SmartProposalWidget", "View in browser"))
@@ -200,37 +208,53 @@ class Ui_SmartProposalWidget(object):
         self.yesButton.setText(_translate("SmartProposalWidget", "Yes"))
         self.noButton.setText(_translate("SmartProposalWidget", "No"))
         self.abstainButton.setText(_translate("SmartProposalWidget", "Abstain"))
+        self.yesLabel.setText(_translate("SmartProposalWidget", "Yes ( 0000000.0000  )"))
+        self.noLabel.setText(_translate("SmartProposalWidget", "No ( 0000000.0000  )"))
+        self.abstainLabel.setText(_translate("SmartProposalWidget", "Abstain ( 0000000.0000  )"))
 
-        voteYes = self.litering_by_three(proposal.get('voteYes'))
-        voteNo = self.litering_by_three(proposal.get('voteNo'))
-        voteAbstain = self.litering_by_three(proposal.get('voteAbstain'))
+    def update_proposal_details(self):
+
+        proposal = self.proposal
+
+        title = "#{} - {}".format(proposal.get('proposalId'), proposal.get('title'))
+        amountSmart = "{} SMART".format(self.add_thousands_spaces(proposal.get('amountSmart')))
+        amountUSD = "{} USD".format(self.add_thousands_spaces(proposal.get('amountUSD')))
+
+        voteYes = self.add_thousands_spaces(proposal.get('voteYes'))
+        voteNo = self.add_thousands_spaces(proposal.get('voteNo'))
+        voteAbstain = self.add_thousands_spaces(proposal.get('voteAbstain'))
 
         percentYes = "%.2f" % proposal.get('percentYes')
         percentNo = "%.2f" % proposal.get('percentNo')
         percentAbstain = "%.2f" % proposal.get('percentAbstain')
 
+        votingDeadline = datetime.strptime(proposal.get('votingDeadline'), '%Y-%m-%dT%H:%M:%S')
+        createdDate = datetime.strptime(proposal.get('createdDate'), '%Y-%m-%dT%H:%M:%S')
+        percent_time = self.percent_time(createdDate, votingDeadline, datetime.utcnow())
+
+        self.titleLabel.setText(title)
+        self.amountSmartLabel.setText(amountSmart)
+        self.amountUSDLabel.setText(amountUSD)
+
         self.progressYes.setProperty("value", int(proposal.get('percentYes')))
         self.progressNo.setProperty("value", int(proposal.get('percentNo')))
         self.progressAbstain.setProperty("value", int(proposal.get('percentAbstain')))
 
-        self.yesLabel.setText(_translate("SmartProposalWidget", 'Yes {}%( {} SMART  )'.format(percentYes, voteYes)))
-        self.noLabel.setText(_translate("SmartProposalWidget", 'No {}% ( {} SMART  )'.format(percentNo, voteNo)))
-        self.abstainLabel.setText(_translate("SmartProposalWidget", 'Abstain {}% ( {} SMART  )'.format(percentAbstain, voteAbstain)))
+        self.yesLabel.setText("Yes {}%( {} SMART  )".format(percentYes, voteYes))
+        self.noLabel.setText("No {}% ( {} SMART  )".format(percentNo, voteNo))
+        self.abstainLabel.setText("Abstain {}% ( {} SMART  )".format(percentAbstain, voteAbstain))
 
         self.viewProposalButton.clicked.connect(lambda: self.open_proposal_in_browser(proposal.get('url')))
 
-        from datetime import datetime
-        d = proposal.get('votingDeadline')
-        votingDeadline = datetime.strptime(d, '%Y-%m-%dT%H:%M:%S')
-        self.deadlineLabel.setText(_translate("SmartProposalWidget", votingDeadline.strftime("%b %d %Y %H:%M:%S UTC")))
-
-        d = proposal.get('createdDate')
-        createdDate = datetime.strptime(d, '%Y-%m-%dT%H:%M:%S')
-
-        percent_time = self.percent_time(createdDate,votingDeadline,datetime.utcnow())
+        self.deadlineLabel.setText(votingDeadline.strftime("%b %d %Y %H:%M:%S UTC"))
         self.deadlineProgress.setProperty("value", int(percent_time))
 
-    def litering_by_three(self, a):
+        self.yesButton.clicked.connect(lambda: self.update_vote_option("YES"))
+        self.noButton.clicked.connect(lambda: self.update_vote_option("NO"))
+        self.abstainButton.clicked.connect(lambda: self.update_vote_option("ABSTAIN"))
+        self.disabledButton.clicked.connect(self.disable_vote_option)
+
+    def add_thousands_spaces(self, a):
         a = int(a)
         return format(a, ',').replace(',', ' ').replace('.', ',')
 
@@ -247,6 +271,19 @@ class Ui_SmartProposalWidget(object):
         total = self.t(end_time) - self.t(start_time)
         current = self.t(current_time) - self.t(start_time)
         return (100.0 * current) / total
+
+    def update_votes(self):
+        total = self.t(end_time) - self.t(start_time)
+        current = self.t(current_time) - self.t(start_time)
+        return (100.0 * current) / total
+
+    def update_vote_option(self, option):
+        self.selected_voting_option_map[self.proposal.get("proposalId")] = option
+
+
+    def disable_vote_option(self):
+        self.selected_voting_option_map.pop(self.proposal.get("proposalId"), None)
+
 
 if __name__ == "__main__":
     import sys

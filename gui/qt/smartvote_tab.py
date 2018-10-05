@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import *
 from electrum_smart import bitcoin
 from electrum_smart.util import PrintError, bfh
 from electrum_smart.smartvote_manager import SmartvoteManager
-from .smartproposal import Ui_SmartProposalWidget
+from .smartvote_proposal import Ui_SmartProposalWidget
 
 from . import util
 
@@ -16,7 +16,9 @@ class SmartvoteTab(QWidget):
 
     def __init__(self, parent=None):
         super(SmartvoteTab, self).__init__(parent)
+        self.selected_voting_option_map = dict()
         self.create_layout()
+        self.on_proposal_option_changed()
 
     def create_layout(self):
         self.setObjectName("SmartVotingPage")
@@ -176,7 +178,16 @@ class SmartvoteTab(QWidget):
         self.refreshButton.setText(_translate("SmartVotingPage", "Refresh List"))
         self.castVotesButton.setText(_translate("SmartVotingPage", "Vote for X proposals"))
 
+    def on_proposal_option_changed(self):
+        selected_proposals = len(self.selected_voting_option_map)
+        self.castVotesButton.setText("Vote for {} proposals".format(selected_proposals))
+        if selected_proposals > 0:
+            self.castVotesButton.setEnabled(True)
+        else:
+            self.castVotesButton.setEnabled(False)
+
     def update_all_proposals(self):
+
         self.smartvote_manager = SmartvoteManager()
         open_proposals = self.smartvote_manager.update_proposals().get("result")
 
@@ -186,7 +197,11 @@ class SmartvoteTab(QWidget):
         for proposal in open_proposals:
             SmartProposalWidget = QWidget()
             ui = Ui_SmartProposalWidget()
-            ui.setupUi(SmartProposalWidget, proposal)
+            ui.setupUi(SmartProposalWidget, proposal, self.selected_voting_option_map)
+            ui.yesButton.clicked.connect(self.on_proposal_option_changed)
+            ui.noButton.clicked.connect(self.on_proposal_option_changed)
+            ui.abstainButton.clicked.connect(self.on_proposal_option_changed)
+            ui.disabledButton.clicked.connect(self.on_proposal_option_changed)
             self.verticalLayout_6.addWidget(SmartProposalWidget)
 
     def refresh_proposals(self):
