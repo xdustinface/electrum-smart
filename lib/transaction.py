@@ -920,8 +920,8 @@ class Transaction:
         return self.txid()
 
     def txid(self):
-        all_segwit = all(self.is_segwit_input(x) for x in self.inputs())
-        if not all_segwit and not self.is_complete():
+        #all_segwit = all(self.is_segwit_input(x) for x in self.inputs())
+        if not self.is_complete():
             return None
         ser = self.serialize(witness=False)
         return bh2u(Hash_Sha256(bfh(ser))[::-1])
