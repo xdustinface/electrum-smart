@@ -234,6 +234,7 @@ class SmartnodeTab(QWidget, PrintError):
 
     def __init__(self, parent=None):
         super(SmartnodeTab, self).__init__(parent)
+        self.gui = parent
         self.create_layout()
 
     def update_nodelist(self, wallet, config, manager):
