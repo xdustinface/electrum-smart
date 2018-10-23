@@ -6,10 +6,10 @@ from electrum_smart.i18n import _
 from electrum_smart.util import PrintError
 
 
-class Ui_CastVotesDialog(QDialog, PrintError):
+class CastVotesDialog(QDialog, PrintError):
 
     def __init__(self, parent=None):
-        super(Ui_CastVotesDialog, self).__init__(parent)
+        super(CastVotesDialog, self).__init__(parent)
         self.setupUi()
 
     def setupUi(self):
@@ -59,8 +59,8 @@ class Ui_CastVotesDialog(QDialog, PrintError):
 if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
-    CastVotesDialog = QDialog()
-    ui = Ui_CastVotesDialog()
+    _CastVotesDialog = QDialog()
+    ui = CastVotesDialog()
     ui.setupUi(self)
     self.show()
     sys.exit(app.exec_())

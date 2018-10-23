@@ -8,8 +8,9 @@ from PyQt5.QtWidgets import *
 from electrum_smart import bitcoin
 from electrum_smart.util import PrintError, bfh
 from electrum_smart.smartvote_manager import SmartvoteManager
-from .smartvote_proposal import Ui_SmartProposalWidget
-from .smartvote_castvotedialog import Ui_CastVotesDialog
+from .smartvote_listproposal import Ui_SmartProposalWidget
+from .smartvote_castdialog import CastVotesDialog
+from .smartvote_addresses import VoteAddressesDialog
 
 from . import util
 
@@ -126,6 +127,7 @@ class SmartvoteTab(QWidget):
         self.horizontalLayout_6.addWidget(self.addressesLabel)
         self.selectAddressesButton = QPushButton(self.widget_2)
         self.selectAddressesButton.setObjectName("selectAddressesButton")
+        self.selectAddressesButton.clicked.connect(self.open_addresses_dialog)
         self.horizontalLayout_6.addWidget(self.selectAddressesButton)
         self.verticalLayout_8.addLayout(self.horizontalLayout_6)
         self.horizontalLayout_5.addLayout(self.verticalLayout_8)
@@ -180,8 +182,12 @@ class SmartvoteTab(QWidget):
         self.refreshButton.setText(_translate("SmartVotingPage", "Refresh List"))
         self.castVotesButton.setText(_translate("SmartVotingPage", "Vote for X proposals"))
 
+    def open_addresses_dialog(self):
+        d = VoteAddressesDialog()
+        d.exec_()
+
     def open_cast_vote_dialog(self):
-        d = Ui_CastVotesDialog()
+        d = CastVotesDialog()
         d.exec_()
 
     def on_proposal_option_changed(self):
