@@ -9,6 +9,7 @@ from electrum_smart import bitcoin
 from electrum_smart.util import PrintError, bfh
 from electrum_smart.smartvote_manager import SmartvoteManager
 from .smartvote_proposal import Ui_SmartProposalWidget
+from .smartvote_castvotedialog import Ui_CastVotesDialog
 
 from . import util
 
@@ -153,6 +154,7 @@ class SmartvoteTab(QWidget):
         self.horizontalLayout_2.addItem(spacerItem1)
         self.castVotesButton = QPushButton(self.rewardsPage)
         self.castVotesButton.setObjectName("castVotesButton")
+        self.castVotesButton.clicked.connect(self.open_cast_vote_dialog)
         self.horizontalLayout_2.addWidget(self.castVotesButton)
         spacerItem2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem2)
@@ -177,6 +179,10 @@ class SmartvoteTab(QWidget):
         self.selectAddressesButton.setText(_translate("SmartVotingPage", "Select addresses"))
         self.refreshButton.setText(_translate("SmartVotingPage", "Refresh List"))
         self.castVotesButton.setText(_translate("SmartVotingPage", "Vote for X proposals"))
+
+    def open_cast_vote_dialog(self):
+        d = Ui_CastVotesDialog()
+        d.exec_()
 
     def on_proposal_option_changed(self):
         selected_proposals = len(self.selected_voting_option_map)
