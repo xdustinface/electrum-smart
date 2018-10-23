@@ -166,6 +166,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setCentralWidget(tabs)
 
+        tabs.currentChanged.connect(self.loadProposals)
+
         if self.config.get("is_maximized"):
             self.showMaximized()
 
@@ -209,6 +211,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.load_wallet(wallet)
         self.connect_slots(gui_object.timer)
         self.fetch_alias()
+
+    def loadProposals(self, index):
+        if(index == 4):
+            self.update_smartvote_tab()
 
     def on_history(self, b):
         self.new_fx_history_signal.emit()
@@ -351,8 +357,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.masternode_manager = MasternodeManager(self.wallet, self.config)
         self.smartnode_tab.update_nodelist(self.wallet, self.config, self.masternode_manager)
         #self.masternode_manager.send_subscriptions()
-
-        self.update_smartvote_tab()
 
         self.update_recently_visited(wallet.storage.path)
         # address used to create a dummy transaction and estimate transaction fee

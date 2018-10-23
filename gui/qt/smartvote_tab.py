@@ -6,9 +6,9 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 from electrum_smart import bitcoin
-from electrum_smart.util import PrintError, bfh
-from electrum_smart.smartvote_manager import SmartvoteManager
 from .smartvote_listproposal import Ui_SmartProposalWidget
+from electrum_smart.util import print_error, print_msg
+from electrum_smart.smartvote_manager import SmartvoteManager
 from .smartvote_castdialog import CastVotesDialog
 from .smartvote_addresses import VoteAddressesDialog
 
@@ -21,6 +21,7 @@ class SmartvoteTab(QWidget):
         self.selected_voting_option_map = dict()
         self.create_layout()
         self.on_proposal_option_changed()
+        self.open_proposals_qtd = 0;
 
     def create_layout(self):
         self.setObjectName("SmartVotingPage")
@@ -199,12 +200,18 @@ class SmartvoteTab(QWidget):
             self.castVotesButton.setEnabled(False)
 
     def update_all_proposals(self):
-
         self.smartvote_manager = SmartvoteManager()
-        open_proposals = self.smartvote_manager.update_proposals().get("result")
 
-        open_proposals_qtd = len(open_proposals)
-        self.openProposalsLabel.setText(str(open_proposals_qtd))
+        if self.open_proposals_qtd <= 0:
+            util.WaitingDialog(self, ('Loading proposals...'), self.load_proposal_thread, self.on_load_proposal_successful, self.on_load_proposal_error)
+
+    def load_proposal_thread(self):
+        return self.smartvote_manager.update_proposals().get("result")
+
+    def on_load_proposal_successful(self, open_proposals):
+
+        self.open_proposals_qtd = len(open_proposals)
+        self.openProposalsLabel.setText(str(self.open_proposals_qtd))
 
         for proposal in open_proposals:
             SmartProposalWidget = QWidget()
@@ -216,13 +223,20 @@ class SmartvoteTab(QWidget):
             ui.disabledButton.clicked.connect(self.on_proposal_option_changed)
             self.verticalLayout_6.addWidget(SmartProposalWidget)
 
+        print_msg('Successfully loaded proposals')
+
+    def on_load_proposal_error(self, err):
+        print_error('Error loading proposals')
+        errmsg = ''.join(traceback.format_exception_only(err[0], err[1]))
+        QMessageBox.critical(self, ('Error loading proposals'), (errmsg))
+
     def refresh_proposals(self):
 
         layout = self.verticalLayout_6
         for i in reversed(range(layout.count())):
             layout.itemAt(i).widget().setParent(None)
 
-        self.update_all_proposals()
+        util.WaitingDialog(self, ('Loading proposals...'), self.load_proposal_thread, self.on_load_proposal_successful,self.on_load_proposal_error)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
