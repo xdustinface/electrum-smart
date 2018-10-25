@@ -30,7 +30,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QPushButton
 
-from electrum_smart import bitcoin, util
+from electrum_smart import bitcoin, util, keystore
 from electrum_smart import transaction
 from electrum_smart.plugins import BasePlugin, hook
 from electrum_smart.i18n import _
@@ -38,6 +38,7 @@ from electrum_smart.wallet import Multisig_Wallet
 from electrum_smart.util import bh2u, bfh
 
 from electrum_smart_gui.qt.transaction_dialog import show_transaction
+from electrum_smart_gui.qt.util import WaitingDialog
 
 import sys
 import traceback
@@ -170,18 +171,25 @@ class Plugin(BasePlugin):
         return cosigner_xpub in xpub_set
 
     def do_send(self, tx):
+        def on_success(result):
+            window.show_message(_("Your transaction was sent to the cosigning pool.") + '\n' +
+                                _("Open your cosigner wallet to retrieve it."))
+        def on_failure(exc_info):
+            e = exc_info[1]
+            try: traceback.print_exception(*exc_info)
+            except OSError: pass
+            window.show_message(_("Failed to send transaction to cosigning pool."))
+
         for window, xpub, K, _hash in self.cosigner_list:
             if not self.cosigner_can_sign(tx, xpub):
                 continue
+            # construct message
             raw_tx_bytes = bfh(str(tx))
             message = bitcoin.encrypt_message(raw_tx_bytes, bh2u(K)).decode('ascii')
-            try:
-                server.put(_hash, message)
-            except Exception as e:
-                traceback.print_exc(file=sys.stdout)
-                window.show_message("Failed to send transaction to cosigning pool.")
-                return
-            window.show_message("Your transaction was sent to the cosigning pool.\nOpen your cosigner wallet to retrieve it.")
+            # send message
+            task = lambda: server.put(_hash, message)
+            msg = _('Sending transaction to cosigning pool...')
+            WaitingDialog(window, msg, task, on_success, on_failure)
 
     def on_receive(self, keyhash, message):
         self.print_error("signal arrived for", keyhash)
@@ -194,12 +202,14 @@ class Plugin(BasePlugin):
 
         wallet = window.wallet
         if wallet.has_keystore_encryption():
-            password = window.password_dialog('An encrypted transaction was retrieved from cosigning pool.\nPlease enter your password to decrypt it.')
+            password = window.password_dialog(
+                'An encrypted transaction was retrieved from cosigning pool.\nPlease enter your password to decrypt it.')
             if not password:
                 return
         else:
             password = None
-            if not window.question(_("An encrypted transaction was retrieved from cosigning pool.\nDo you want to open it now?")):
+            if not window.question(
+                    _("An encrypted transaction was retrieved from cosigning pool.\nDo you want to open it now?")):
                 return
 
         xprv = wallet.keystore.get_master_private_key(password)
