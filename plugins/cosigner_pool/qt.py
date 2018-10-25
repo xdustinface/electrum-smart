@@ -201,15 +201,20 @@ class Plugin(BasePlugin):
             return
 
         wallet = window.wallet
-        if wallet.has_keystore_encryption():
-            password = window.password_dialog(
-                'An encrypted transaction was retrieved from cosigning pool.\nPlease enter your password to decrypt it.')
+        if isinstance(wallet.keystore, keystore.Hardware_KeyStore):
+            window.show_warning(_('An encrypted transaction was retrieved from cosigning pool.') + '\n' +
+                                _('However, hardware wallets do not support message decryption, '
+                                  'which makes them not compatible with the current design of cosigner pool.'))
+            return
+        elif wallet.has_keystore_encryption():
+            password = window.password_dialog(_('An encrypted transaction was retrieved from cosigning pool.') + '\n' +
+                                              _('Please enter your password to decrypt it.'))
             if not password:
                 return
         else:
             password = None
-            if not window.question(
-                    _("An encrypted transaction was retrieved from cosigning pool.\nDo you want to open it now?")):
+            if not window.question(_("An encrypted transaction was retrieved from cosigning pool.") + '\n' +
+                                   _("Do you want to open it now?")):
                 return
 
         xprv = wallet.keystore.get_master_private_key(password)
