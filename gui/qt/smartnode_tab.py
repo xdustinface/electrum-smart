@@ -5,7 +5,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 from electrum_smart.i18n import _
-from electrum_smart import bitcoin
+from electrum_smart import bitcoin, keystore
 from electrum_smart.util import PrintError, bfh
 from electrum_smart.smartnode import MasternodeAnnounce, NetworkAddress
 from .smartnode_controldialog import SmartnodeControlDialog
@@ -485,9 +485,10 @@ class SmartnodeTab(QWidget, PrintError):
 
         pw = None
         if self.manager.wallet.has_password():
-            pw = self.gui.password_dialog(msg=_('Please enter your password to activate smartnode "%s".' % alias))
-            if pw is None:
-                return
+            if not isinstance(self.manager.wallet.keystore, keystore.Hardware_KeyStore):
+                pw = self.gui.password_dialog(self.manager.wallet,msg=_('Please enter your password to activate smartnode "%s".' % alias))
+                if pw is None:
+                    return
 
         def sign_thread():
             return self.manager.sign_announce(alias, pw)
