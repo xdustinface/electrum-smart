@@ -334,7 +334,6 @@ class SettingsDialog(WindowModalDialog):
             version = "%d.%d.%d" % (features.major_version,
                                     features.minor_version,
                                     features.patch_version)
-            coins = ", ".join(coin.coin_name for coin in features.coins)
 
             device_label.setText(features.label)
             pin_set_label.setText(noyes[features.pin_protection])
@@ -344,7 +343,6 @@ class SettingsDialog(WindowModalDialog):
             device_id_label.setText(features.device_id)
             initialized_label.setText(noyes[features.initialized])
             version_label.setText(version)
-            coins_label.setText(coins)
             clear_pin_button.setVisible(features.pin_protection)
             clear_pin_warning.setVisible(features.pin_protection)
             pin_button.setText(setchange[features.pin_protection])
@@ -452,7 +450,7 @@ class SettingsDialog(WindowModalDialog):
             (_("Firmware Version"), version_label),
             (_("Device ID"), device_id_label),
             (_("Bootloader Hash"), bl_hash_label),
-            (_("Supported Coins"), coins_label),
+            #(_("Supported Coins"), coins_label),
             (_("Language"), language_label),
             (_("Initialized"), initialized_label),
         ]
