@@ -53,6 +53,7 @@ from electrum_smart import util, bitcoin, commands, coinchooser
 from electrum_smart import paymentrequest
 from electrum_smart.wallet import Multisig_Wallet, AddTransactionException
 from electrum_smart.smartnode_manager import MasternodeManager
+from electrum_smart.smartvote_manager import SmartvoteManager
 
 
 from .amountedit import AmountEdit, BTCAmountEdit, MyLineEdit, FeerateEdit
@@ -101,7 +102,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         QMainWindow.__init__(self)
 
         self.gui_object = gui_object
-        self.masternode_manager = None
+        self.smartnode_manager = None
+        self.smartvote_manager = None
         self.config = config = gui_object.config
 
         self.setup_exception_hook()
@@ -354,9 +356,13 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         wallet.thread = TaskThread(self, self.on_error)
         self.wallet = wallet
 
-        self.masternode_manager = MasternodeManager(self.wallet, self.config)
-        self.smartnode_tab.update_nodelist(self.wallet, self.config, self.masternode_manager)
-        #self.masternode_manager.send_subscriptions()
+        #Load SmartNode
+        self.smartnode_manager = MasternodeManager(self.wallet, self.config)
+        self.smartnode_tab.update_nodelist(self.wallet, self.config, self.smartnode_manager)
+
+        #Load SmartVote
+        self.smartvote_manager = SmartvoteManager(self.wallet)
+        self.smartvote_tab.update_vote_info(self.smartvote_manager)
 
         self.update_recently_visited(wallet.storage.path)
         # address used to create a dummy transaction and estimate transaction fee
@@ -730,7 +736,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             icon = QIcon(":icons/status_disconnected.png")
 
         elif self.network.is_connected():
-            self.masternode_manager.send_subscriptions()
+            self.smartnode_manager.send_subscriptions()
             server_height = self.network.get_server_height()
             server_lag = self.network.get_local_height() - server_height
             # Server height can be 0 after switching to a new server
@@ -780,7 +786,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.contact_list.update()
         self.invoice_list.update()
         self.update_completions()
-        #self.update_smartvote_tab()
 
     def create_history_tab(self):
         from .history_list import HistoryList

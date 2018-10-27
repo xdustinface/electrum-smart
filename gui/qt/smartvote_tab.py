@@ -16,12 +16,13 @@ from . import util
 
 class SmartvoteTab(QWidget):
 
-    def __init__(self, parent=None):
+    def __init__(self, wallet, parent=None):
         super(SmartvoteTab, self).__init__(parent)
         self.selected_voting_option_map = dict()
         self.create_layout()
         self.on_proposal_option_changed()
-        self.open_proposals_qtd = 0;
+        self.open_proposals_qty = 0
+        self.smartvote_manager = None
 
     def create_layout(self):
         self.setObjectName("SmartVotingPage")
@@ -199,10 +200,19 @@ class SmartvoteTab(QWidget):
         else:
             self.castVotesButton.setEnabled(False)
 
-    def update_all_proposals(self):
-        self.smartvote_manager = SmartvoteManager()
+    def update_vote_info(self, smartvotemanager):
+        self.smartvote_manager = smartvotemanager
 
-        if self.open_proposals_qtd <= 0:
+        voting_power, addrs = self.smartvote_manager.get_voting_power()
+
+        voting_power_label = "{} SMART".format(self.smartvote_manager.add_thousands_spaces(voting_power))
+        self.votingPowerLabel.setText(voting_power_label)
+
+        addresses_label = "( {} addresses )".format(addrs)
+        self.addressesLabel.setText(addresses_label)
+
+    def update_all_proposals(self):
+        if self.open_proposals_qty <= 0:
             util.WaitingDialog(self, ('Loading proposals...'), self.load_proposal_thread, self.on_load_proposal_successful, self.on_load_proposal_error)
 
     def load_proposal_thread(self):
@@ -210,8 +220,8 @@ class SmartvoteTab(QWidget):
 
     def on_load_proposal_successful(self, open_proposals):
 
-        self.open_proposals_qtd = len(open_proposals)
-        self.openProposalsLabel.setText(str(self.open_proposals_qtd))
+        self.open_proposals_qty = len(open_proposals)
+        self.openProposalsLabel.setText(str(self.open_proposals_qty))
 
         for proposal in open_proposals:
             SmartProposalWidget = QWidget()
