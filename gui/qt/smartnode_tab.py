@@ -232,7 +232,7 @@ class SmartnodeTab(QWidget, PrintError):
     EDIT = 1
     VIEW = 2
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super(SmartnodeTab, self).__init__(parent)
         self.gui = parent
         self.create_layout()
@@ -486,7 +486,7 @@ class SmartnodeTab(QWidget, PrintError):
         pw = None
         if self.manager.wallet.has_password():
             if not isinstance(self.manager.wallet.keystore, keystore.Hardware_KeyStore):
-                pw = self.gui.password_dialog(self.manager.wallet,msg=_('Please enter your password to activate smartnode "%s".' % alias))
+                pw = self.gui.password_dialog(_('Please enter your password to activate smartnode "%s".' % alias))
                 if pw is None:
                     return
 
