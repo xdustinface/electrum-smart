@@ -157,7 +157,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             tab.tab_description = description
             tab.tab_pos = len(tabs)
             tab.tab_name = name
-            if self.config.get('show_{}_tab'.format(name), False):
+            if self.config.get('show_{}_tab'.format(name), True):
                 tabs.addTab(tab, icon, description.replace("&", ""))
 
         add_optional_tab(tabs, self.addresses_tab, QIcon(":icons/tab_addresses.png"), _("&Addresses"), "addresses")
