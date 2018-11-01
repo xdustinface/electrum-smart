@@ -223,15 +223,12 @@ class MasternodeManager(object):
         if mn.vin.get('value', 0) != bitcoin.COIN * 10000:
             raise Exception('Smartnode requires a collateral 10000 SMART output.')
 
-        c, u, x = self.wallet.get_addr_balance(mn.vin['address'])
-        if (c < 10000 * bitcoin.COIN):
+        # Ensure collateral was not moved or spent.
+        uxto = '{}:{}'.format(mn.vin['prevout_hash'], mn.vin['prevout_n'])
+        utxos = self.wallet.get_addr_utxo(mn.vin['address'])
+        if uxto not in utxos:
             raise Exception('Smartnode requires a 10 000 SMART collateral. Check if funds have been moved or spent.')
 
-        # If the masternode has been announced, it can be announced again if it has been disabled.
-        #if mn.announced:
-        #    status = self.masternode_statuses.get(mn.get_collateral_str())
-        #   if status in ['PRE_ENABLED', 'ENABLED']:
-        #        raise Exception('Smartnode has already been started')
 
     def check_masternode_status(self, alias):
         """Raise an exception if alias can't be signed and announced to the network."""
