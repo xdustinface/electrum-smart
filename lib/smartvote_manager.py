@@ -30,7 +30,7 @@ class SmartvoteManager(object):
         if (response.ok):
 
             # Loading the response data into a dict variable
-            jData = json.loads(response.content)
+            jData = json.loads(response.content.decode("utf-8"))
 
             print_msg("Loaded {0} proposals from smartvote API".format(len(jData.get("result"))))
 
