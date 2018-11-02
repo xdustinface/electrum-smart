@@ -42,14 +42,14 @@ class SmartvoteManager(object):
 
     def get_voting_power(self):
         voting_power = 0
-        addr_qty = 0
         addresses = self.wallet.get_addresses()
+        vote_addresses = []
         for addr in addresses:
             c, u, x = self.wallet.get_addr_balance(addr)
             if c >= 1 * COIN:
                 voting_power += c
-                addr_qty += 1
-        return int(voting_power/COIN), addr_qty
+                vote_addresses.append(addr)
+        return int(voting_power/COIN), vote_addresses
 
     def add_thousands_spaces(self, a):
         a = int(a)

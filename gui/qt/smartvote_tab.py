@@ -23,6 +23,7 @@ class SmartvoteTab(QWidget):
         self.on_proposal_option_changed()
         self.open_proposals_qty = 0
         self.smartvote_manager = None
+        self.vote_address_list = None
 
     def create_layout(self):
         self.setObjectName("SmartVotingPage")
@@ -127,9 +128,11 @@ class SmartvoteTab(QWidget):
         self.addressesLabel = QLabel(self.widget_2)
         self.addressesLabel.setObjectName("addressesLabel")
         self.horizontalLayout_6.addWidget(self.addressesLabel)
+
         self.selectAddressesButton = QPushButton(self.widget_2)
         self.selectAddressesButton.setObjectName("selectAddressesButton")
-        self.selectAddressesButton.clicked.connect(self.open_addresses_dialog)
+        self.selectAddressesButton.clicked.connect(lambda:self.open_addresses_dialog(self.vote_address_list))
+
         self.horizontalLayout_6.addWidget(self.selectAddressesButton)
         self.verticalLayout_8.addLayout(self.horizontalLayout_6)
         self.horizontalLayout_5.addLayout(self.verticalLayout_8)
@@ -184,8 +187,8 @@ class SmartvoteTab(QWidget):
         self.refreshButton.setText(_translate("SmartVotingPage", "Refresh List"))
         self.castVotesButton.setText(_translate("SmartVotingPage", "Vote for X proposals"))
 
-    def open_addresses_dialog(self):
-        d = VoteAddressesDialog()
+    def open_addresses_dialog(self, address_list):
+        d = VoteAddressesDialog(address_list)
         d.exec_()
 
     def open_cast_vote_dialog(self):
@@ -203,12 +206,12 @@ class SmartvoteTab(QWidget):
     def update_vote_info(self, smartvotemanager):
         self.smartvote_manager = smartvotemanager
 
-        voting_power, addrs = self.smartvote_manager.get_voting_power()
+        voting_power, self.vote_address_list = self.smartvote_manager.get_voting_power()
 
         voting_power_label = "{} SMART".format(self.smartvote_manager.add_thousands_spaces(voting_power))
         self.votingPowerLabel.setText(voting_power_label)
 
-        addresses_label = "( {} addresses )".format(addrs)
+        addresses_label = "( {} addresses )".format(len(self.vote_address_list))
         self.addressesLabel.setText(addresses_label)
 
     def update_all_proposals(self):

@@ -7,9 +7,12 @@ from electrum_smart.util import PrintError
 
 class VoteAddressesDialog(QDialog, PrintError):
 
-    def __init__(self, parent=None):
+    def __init__(self, vote_address_list, parent=None):
         super(VoteAddressesDialog, self).__init__(parent)
+        self.vote_address_list = vote_address_list
         self.setupUi()
+        self.setupAddressList()
+
 
     def setupUi(self):
         self.setObjectName("VoteAddressesDialog")
@@ -69,6 +72,7 @@ class VoteAddressesDialog(QDialog, PrintError):
         self.horizontalLayout_2.addItem(spacerItem1)
         self.button = QPushButton(self.widget_2)
         self.button.setObjectName("button")
+        self.button.clicked.connect(self.close)
         self.horizontalLayout_2.addWidget(self.button)
         spacerItem2 = QSpacerItem(88, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem2)
@@ -79,7 +83,7 @@ class VoteAddressesDialog(QDialog, PrintError):
 
     def retranslateUi(self, VoteAddressesDialog):
         _translate = QCoreApplication.translate
-        self.setWindowTitle(_translate("VoteAddressesDialog", "Create new Smartnode"))
+        self.setWindowTitle(_translate("VoteAddressesDialog", "Change your voting power"))
         self.label.setText(_translate("VoteAddressesDialog", "Selected voting power"))
         self.votingPowerLabel.setText(_translate("VoteAddressesDialog", "0 SMART"))
         self.selectionButton.setText(_translate("VoteAddressesDialog", "(un)select all"))
@@ -91,6 +95,27 @@ class VoteAddressesDialog(QDialog, PrintError):
         item.setText(_translate("VoteAddressesDialog", "Address"))
         self.button.setText(_translate("VoteAddressesDialog", "Close"))
 
+    def setupAddressList(self):
+        self.votingPowerLabel.setText("{} SMART".format(len(self.vote_address_list)))
+
+        nRows = len(self.vote_address_list)
+        nCols = 3
+        self.addressTable.setColumnCount(nCols)
+        self.addressTable.setRowCount(nRows)
+
+        for addr in self.vote_address_list:
+            rowIndex = 0
+
+            chkBoxItem = QTableWidgetItem()
+            chkBoxItem.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+            chkBoxItem.setCheckState(Qt.Unchecked)
+
+            self.addressTable.setItem(rowIndex, 0, chkBoxItem) #Enabled
+            self.addressTable.setItem(rowIndex, 1, QTableWidgetItem("text1")) #Voting Power
+            self.addressTable.setItem(rowIndex, 2, QTableWidgetItem(addr)) #Address
+            rowIndex = rowIndex + 1
+
+        #self.addressTable
 
 if __name__ == "__main__":
     import sys
