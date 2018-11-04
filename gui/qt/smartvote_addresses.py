@@ -96,7 +96,12 @@ class VoteAddressesDialog(QDialog, PrintError):
         self.button.setText(_translate("VoteAddressesDialog", "Close"))
 
     def setupAddressList(self):
-        self.votingPowerLabel.setText("{} SMART".format(len(self.vote_address_list)))
+
+
+        avalable_addresses = None #Todo: dict for address and voting power
+        selected_addresses = None #Todo: dict for selected addresses and voting power
+
+        self.votingPowerLabel.setText("{} SMART".format(self.get_voting_power(selected_addresses)))
 
         nRows = len(self.vote_address_list)
         nCols = 3
@@ -109,6 +114,7 @@ class VoteAddressesDialog(QDialog, PrintError):
             chkBoxItem = QTableWidgetItem()
             chkBoxItem.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
             chkBoxItem.setCheckState(Qt.Unchecked)
+            chkBoxItem.toggled.connect(self.update_selected_addresses) #TODO
 
             self.addressTable.setItem(rowIndex, 0, chkBoxItem) #Enabled
             self.addressTable.setItem(rowIndex, 1, QTableWidgetItem("text1")) #Voting Power

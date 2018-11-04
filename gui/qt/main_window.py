@@ -140,7 +140,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.addresses_tab = self.create_addresses_tab()
         self.smartnode_tab = self.create_smartnode_tab()
         #self.smartrewards_tab = self.create_smartrewards_tab()
-        self.smartvote_tab = self.create_smartvote_tab()
+        #self.smartvote_tab = self.create_smartvote_tab()
         self.utxo_tab = self.create_utxo_tab()
         self.console_tab = self.create_console_tab()
         self.contacts_tab = self.create_contacts_tab()
@@ -150,7 +150,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         tabs.addTab(self.receive_tab, QIcon(":icons/tab_receive.png"), _('Receive'))
         tabs.addTab(self.smartnode_tab, QIcon(":icons/tab_smartnodes.png"), _('Smartnodes'))
         #tabs.addTab(self.smartrewards_tab, QIcon(":icons/tab_smartrewards.png"), _('Smartrewards'))
-        tabs.addTab(self.smartvote_tab, QIcon(":icons/tab_smarthive.png"), _('Smartvote'))
+        #tabs.addTab(self.smartvote_tab, QIcon(":icons/tab_smarthive.png"), _('Smartvote'))
 
         def add_optional_tab(tabs, tab, icon, description, name):
             tab.tab_icon = icon
@@ -168,7 +168,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setCentralWidget(tabs)
 
-        tabs.currentChanged.connect(self.loadProposals)
+        #tabs.currentChanged.connect(self.load_vote_proposals)
 
         if self.config.get("is_maximized"):
             self.showMaximized()
@@ -214,7 +214,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.connect_slots(gui_object.timer)
         self.fetch_alias()
 
-    def loadProposals(self, index):
+    def load_vote_proposals(self, index):
         if(index == 4):
             self.update_smartvote_tab()
 
@@ -361,8 +361,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.smartnode_tab.update_nodelist(self.wallet, self.config, self.smartnode_manager)
 
         #Load SmartVote
-        self.smartvote_manager = SmartvoteManager(self.wallet)
-        self.smartvote_tab.update_vote_info(self.smartvote_manager)
+        #self.smartvote_manager = SmartvoteManager(self.wallet)
+        #self.smartvote_tab.update_vote_info(self.smartvote_manager)
 
         self.update_recently_visited(wallet.storage.path)
         # address used to create a dummy transaction and estimate transaction fee
