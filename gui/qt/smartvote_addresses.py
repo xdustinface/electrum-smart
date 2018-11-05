@@ -13,6 +13,7 @@ class VoteAddressesDialog(QDialog, PrintError):
         self.manager = manager
         self.setupUi()
         self.setupAddressList()
+        self.checked = True
 
 
     def setupUi(self):
@@ -48,6 +49,7 @@ class VoteAddressesDialog(QDialog, PrintError):
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
         self.selectionButton = QPushButton(self)
         self.selectionButton.setObjectName("selectionButton")
+        self.selectionButton.clicked.connect(self.select_unselect_all)
         self.horizontalLayout_3.addWidget(self.selectionButton)
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem)
@@ -129,6 +131,18 @@ class VoteAddressesDialog(QDialog, PrintError):
 
     def update_selected_addresses(self):
         a = 1
+
+    def select_unselect_all(self):
+
+        if self.checked == True:
+            status = Qt.Unchecked
+            self.checked = False
+        else:
+            status = Qt.Checked
+            self.checked = True
+
+        for rowIndex in (0,self.addressTable.rowCount()-1):
+            self.addressTable.item(rowIndex, 0).setCheckState(status)
 
 
 
