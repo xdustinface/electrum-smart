@@ -215,6 +215,10 @@ class SmartvoteTab(QWidget):
         addresses_label = "( {} addresses )".format(len(self.vote_address_list))
         self.addressesLabel.setText(addresses_label)
 
+        if(len(self.vote_address_list) == 0):
+            self.selectAddressesButton.setEnabled(False)
+
+
     def update_all_proposals(self):
         if self.open_proposals_qty <= 0:
             util.WaitingDialog(self, ('Loading proposals...'), self.load_proposal_thread, self.on_load_proposal_successful, self.on_load_proposal_error)
