@@ -188,7 +188,7 @@ class SmartvoteTab(QWidget):
         self.castVotesButton.setText(_translate("SmartVotingPage", "Vote for X proposals"))
 
     def open_addresses_dialog(self, address_list):
-        d = VoteAddressesDialog(address_list)
+        d = VoteAddressesDialog(address_list, self.smartvote_manager)
         d.exec_()
 
     def open_cast_vote_dialog(self):
@@ -206,7 +206,8 @@ class SmartvoteTab(QWidget):
     def update_vote_info(self, smartvotemanager):
         self.smartvote_manager = smartvotemanager
 
-        voting_power, self.vote_address_list = self.smartvote_manager.get_voting_power()
+        self.vote_address_list = self.smartvote_manager.get_avaliable_vote_addresses()
+        voting_power = self.smartvote_manager.get_selected_voting_power(self.vote_address_list)
 
         voting_power_label = "{} SMART".format(self.smartvote_manager.add_thousands_spaces(voting_power))
         self.votingPowerLabel.setText(voting_power_label)

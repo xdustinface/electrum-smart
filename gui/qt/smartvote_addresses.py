@@ -7,9 +7,10 @@ from electrum_smart.util import PrintError
 
 class VoteAddressesDialog(QDialog, PrintError):
 
-    def __init__(self, vote_address_list, parent=None):
+    def __init__(self, vote_address_list, manager, parent=None):
         super(VoteAddressesDialog, self).__init__(parent)
         self.vote_address_list = vote_address_list
+        self.manager = manager
         self.setupUi()
         self.setupAddressList()
 
@@ -96,32 +97,40 @@ class VoteAddressesDialog(QDialog, PrintError):
         self.button.setText(_translate("VoteAddressesDialog", "Close"))
 
     def setupAddressList(self):
+        avaliable_addresses = self.manager.get_avaliable_vote_addresses()
+        selected_addresses = self.vote_address_list
 
+        self.votingPowerLabel.setText("{} SMART".format(self.manager.add_thousands_spaces(self.manager.get_selected_voting_power(selected_addresses))))
 
-        avalable_addresses = None #Todo: dict for address and voting power
-        selected_addresses = None #Todo: dict for selected addresses and voting power
-
-        self.votingPowerLabel.setText("{} SMART".format(self.get_voting_power(selected_addresses)))
-
-        nRows = len(self.vote_address_list)
+        nRows = len(avaliable_addresses)
         nCols = 3
         self.addressTable.setColumnCount(nCols)
         self.addressTable.setRowCount(nRows)
+        self.addressTable.verticalHeader().hide()
+        self.addressTable.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.addressTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.addressTable.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.addressTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
 
-        for addr in self.vote_address_list:
-            rowIndex = 0
+        rowIndex = 0
+        for addr in avaliable_addresses:
 
             chkBoxItem = QTableWidgetItem()
             chkBoxItem.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-            chkBoxItem.setCheckState(Qt.Unchecked)
-            chkBoxItem.toggled.connect(self.update_selected_addresses) #TODO
+            chkBoxItem.setCheckState(Qt.Checked)
+            #chkBoxItem.toggled.connect(self.update_selected_addresses) #TODO
 
             self.addressTable.setItem(rowIndex, 0, chkBoxItem) #Enabled
-            self.addressTable.setItem(rowIndex, 1, QTableWidgetItem("text1")) #Voting Power
+            self.addressTable.setItem(rowIndex, 1, QTableWidgetItem('{} SMART'.format(self.manager.add_thousands_spaces(avaliable_addresses.get(addr))))) #Voting Power
             self.addressTable.setItem(rowIndex, 2, QTableWidgetItem(addr)) #Address
             rowIndex = rowIndex + 1
 
         #self.addressTable
+
+    def update_selected_addresses(self):
+        a = 1
+
+
 
 if __name__ == "__main__":
     import sys

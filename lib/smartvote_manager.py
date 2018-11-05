@@ -40,16 +40,19 @@ class SmartvoteManager(object):
             # If response code is not ok (200), print the resulting http error code with description
             response.raise_for_status()
 
-    def get_voting_power(self):
+    def get_avaliable_vote_addresses(self):
         voting_power = 0
         addresses = self.wallet.get_addresses()
-        vote_addresses = []
+        vote_addresses = {}
         for addr in addresses:
             c, u, x = self.wallet.get_addr_balance(addr)
             if c >= 1 * COIN:
                 voting_power += c
-                vote_addresses.append(addr)
-        return int(voting_power/COIN), vote_addresses
+                vote_addresses[addr] = int(c / COIN)
+        return vote_addresses
+
+    def get_selected_voting_power(self, address_list):
+        return sum(address_list.values())
 
     def add_thousands_spaces(self, a):
         a = int(a)
