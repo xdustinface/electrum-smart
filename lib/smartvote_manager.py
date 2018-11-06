@@ -15,13 +15,14 @@ class SmartvoteManager(object):
     def __init__(self, wallet):
         self.network_event = threading.Event()
         self.wallet = wallet
-        #self.config = config
+        self.avaliable_addresses = {}
+        self.selected_addresses = {}
         self.load()
 
     def load(self):
         """Load from wallet storage."""
-        #masternodes = self.wallet.storage.get('masternodes', {})
-        #self.masternodes = [MasternodeAnnounce.from_dict(d) for d in masternodes.values()]
+        self.avaliable_addresses = self.get_avaliable_vote_addresses()
+        self.selected_addresses = self.avaliable_addresses
 
     def update_proposals(self):
         request = "voteproposals"
@@ -41,18 +42,23 @@ class SmartvoteManager(object):
             response.raise_for_status()
 
     def get_avaliable_vote_addresses(self):
-        voting_power = 0
         addresses = self.wallet.get_addresses()
         vote_addresses = {}
         for addr in addresses:
             c, u, x = self.wallet.get_addr_balance(addr)
             if c >= 1 * COIN:
-                voting_power += c
                 vote_addresses[addr] = int(c / COIN)
         return vote_addresses
 
-    def get_selected_voting_power(self, address_list):
-        return sum(address_list.values())
+    def add_vote_address(self, addr):
+        c, u, x = self.wallet.get_addr_balance(addr)
+        self.selected_addresses[addr] = int(c / COIN)
+
+    def remove_vote_address(self, addr):
+        del self.selected_addresses[addr]
+
+    def get_voting_power(self):
+        return sum(self.selected_addresses.values())
 
     def add_thousands_spaces(self, a):
         a = int(a)

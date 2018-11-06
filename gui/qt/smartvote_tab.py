@@ -131,7 +131,7 @@ class SmartvoteTab(QWidget):
 
         self.selectAddressesButton = QPushButton(self.widget_2)
         self.selectAddressesButton.setObjectName("selectAddressesButton")
-        self.selectAddressesButton.clicked.connect(lambda:self.open_addresses_dialog(self.vote_address_list))
+        self.selectAddressesButton.clicked.connect(self.open_addresses_dialog)
 
         self.horizontalLayout_6.addWidget(self.selectAddressesButton)
         self.verticalLayout_8.addLayout(self.horizontalLayout_6)
@@ -187,8 +187,8 @@ class SmartvoteTab(QWidget):
         self.refreshButton.setText(_translate("SmartVotingPage", "Refresh List"))
         self.castVotesButton.setText(_translate("SmartVotingPage", "Vote for X proposals"))
 
-    def open_addresses_dialog(self, address_list):
-        d = VoteAddressesDialog(address_list, self.smartvote_manager)
+    def open_addresses_dialog(self):
+        d = VoteAddressesDialog(self.smartvote_manager)
         d.exec_()
 
     def open_cast_vote_dialog(self):
@@ -206,16 +206,15 @@ class SmartvoteTab(QWidget):
     def update_vote_info(self, smartvotemanager):
         self.smartvote_manager = smartvotemanager
 
-        self.vote_address_list = self.smartvote_manager.get_avaliable_vote_addresses()
-        voting_power = self.smartvote_manager.get_selected_voting_power(self.vote_address_list)
+        voting_power = self.smartvote_manager.get_voting_power()
 
         voting_power_label = "{} SMART".format(self.smartvote_manager.add_thousands_spaces(voting_power))
         self.votingPowerLabel.setText(voting_power_label)
 
-        addresses_label = "( {} addresses )".format(len(self.vote_address_list))
+        addresses_label = "( {} addresses )".format(len(self.smartvote_manager.selected_addresses))
         self.addressesLabel.setText(addresses_label)
 
-        if(len(self.vote_address_list) == 0):
+        if(len(self.smartvote_manager.avaliable_addresses) == 0):
             self.selectAddressesButton.setEnabled(False)
 
 
