@@ -22,7 +22,7 @@ class SmartvoteManager(object):
     def load(self):
         """Load from wallet storage."""
         self.avaliable_addresses = self.get_avaliable_vote_addresses()
-        self.selected_addresses = self.avaliable_addresses
+        self.selected_addresses = self.get_avaliable_vote_addresses()
 
     def update_proposals(self):
         request = "voteproposals"

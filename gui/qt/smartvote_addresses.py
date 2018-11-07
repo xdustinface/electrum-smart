@@ -119,7 +119,11 @@ class VoteAddressesDialog(QDialog, PrintError):
 
             chkBoxItem = QTableWidgetItem()
             chkBoxItem.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-            chkBoxItem.setCheckState(Qt.Checked)
+
+            if addr in selected_addresses:
+                chkBoxItem.setCheckState(Qt.Checked)
+            else:
+                chkBoxItem.setCheckState(Qt.Unchecked)
 
             voting_power = avaliable_addresses[addr]
 

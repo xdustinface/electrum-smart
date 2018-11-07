@@ -362,7 +362,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         #Load SmartVote
         self.smartvote_manager = SmartvoteManager(self.wallet)
-        self.smartvote_tab.update_vote_info(self.smartvote_manager)
+        self.smartvote_tab.load_smartvote(self.smartvote_manager)
 
         self.update_recently_visited(wallet.storage.path)
         # address used to create a dummy transaction and estimate transaction fee
