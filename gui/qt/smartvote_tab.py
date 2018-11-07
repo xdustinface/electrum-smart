@@ -193,7 +193,7 @@ class SmartvoteTab(QWidget):
         self.update_vote_info()
 
     def open_cast_vote_dialog(self):
-        d = CastVotesDialog()
+        d = CastVotesDialog(self.smartvote_manager, self.selected_voting_option_map)
         d.exec_()
 
     def on_proposal_option_changed(self):
@@ -225,7 +225,6 @@ class SmartvoteTab(QWidget):
         return self.smartvote_manager.update_proposals().get("result")
 
     def on_load_proposal_successful(self, open_proposals):
-
         self.open_proposals_qty = len(open_proposals)
         self.openProposalsLabel.setText(str(self.open_proposals_qty))
 
@@ -247,7 +246,6 @@ class SmartvoteTab(QWidget):
         QMessageBox.critical(self, ('Error loading proposals'), (errmsg))
 
     def refresh_proposals(self):
-
         layout = self.verticalLayout_6
         for i in reversed(range(layout.count())):
             layout.itemAt(i).widget().setParent(None)

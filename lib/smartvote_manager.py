@@ -63,3 +63,6 @@ class SmartvoteManager(object):
     def add_thousands_spaces(self, a):
         a = int(a)
         return format(a, ',').replace(',', ' ').replace('.', ',')
+
+    def vote(self, proposal_id, addr):
+        return True
