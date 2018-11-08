@@ -25,7 +25,7 @@ class SmartvoteManager(object):
         self.selected_addresses = self.get_avaliable_vote_addresses()
 
     def update_proposals(self):
-        request = "voteproposals"
+        request = "{}/VoteProposals".format(URL_HIVE_VOTING_PORTAL)
         response = requests.get(URL_HIVE_VOTING_PORTAL+request)
 
         if (response.ok):
@@ -64,5 +64,6 @@ class SmartvoteManager(object):
         a = int(a)
         return format(a, ',').replace(',', ' ').replace('.', ',')
 
-    def vote(self, proposal_id, addr):
+    def vote(self, proposals, selected_addresses):
+        request = "{}/VoteProposals/CastVoteList".format(URL_HIVE_VOTING_PORTAL)
         return True

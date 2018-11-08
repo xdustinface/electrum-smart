@@ -66,20 +66,21 @@ class CastVotesDialog(QDialog, PrintError):
         msg = 'Signing <b>{}</b> messages for <b>{}</b> proposal<br />'.format(len(selected_addresses)*len(self.proposals), len(self.proposals))
         self.results.append(msg)
 
-        for proposal in self.proposals:
+        for proposal_id in self.proposals:
 
-            proposal_id = proposal
-            self.results.append("Vote <b>{}</b> with <b>{} SMART</b> for proposal <b>#{}</b>".format('Yes', '2 500', proposal_id))
+            self.results.append("Vote <b>{}</b> with <b>{} addresses</b> for proposal <b>#{}</b>".format(self.proposals[proposal_id], len(selected_addresses), proposal_id))
             self.results.append("Waiting for response.....<br />")
 
-            for addr in selected_addresses:
-                status = ''
-                result = self.manager.vote(proposal_id, addr)
-                if result == True:
-                    status = '<span style=\" color:green; \"><b>OK</b></span>'
-                else:
-                    status = '<span style=\" color:red; \">ERROR</span>'
-                self.results.append('-> {} | {} SMART {}'.format(addr,'5 000', status))
+            result = self.manager.vote(proposal_id, selected_addresses)
+
+            #for addr in selected_addresses:
+            #    status = ''
+            #
+            #    if result == True:
+            #        status = '<span style=\" color:green; \"><b>OK</b></span>'
+            #    else:
+            #        status = '<span style=\" color:red; \">ERROR</span>'
+            #    self.results.append('-> {} | {} SMART {}'.format(addr,'5 000', status))
 
 
 
