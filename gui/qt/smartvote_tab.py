@@ -16,8 +16,9 @@ from . import util
 
 class SmartvoteTab(QWidget):
 
-    def __init__(self, wallet, parent=None):
+    def __init__(self, parent=None):
         super(SmartvoteTab, self).__init__(parent)
+        self.gui = parent
         self.selected_voting_option_map = dict()
         self.create_layout()
         self.on_proposal_option_changed()
@@ -193,7 +194,7 @@ class SmartvoteTab(QWidget):
         self.update_vote_info()
 
     def open_cast_vote_dialog(self):
-        d = CastVotesDialog(self.smartvote_manager, self.selected_voting_option_map)
+        d = CastVotesDialog(self.gui, self.smartvote_manager, self.selected_voting_option_map)
         d.exec_()
 
     def on_proposal_option_changed(self):
@@ -225,6 +226,7 @@ class SmartvoteTab(QWidget):
         return self.smartvote_manager.update_proposals().get("result")
 
     def on_load_proposal_successful(self, open_proposals):
+        self.smartvote_manager.proposals = open_proposals
         self.open_proposals_qty = len(open_proposals)
         self.openProposalsLabel.setText(str(self.open_proposals_qty))
 

@@ -4,14 +4,15 @@ from PyQt5.QtWidgets import *
 
 from electrum_smart.i18n import _
 from electrum_smart.util import PrintError
-
+from electrum_smart import keystore
 
 class CastVotesDialog(QDialog, PrintError):
 
-    def __init__(self, manager, proposals, parent=None):
+    def __init__(self, parent, manager, selected_proposals):
         super(CastVotesDialog, self).__init__(parent)
         self.manager = manager
-        self.proposals = proposals
+        self.gui = parent
+        self.selected_proposals = selected_proposals
         self.setupUi()
         self.start()
 
@@ -63,15 +64,23 @@ class CastVotesDialog(QDialog, PrintError):
     def start(self):
         selected_addresses = self.manager.selected_addresses
 
-        msg = 'Signing <b>{}</b> messages for <b>{}</b> proposal<br />'.format(len(selected_addresses)*len(self.proposals), len(self.proposals))
+        msg = 'Signing <b>{}</b> messages for <b>{}</b> proposal<br />'.format(len(selected_addresses) * len(self.selected_proposals), len(self.selected_proposals))
         self.results.append(msg)
 
-        for proposal_id in self.proposals:
+        password = None
+        if self.manager.wallet.has_password():
+            if isinstance(self.manager.wallet.keystore, keystore.Hardware_KeyStore):
+                self.gui.show_warning('Vote is not supported on hardware wallets yet')
+                return
+            else:
+                password = self.gui.password_dialog(_('Please enter your password to vote'))
+                if password is None:
+                    return
 
-            self.results.append("Vote <b>{}</b> with <b>{} addresses</b> for proposal <b>#{}</b>".format(self.proposals[proposal_id], len(selected_addresses), proposal_id))
+        for proposal_id in self.selected_proposals:
+            self.results.append("Vote <b>{}</b> with <b>{} addresses</b> for proposal <b>#{}</b>".format(self.selected_proposals[proposal_id], len(selected_addresses), proposal_id))
             self.results.append("Waiting for response.....<br />")
-
-            result = self.manager.vote(proposal_id, selected_addresses)
+            result = self.manager.cast_vote(proposal_id, self.selected_proposals[proposal_id], selected_addresses, password)
 
             #for addr in selected_addresses:
             #    status = ''

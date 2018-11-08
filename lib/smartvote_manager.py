@@ -1,11 +1,12 @@
 import threading
 import requests, json
+import base64
 
 from decimal import Decimal
 from electrum_smart.util import print_msg, print_stderr, json_encode, json_decode, UserCancelled
 from electrum_smart.bitcoin import COIN
 
-URL_HIVE_VOTING_PORTAL = "https://vote.smartcash.cc/api/v1/"
+URL_HIVE_VOTING_PORTAL = "https://vote.smartcash.cc/api/v1"
 
 class SmartvoteManager(object):
     """Smartvote manager.
@@ -17,6 +18,7 @@ class SmartvoteManager(object):
         self.wallet = wallet
         self.avaliable_addresses = {}
         self.selected_addresses = {}
+        self.proposals = {}
         self.load()
 
     def load(self):
@@ -26,7 +28,7 @@ class SmartvoteManager(object):
 
     def update_proposals(self):
         request = "{}/VoteProposals".format(URL_HIVE_VOTING_PORTAL)
-        response = requests.get(URL_HIVE_VOTING_PORTAL+request)
+        response = requests.get(request)
 
         if (response.ok):
 
@@ -64,6 +66,45 @@ class SmartvoteManager(object):
         a = int(a)
         return format(a, ',').replace(',', ' ').replace('.', ',')
 
-    def vote(self, proposals, selected_addresses):
-        request = "{}/VoteProposals/CastVoteList".format(URL_HIVE_VOTING_PORTAL)
+    def cast_vote(self, proposal_id, vote_type, selected_addresses, password):
+
+        proposal = None
+        proposals = self.proposals
+
+        for p in proposals:
+            if (p["proposalId"] == proposal_id):
+                proposal = p
+
+        votes = []
+        for addr in selected_addresses:
+            address_vote = {}
+            address_vote["smartAddress"] = addr
+            address_vote["signature"] = base64.b64encode(self.wallet.sign_message(addr, proposal["url"], password)).decode('ascii')
+            address_vote["voteType"] = vote_type.upper()
+            votes.append(address_vote)
+
+        url = "{}/VoteProposals/CastVoteList".format(URL_HIVE_VOTING_PORTAL)
+        headers = {'Content-type': 'application/json'}
+
+        data = {}
+        data['proposalId'] = proposal_id
+        data['votes'] = votes
+        json_data = json.dumps(data)
+
+        response = requests.post(url, json=data, headers=headers)
+
+        if (response.ok):
+
+            # Loading the response data into a dict variable
+            jData = json.loads(response.content.decode("utf-8"))
+
+            #print_msg("Loaded {0} proposals from smartvote API".format(len(jData.get("result"))))
+
+            #return jData
+
+        else:
+            # If response code is not ok (200), print the resulting http error code with description
+            response.raise_for_status()
+
+
         return True

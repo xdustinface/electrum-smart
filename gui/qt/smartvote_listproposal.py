@@ -280,7 +280,6 @@ class Ui_SmartProposalWidget(object):
     def update_vote_option(self, option):
         self.selected_voting_option_map[self.proposal.get("proposalId")] = option
 
-
     def disable_vote_option(self):
         self.selected_voting_option_map.pop(self.proposal.get("proposalId"), None)
 
