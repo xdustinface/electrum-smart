@@ -1,10 +1,60 @@
+from threading import Thread
+
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 from electrum_smart.i18n import _
-from electrum_smart.util import PrintError
+from electrum_smart.util import print_error, PrintError
 from electrum_smart import keystore
+
+class cast_vote_function(QObject):
+    def __init__(self, widget):
+        super(cast_vote_function, self).__init__()
+        self.widget = widget
+        self.run_trigger.connect(self.run)
+
+    run_trigger = pyqtSignal(int, int)
+    @pyqtSlot(int, int)
+    def run(self, int1, int2):
+        print_error("Vote started")
+        self.cast_vote()
+        print_error("Vote finished")
+        #self.widget.someTrigger.emit([1, 2, 3])
+
+    def cast_vote(self):
+        selected_addresses = self.widget.manager.selected_addresses
+
+        msg = 'Signing <b>{}</b> messages for <b>{}</b> proposal<br />'.format(
+            len(selected_addresses) * len(self.widget.selected_proposals), len(self.widget.selected_proposals))
+        self.widget.results.append(msg)
+
+        password = None
+        if self.widget.manager.wallet.has_password():
+            if isinstance(self.widget.manager.wallet.keystore, keystore.Hardware_KeyStore):
+                self.gui.show_warning('Vote is not supported on hardware wallets yet')
+                return
+            else:
+                password = self.widget.gui.password_dialog(_('Please enter your password to vote'))
+                if password is None:
+                    return
+
+        for proposal_id in self.widget.selected_proposals:
+            self.widget.results.append("Vote <b>{}</b> with <b>{} addresses</b> for proposal <b>#{}</b>".format(self.widget.selected_proposals[proposal_id], len(selected_addresses), proposal_id))
+            self.widget.results.append("<br />Waiting for response.<br />")
+            final_results = self.widget.manager.cast_vote(proposal_id, self.widget.selected_proposals[proposal_id],selected_addresses, password)
+
+            self.widget.results.append('Result for proposal <b>#{}</b>'.format(proposal_id))
+            for result in final_results:
+                if result["status"] == "OK":
+                    status = '<span style=\" color:green; \"><b>OK</b></span>'
+                else:
+                    status = '<span style=\" color:red; \">{}</span>'.format(result["status"])
+                self.widget.results.append('-> {} | {} SMART <b>{}</b>'.format(result["smartAddress"], int(result["amount"]), status))
+
+        msg = '<br /><b>Done!</b>'
+        self.widget.results.append(msg)
+
 
 class CastVotesDialog(QDialog, PrintError):
 
@@ -58,40 +108,15 @@ class CastVotesDialog(QDialog, PrintError):
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'.SF NS Text\'; font-size:13pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-weight:600; color:#000000;\">Start voting...<br /></span></p></body></html>"))
-        self.button.setText(_translate("CastVotesDialog", "Cancel"))
+        self.button.setText(_translate("CastVotesDialog", "Close"))
 
 
     def start(self):
-        selected_addresses = self.manager.selected_addresses
-
-        msg = 'Signing <b>{}</b> messages for <b>{}</b> proposal<br />'.format(len(selected_addresses) * len(self.selected_proposals), len(self.selected_proposals))
-        self.results.append(msg)
-
-        password = None
-        if self.manager.wallet.has_password():
-            if isinstance(self.manager.wallet.keystore, keystore.Hardware_KeyStore):
-                self.gui.show_warning('Vote is not supported on hardware wallets yet')
-                return
-            else:
-                password = self.gui.password_dialog(_('Please enter your password to vote'))
-                if password is None:
-                    return
-
-        for proposal_id in self.selected_proposals:
-            self.results.append("Vote <b>{}</b> with <b>{} addresses</b> for proposal <b>#{}</b>".format(self.selected_proposals[proposal_id], len(selected_addresses), proposal_id))
-            self.results.append("Waiting for response.....<br />")
-            result = self.manager.cast_vote(proposal_id, self.selected_proposals[proposal_id], selected_addresses, password)
-
-            #for addr in selected_addresses:
-            #    status = ''
-            #
-            #    if result == True:
-            #        status = '<span style=\" color:green; \"><b>OK</b></span>'
-            #    else:
-            #        status = '<span style=\" color:red; \">ERROR</span>'
-            #    self.results.append('-> {} | {} SMART {}'.format(addr,'5 000', status))
+        self.thread = QThread()
+        self.thread.start()
+        self.consume = cast_vote_function(self)
+        self.consume.moveToThread(self.thread)
+        self.consume.run_trigger.emit(1, 1)
 
 
 
-        msg = '<br /><b>Done!</b>'
-        self.results.append(msg)

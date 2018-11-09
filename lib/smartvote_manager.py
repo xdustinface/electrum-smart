@@ -67,7 +67,6 @@ class SmartvoteManager(object):
         return format(a, ',').replace(',', ' ').replace('.', ',')
 
     def cast_vote(self, proposal_id, vote_type, selected_addresses, password):
-
         proposal = None
         proposals = self.proposals
 
@@ -89,22 +88,13 @@ class SmartvoteManager(object):
         data = {}
         data['proposalId'] = proposal_id
         data['votes'] = votes
-        json_data = json.dumps(data)
 
         response = requests.post(url, json=data, headers=headers)
 
         if (response.ok):
-
-            # Loading the response data into a dict variable
             jData = json.loads(response.content.decode("utf-8"))
-
-            #print_msg("Loaded {0} proposals from smartvote API".format(len(jData.get("result"))))
-
-            #return jData
-
+            return jData.get('result')
         else:
-            # If response code is not ok (200), print the resulting http error code with description
             response.raise_for_status()
+            return False
 
-
-        return True
