@@ -139,8 +139,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.receive_tab = self.create_receive_tab()
         self.addresses_tab = self.create_addresses_tab()
         self.smartnode_tab = self.create_smartnode_tab()
-        #self.smartrewards_tab = self.create_smartrewards_tab()
         self.smartvote_tab = self.create_smartvote_tab()
+        self.smartrewards_tab = self.create_smartrewards_tab()
         self.utxo_tab = self.create_utxo_tab()
         self.console_tab = self.create_console_tab()
         self.contacts_tab = self.create_contacts_tab()
@@ -149,8 +149,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         tabs.addTab(self.send_tab, QIcon(":icons/tab_send.png"), _('Send'))
         tabs.addTab(self.receive_tab, QIcon(":icons/tab_receive.png"), _('Receive'))
         tabs.addTab(self.smartnode_tab, QIcon(":icons/tab_smartnodes.png"), _('Smartnodes'))
-        #tabs.addTab(self.smartrewards_tab, QIcon(":icons/tab_smartrewards.png"), _('Smartrewards'))
         tabs.addTab(self.smartvote_tab, QIcon(":icons/tab_smarthive.png"), _('Smartvote'))
+        tabs.addTab(self.smartrewards_tab, QIcon(":icons/tab_smartrewards.png"), _('Smartrewards'))
 
         def add_optional_tab(tabs, tab, icon, description, name):
             tab.tab_icon = icon
