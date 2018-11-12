@@ -103,7 +103,7 @@ class Commands:
         self.smartrewards_manager = None
         if self.wallet:
             self.masternode_manager = MasternodeManager(self.wallet, self.config)
-            self.smartrewards_manager = SmartrewardsManager(self.wallet, self.config)
+            self.smartrewards_manager = SmartrewardsManager(self.wallet)
         self._callback = callback
 
     def _run(self, method, args, password_getter):

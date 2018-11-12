@@ -22,45 +22,39 @@
 # ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import sys, time, threading
-import os, json, traceback
+import base64
+import csv
+import os
 import shutil
+import threading
+import traceback
 import weakref
 import webbrowser
-import csv
 from decimal import Decimal
-import base64
-from functools import partial
 
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-import PyQt5.QtCore as QtCore
-
-from .exception_window import Exception_Hook
-from PyQt5.QtWidgets import *
-
-from electrum_smart import keystore, simple_config
-from electrum_smart.bitcoin import COIN, is_address, TYPE_ADDRESS
-from electrum_smart import constants
-from electrum_smart.plugins import run_hook
-from electrum_smart.i18n import _
-from electrum_smart.util import (format_time, format_satoshis, PrintError,
-                           format_satoshis_plain, NotEnoughFunds,
-                           UserCancelled, NoDynamicFeeEstimates, profiler,
-                           export_meta, import_meta, bh2u, bfh, InvalidPassword)
 from electrum_smart import Transaction
-from electrum_smart import util, bitcoin, commands, coinchooser
+from electrum_smart import constants
+from electrum_smart import keystore, simple_config
 from electrum_smart import paymentrequest
-from electrum_smart.wallet import Multisig_Wallet, AddTransactionException
+from electrum_smart import util, bitcoin, commands, coinchooser
+from electrum_smart.bitcoin import COIN, is_address, TYPE_ADDRESS
+from electrum_smart.i18n import _
+from electrum_smart.plugins import run_hook
 from electrum_smart.smartnode_manager import MasternodeManager
 from electrum_smart.smartvote_manager import SmartvoteManager
-
+from electrum_smart.smartrewards_manager import SmartrewardsManager
+from electrum_smart.util import (format_time, format_satoshis, PrintError,
+                                 format_satoshis_plain, NotEnoughFunds,
+                                 UserCancelled, NoDynamicFeeEstimates, profiler,
+                                 export_meta, import_meta, bh2u, bfh, InvalidPassword)
+from electrum_smart.wallet import Multisig_Wallet, AddTransactionException
 
 from .amountedit import AmountEdit, BTCAmountEdit, MyLineEdit, FeerateEdit
+from .exception_window import Exception_Hook
 from .qrcodewidget import QRCodeWidget, QRDialog
 from .qrtextedit import ShowQRTextEdit, ScanQRTextEdit
 from .transaction_dialog import show_transaction
-#from .fee_slider import FeeSlider
+# from .fee_slider import FeeSlider
 from .util import *
 
 
@@ -104,6 +98,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.gui_object = gui_object
         self.smartnode_manager = None
         self.smartvote_manager = None
+        self.smartrewards_manager = None
         self.config = config = gui_object.config
 
         self.setup_exception_hook()
@@ -363,6 +358,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         #Load SmartVote
         self.smartvote_manager = SmartvoteManager(self.wallet)
         self.smartvote_tab.load_smartvote(self.smartvote_manager)
+
+        # Load SmartRewards
+        self.smartrewards_manager = SmartrewardsManager(self.wallet)
+        self.smartrewards_tab.load_smartrewards(self.smartrewards_manager)
 
         self.update_recently_visited(wallet.storage.path)
         # address used to create a dummy transaction and estimate transaction fee

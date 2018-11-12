@@ -14,6 +14,7 @@ class SmartrewardsTab(QWidget):
     def __init__(self, parent=None):
         super(SmartrewardsTab, self).__init__(parent)
         self.create_layout()
+        self.manager = None
 
     def create_layout(self):
         self.setObjectName("SmartrewardsList")
@@ -176,6 +177,15 @@ class SmartrewardsTab(QWidget):
         item.setText(_translate("SmartrewardsList", "Estimated SmartReward"))
         self.label.setText(_translate("SmartrewardsList", "Estimated SmartRewards"))
         self.sumLabel.setText(_translate("SmartrewardsList", "0 SMART"))
+
+    def load_smartrewards(self, manager):
+        self.manager = manager
+        self.manager.subscribe_to_smartrewards()
+        rewards = self.manager.smartrewards_cycle
+
+        self.roundLabel.setText(rewards.get_rewards_cycle())
+        self.percentLabel.setText(str(rewards.estimated_percent))
+        self.nextRoundLabel.setText(str(rewards.end_blockheight))
 
 
 if __name__ == '__main__':
