@@ -43,6 +43,8 @@ from .paymentrequest import PR_PAID, PR_UNPAID, PR_UNKNOWN, PR_EXPIRED
 from .plugins import run_hook
 from .smartnode import MasternodeAnnounce
 from .smartnode_manager import MasternodeManager, parse_masternode_conf
+from .smartrewards_manager import SmartrewardsManager
+
 
 known_commands = {}
 
@@ -98,9 +100,10 @@ class Commands:
         self.wallet = wallet
         self.network = network
         self.masternode_manager = None
+        self.smartrewards_manager = None
         if self.wallet:
-            self.masternode_manager = MasternodeManager(self.wallet,
-                                                        self.config)
+            self.masternode_manager = MasternodeManager(self.wallet, self.config)
+            self.smartrewards_manager = SmartrewardsManager(self.wallet, self.config)
         self._callback = callback
 
     def _run(self, method, args, password_getter):
@@ -719,6 +722,14 @@ class Commands:
             return 'Error sending: ' + str(e)
 
         return 'Smartnode "%s" activated successfully.' % alias
+
+    @command('w')
+    def smartrewards_current(self):
+        return self.smartrewards_manager.get_smartrewards_current()
+
+    @command('w')
+    def smartrewards_check(self, addr):
+        return self.smartrewards_manager.get_smartrewards_check(addr)
 
     @command('n')
     def notify(self, address, URL):

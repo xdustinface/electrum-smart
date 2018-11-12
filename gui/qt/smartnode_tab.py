@@ -518,7 +518,9 @@ class SmartnodeTab(QWidget, PrintError):
                 self.print_error('Failed to broadcast SmartnodeAnnounce: %s' % errmsg)
                 QMessageBox.critical(self, ('Error Sending'), errmsg)
             elif was_announced:
+                self.update_smartnodes_status(False)
                 self.print_msg('Successfully broadcasted SmartnodeAnnounce for "%s"' % alias)
+
                 QMessageBox.information(self, ('Success'), ('Successfully started smartnode "%s"' % alias))
             self.refresh_items()
             self.select_smartnode(alias)
@@ -535,7 +537,7 @@ class SmartnodeTab(QWidget, PrintError):
         self.print_msg('Sending Smartnode Announce message...')
         util.WaitingDialog(self, ('Broadcasting smartnode...'), send_thread, on_send_successful, on_send_error)
 
-    def update_smartnodes_status(self, show_message = True):
+    def update_smartnodes_status(self, show_message=True):
         self.manager.subscribe_to_all_masternodes()
         if(show_message):
             QMessageBox.information(self, ('Success'), ('Successfully requested %s smartnodes status' % str(len(self.smartnodes))))
