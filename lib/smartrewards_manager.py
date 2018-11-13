@@ -10,33 +10,43 @@ from .smartnode import MasternodeAnnounce, NetworkAddress
 from .util import AlreadyHaveAddress, print_error, bfh, print_msg, format_satoshis_plain
 
 class SmartRewardsCycle(object):
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
 
-    rewards_cycle = 0
-    start_blockheight = 0
-    start_blocktime = 0
-    end_blockheight = 0
-    end_blocktime = 0
-    eligible_addresses = 0
-    eligible_smart = 0.0
-    disqualified_addresses = 0
-    disqualified_smart = 0.0
-    estimated_rewards = 0.0
-    estimated_percent = 0.0
+    def __init__(self, rewards_cycle=0, start_blockheight=0, start_blocktime=0,
+                 end_blockheight=0, end_blocktime=0, eligible_addresses=0.0, eligible_smart=0,
+                 disqualified_addresses=0, disqualified_smart=0.0,
+                 estimated_rewards=0.0, estimated_percent=0.0):
+        self.rewards_cycle = rewards_cycle
+        self.start_blockheight = start_blockheight
+        self.start_blocktime = start_blocktime
+        self.end_blockheight = end_blockheight
+        self.end_blocktime = end_blocktime
+        self.eligible_addresses = eligible_addresses
+        self.eligible_smart = eligible_smart
+        self.disqualified_addresses = disqualified_addresses
+        self.disqualified_smart = disqualified_smart
+        self.estimated_rewards = estimated_rewards
+        self.estimated_percent = estimated_percent
+        self.actual_blockheight = 0
 
     def get_rewards_cycle(self):
         return str(self.rewards_cycle)
+
+    def get_estimated_percent(self):
+        return "{:.2%}".format(self.estimated_percent)
+
+    def get_rounds_end(self):
+        return '{} blocks'.format(self.end_blockheight - self.actual_blockheight)
 
 class SmartrewardsManager(object):
     """Smartrewards manager.
 
     Keeps track of smartrewards.
     """
-    def __init__(self, wallet):
+    def __init__(self, wallet, network):
         self.network_event = threading.Event()
         self.wallet = wallet
         self.smartrewards_cycle = SmartRewardsCycle()
+        self.network = network
 
     def send_subscriptions(self):
         if not self.wallet.network.is_connected():
@@ -70,6 +80,8 @@ class SmartrewardsManager(object):
         print_msg('Received smartrewards info: "%s"' % (result))
 
         self.smartrewards_cycle = SmartRewardsCycle(**result)
+
+        self.smartrewards_cycle.actual_blockheight = self.network.get_local_height()
 
         a = 1
 

@@ -181,13 +181,11 @@ class SmartrewardsTab(QWidget):
     def load_smartrewards(self, manager):
         self.manager = manager
         self.manager.subscribe_to_smartrewards()
-        rewards = self.manager.smartrewards_cycle
 
-        self.roundLabel.setText(rewards.get_rewards_cycle())
-        self.percentLabel.setText(str(rewards.estimated_percent))
-        self.nextRoundLabel.setText(str(rewards.end_blockheight))
+    def update(self):
+        self.roundLabel.setText(self.manager.smartrewards_cycle.get_rewards_cycle())
+        self.percentLabel.setText(str(self.manager.smartrewards_cycle.get_estimated_percent()))
+        self.nextRoundLabel.setText(str(self.manager.smartrewards_cycle.get_rounds_end()))
 
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    sys.exit(app.exec_())
+    def subscribe_to_smartrewards(self):
+        self.manager.subscribe_to_smartrewards()

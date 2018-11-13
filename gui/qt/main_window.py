@@ -326,6 +326,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 self.do_update_fee()
             # todo: update only unconfirmed tx
             self.history_list.update()
+            self.smartrewards_tab.update()
         else:
             self.print_error("unexpected network_qt signal:", event, args)
 
@@ -360,7 +361,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.smartvote_tab.load_smartvote(self.smartvote_manager)
 
         # Load SmartRewards
-        self.smartrewards_manager = SmartrewardsManager(self.wallet)
+        self.smartrewards_manager = SmartrewardsManager(self.wallet, self.network)
         self.smartrewards_tab.load_smartrewards(self.smartrewards_manager)
 
         self.update_recently_visited(wallet.storage.path)
@@ -781,6 +782,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.history_list.update()
         self.request_list.update()
         self.address_list.update()
+        self.smartrewards_tab.update()
         self.utxo_list.update()
         self.contact_list.update()
         self.invoice_list.update()
