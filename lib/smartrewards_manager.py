@@ -7,7 +7,8 @@ from decimal import Decimal
 from . import bitcoin
 from .blockchain import hash_header
 from .smartnode import MasternodeAnnounce, NetworkAddress
-from .util import AlreadyHaveAddress, print_error, bfh, print_msg, format_satoshis_plain
+from .util import AlreadyHaveAddress, print_error, bfh, print_msg, format_satoshis_plain, format_satoshis
+from .bitcoin import COIN
 
 class SmartRewardsCycle(object):
 
@@ -46,28 +47,36 @@ class SmartrewardsManager(object):
         self.network_event = threading.Event()
         self.wallet = wallet
         self.smartrewards_cycle = SmartRewardsCycle()
+        self.smartrewards_eligible = {}
         self.network = network
 
     def send_subscriptions(self):
         if not self.wallet.network.is_connected():
             return
-        self.subscribe_to_masternodes()
+        self.subscribe_to_smartrewards_cycle()
+        self.subscribe_to_smartrewards_address()
 
-    def subscribe_to_smartrewards(self):
+    def subscribe_to_smartrewards_cycle(self):
         if not self.wallet.network.is_connected():
             print_error("Cannot update smartrewards. Wallet not connected")
             return
         req = ('smartrewards.current', [])
-        self.wallet.network.send([req], self.smartrewards_current_response)
+        self.wallet.network.send([req], self.smartrewards_cycle_response)
 
-    def check_smartrewards_address(self, addr):
+    def subscribe_to_smartrewards_address(self):
+        requests = []
+        for addr in self.wallet.get_addresses():
+            balance = sum(self.wallet.get_addr_balance(addr))
+            if balance >= 1000 * COIN:
+                requests.append(('smartrewards.check', [addr]))
+
         if not self.wallet.network.is_connected():
             print_error("Cannot update smartrewards. Wallet not connected")
             return
-        req = ('smartrewards.check', [addr])
-        return self.wallet.network.send([req], self.smartrewards_check_response)
 
-    def smartrewards_current_response(self, response):
+        self.network.send(requests, self.smartrewards_check_response)
+
+    def smartrewards_cycle_response(self, response):
 
         if not 'result' in response:
             print_error(response['error'])
@@ -86,18 +95,15 @@ class SmartrewardsManager(object):
         a = 1
 
     def smartrewards_check_response(self, response):
-
         if not 'result' in response:
             print_error(response['error'])
             return response['error']
 
-        status = response['result']
-        if status is None:
-            status = False
+        result = response['result']
 
-        print_msg('Received updated smartrewards: "%s"' % (status))
+        self.smartrewards_eligible[result.get("address")] = result.get("balance_eligible")
 
-        return status
+        print_msg('Received updated smartrewards: "%s"' % (result))
 
     def get_smartrewards_current(self):
         return self.subscribe_to_smartrewards()

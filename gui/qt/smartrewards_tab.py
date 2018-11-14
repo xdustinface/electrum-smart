@@ -180,7 +180,7 @@ class SmartrewardsTab(QWidget):
 
     def load_smartrewards(self, manager):
         self.manager = manager
-        self.manager.subscribe_to_smartrewards()
+        self.manager.send_subscriptions()
 
     def update(self):
         self.roundLabel.setText(self.manager.smartrewards_cycle.get_rewards_cycle())
