@@ -38,17 +38,37 @@ class SmartRewardsCycle(object):
     def get_rounds_end(self):
         return '{} blocks'.format(self.end_blockheight - self.actual_blockheight)
 
+class SmartRewardsAddress(object):
+
+    def __init__(self, label='', address='', amount=0.0,
+                 eligible_amount=0.0, estimated_reward=0):
+        self.label = label
+        self.address = address
+        self.amount = amount
+        self.eligible_amount = eligible_amount
+        self.estimated_reward = estimated_reward
+
 class SmartrewardsManager(object):
     """Smartrewards manager.
 
     Keeps track of smartrewards.
     """
     def __init__(self, wallet, network):
-        self.network_event = threading.Event()
-        self.wallet = wallet
         self.smartrewards_cycle = SmartRewardsCycle()
         self.smartrewards_eligible = {}
+        self.rewards = []
+        self.network_event = threading.Event()
+        self.wallet = wallet
         self.network = network
+        self.load()
+
+    def load(self):
+        for addr in self.wallet.get_addresses():
+            balance = sum(self.wallet.get_addr_balance(addr))
+            label = self.wallet.labels.get(addr)
+            if balance >= 1000 * COIN:
+                self.rewards.append(SmartRewardsAddress(label, addr, balance, 0, 0))
+
 
     def send_subscriptions(self):
         if not self.wallet.network.is_connected():
@@ -100,13 +120,19 @@ class SmartrewardsManager(object):
             return response['error']
 
         result = response['result']
+        addr = result.get("address")
+        eligible_balance = result.get("balance_eligible")
 
-        self.smartrewards_eligible[result.get("address")] = result.get("balance_eligible")
+        self.smartrewards_eligible[addr] = eligible_balance
 
-        print_msg('Received updated smartrewards: "%s"' % (result))
+        print_msg('received smartrewards resposnse: eligible balance for address {} is {}'.format(addr, eligible_balance))
 
     def get_smartrewards_current(self):
         return self.subscribe_to_smartrewards()
 
     def get_smartrewards_check(self, addr):
         return self.check_smartrewards_address(addr)
+
+    def add_thousands_spaces(self, a):
+        a = int(a)
+        return format(a, ',').replace(',', ' ').replace('.', ',')
