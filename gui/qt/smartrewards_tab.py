@@ -7,8 +7,108 @@ from PyQt5.QtWidgets import *
 
 from electrum_smart import bitcoin
 from electrum_smart.util import PrintError, bfh
+from electrum_smart.bitcoin import COIN
 
 from . import util
+
+
+class SmartrewardsModel(QAbstractTableModel):
+
+    """Model for smartrewards."""
+
+    LABEL = 0
+    ADDRRESS = 1
+    AMOUNT = 2
+    ELIGIBLE_AMOUNT = 3
+    ESTIMATED_REWARD = 4
+    TOTAL_FIELDS = 5
+
+    def __init__(self, manager, parent=None):
+        super(SmartrewardsModel, self).__init__(parent)
+
+        self.manager = manager
+        self.smartrewards = self.manager.rewards
+
+        headers = [
+            {Qt.DisplayRole: 'Label',},
+            {Qt.DisplayRole: 'Address', },
+            {Qt.DisplayRole: 'Amount', },
+            {Qt.DisplayRole: 'Eligible Amount',},
+            {Qt.DisplayRole: 'Estimated SmartReward', },
+        ]
+
+        for d in headers:
+            d[Qt.EditRole] = d[Qt.DisplayRole]
+
+        self.headers = headers
+
+    def smartnode_for_row(self, row):
+        rw = self.smartrewards[row]
+        return rw
+
+    def columnCount(self, parent=QModelIndex()):
+        return self.TOTAL_FIELDS
+
+    def rowCount(self, parent=QModelIndex()):
+        return len(self.smartrewards)
+
+    def headerData(self, section, orientation, role = Qt.DisplayRole):
+        if role not in [Qt.DisplayRole, Qt.EditRole]: return None
+        if orientation != Qt.Horizontal: return None
+
+        data = None
+        try:
+            data = self.headers[section][role]
+        except (IndexError, KeyError):
+            pass
+
+        return QVariant(data)
+
+
+    def data(self, index, role = Qt.DisplayRole):
+        data = None
+        if not index.isValid():
+            return QVariant(data)
+        if role not in [Qt.DisplayRole, Qt.EditRole, Qt.ToolTipRole, Qt.FontRole, Qt.BackgroundRole]:
+            return None
+
+        rw = self.smartrewards[index.row()]
+        i = index.column()
+
+        if i == self.LABEL:
+            data = rw.label
+        elif i == self.ADDRRESS:
+            data = rw.address
+        elif i == self.AMOUNT:
+            data = rw.amount
+        elif i == self.ELIGIBLE_AMOUNT:
+            data = rw.eligible_amount
+        elif i == self.ESTIMATED_REWARD:
+            data = rw.estimated_reward
+
+        return QVariant(data)
+
+    def setData(self, index, value, role=Qt.EditRole):
+        if not index.isValid(): return False
+
+        rw = self.smartrewards[index.row()]
+        i = index.column()
+
+        if i == self.LABEL:
+            rw.alias = value
+        elif i == self.ADDRRESS:
+            rw.address = value
+        elif i == self.AMOUNT:
+            rw.amount = value
+        elif i == self.ELIGIBLE_AMOUNT:
+            rw.eligible_amount = value
+        elif i == self.ESTIMATED_REWARD:
+            rw.estimated_reward = value
+        else:
+            return False
+
+        self.dataChanged.emit(self.index(index.row(), index.column()), self.index(index.row(), index.column()))
+        return True
 
 class SmartrewardsTab(QWidget):
     def __init__(self, parent=None):
@@ -102,26 +202,19 @@ class SmartrewardsTab(QWidget):
         self.horizontalLayout_14.addWidget(self.percentLabel)
         self.horizontalLayout_11.addLayout(self.horizontalLayout_14)
         self.verticalLayout_2.addWidget(self.widget_2)
-        self.tableWidget = QTableWidget(self.widget)
+
+        #SmartRewards Table
+        self.tableWidget = QTableView()
+        self.tableWidget.setMinimumSize(QSize(695, 0))
         self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tableWidget.setAlternatingRowColors(True)
+        self.tableWidget.setSelectionMode(QAbstractItemView.SingleSelection)
         self.tableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.tableWidget.setColumnCount(5)
-        self.tableWidget.setObjectName("tableWidget")
-        self.tableWidget.setRowCount(0)
-        item = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(0, item)
-        item = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(1, item)
-        item = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(2, item)
-        item = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(3, item)
-        item = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(4, item)
-        self.tableWidget.horizontalHeader().setStretchLastSection(False)
+        self.tableWidget.setSortingEnabled(True)
         self.tableWidget.verticalHeader().setVisible(False)
+        self.tableWidget.setObjectName("tableWidget")
         self.verticalLayout_2.addWidget(self.tableWidget)
+
         self.widget1 = QWidget(self.widget)
         self.widget1.setMinimumSize(QSize(0, 40))
         self.widget1.setObjectName("widget1")
@@ -152,10 +245,10 @@ class SmartrewardsTab(QWidget):
         self.verticalLayout_2.addWidget(self.widget1)
         self.verticalLayout.addWidget(self.widget)
 
-        self.retranslateUi(self)
+        self.retranslateUi()
         QMetaObject.connectSlotsByName(self)
 
-    def retranslateUi(self, SmartrewardsList):
+    def retranslateUi(self):
         _translate = QCoreApplication.translate
         self.setWindowTitle(_translate("SmartrewardsList", "Form"))
         self.label_17.setText(_translate("SmartrewardsList", "SmartRewards round"))
@@ -164,23 +257,13 @@ class SmartrewardsTab(QWidget):
         self.nextRoundLabel.setText(_translate("SmartrewardsList", "25.12.1999"))
         self.label_21.setText(_translate("SmartrewardsList", "Current reward"))
         self.percentLabel.setText(_translate("SmartrewardsList", "0.00%"))
-        self.tableWidget.setSortingEnabled(True)
-        item = self.tableWidget.horizontalHeaderItem(0)
-        item.setText(_translate("SmartrewardsList", "Label"))
-        item = self.tableWidget.horizontalHeaderItem(1)
-        item.setText(_translate("SmartrewardsList", "Address"))
-        item = self.tableWidget.horizontalHeaderItem(2)
-        item.setText(_translate("SmartrewardsList", "Amount"))
-        item = self.tableWidget.horizontalHeaderItem(3)
-        item.setText(_translate("SmartrewardsList", "Eligible Amount"))
-        item = self.tableWidget.horizontalHeaderItem(4)
-        item.setText(_translate("SmartrewardsList", "Estimated SmartReward"))
         self.label.setText(_translate("SmartrewardsList", "Estimated SmartRewards"))
         self.sumLabel.setText(_translate("SmartrewardsList", "0 SMART"))
 
     def load_smartrewards(self, manager):
         self.manager = manager
         self.manager.send_subscriptions()
+        self.load_table()
 
     def update(self):
         self.roundLabel.setText(self.manager.smartrewards_cycle.get_rewards_cycle())
@@ -189,3 +272,19 @@ class SmartrewardsTab(QWidget):
 
     def subscribe_to_smartrewards(self):
         self.manager.subscribe_to_smartrewards()
+
+    def load_table(self):
+
+        self.model = SmartrewardsModel(self.manager)
+
+        self.proxy_model = model = QSortFilterProxyModel()
+        self.proxy_model.setSourceModel(self.model)
+        self.tableWidget.setModel(self.proxy_model)
+
+        header = self.tableWidget.horizontalHeader()
+        header.setSectionResizeMode(SmartrewardsModel.LABEL, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(SmartrewardsModel.ADDRRESS, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(SmartrewardsModel.AMOUNT, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(SmartrewardsModel.ELIGIBLE_AMOUNT, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(SmartrewardsModel.ESTIMATED_REWARD, QHeaderView.Stretch)
+
