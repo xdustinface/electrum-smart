@@ -32,11 +32,11 @@ class SmartRewardsInfo(object):
     def get_rewards_cycle(self):
         return str(self.rewards_cycle)
 
-    def get_next_round(self):
-        return '{} blocks'.format(self.end_blockheight - self.actual_blockheight)
-
     def get_percent_rewards(self):
         return "{:.2%}".format(self.estimated_percent)
+
+    def get_next_round(self):
+        return '{} blocks'.format(self.end_blockheight - self.actual_blockheight)
 
 class SmartRewardsAddress(object):
 
