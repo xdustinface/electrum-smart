@@ -212,6 +212,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def load_vote_proposals(self, index):
         if(index == 4):
             self.update_smartvote_tab()
+        elif (index == 5):
+            self.smartrewards_tab.subscribe_to_smartrewards()
 
     def on_history(self, b):
         self.new_fx_history_signal.emit()
@@ -782,11 +784,11 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.history_list.update()
         self.request_list.update()
         self.address_list.update()
-        self.smartrewards_tab.update()
         self.utxo_list.update()
         self.contact_list.update()
         self.invoice_list.update()
         self.update_completions()
+        self.smartrewards_tab.update()
 
     def create_history_tab(self):
         from .history_list import HistoryList

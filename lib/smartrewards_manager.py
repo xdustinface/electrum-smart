@@ -10,9 +10,9 @@ from .smartnode import MasternodeAnnounce, NetworkAddress
 from .util import AlreadyHaveAddress, print_error, bfh, print_msg, format_satoshis_plain, format_satoshis
 from .bitcoin import COIN
 
-class SmartRewardsCycle(object):
+class SmartRewardsInfo(object):
 
-    def __init__(self, rewards_cycle=0, start_blockheight=0, start_blocktime=0,
+    def __init__(self, rewards_cycle='', start_blockheight=0, start_blocktime=0,
                  end_blockheight=0, end_blocktime=0, eligible_addresses=0.0, eligible_smart=0,
                  disqualified_addresses=0, disqualified_smart=0.0,
                  estimated_rewards=0.0, estimated_percent=0.0):
@@ -32,11 +32,11 @@ class SmartRewardsCycle(object):
     def get_rewards_cycle(self):
         return str(self.rewards_cycle)
 
-    def get_estimated_percent(self):
-        return "{:.2%}".format(self.estimated_percent)
-
-    def get_rounds_end(self):
+    def get_next_round(self):
         return '{} blocks'.format(self.end_blockheight - self.actual_blockheight)
+
+    def get_percent_rewards(self):
+        return "{:.2%}".format(self.estimated_percent)
 
 class SmartRewardsAddress(object):
 
@@ -54,50 +54,44 @@ class SmartrewardsManager(object):
     Keeps track of smartrewards.
     """
     def __init__(self, wallet, network):
-        self.smartrewards_cycle = SmartRewardsCycle()
-        self.smartrewards_eligible = {}
-        self.rewards = []
         self.network_event = threading.Event()
         self.wallet = wallet
         self.network = network
+
+        self.rewards_info = SmartRewardsInfo()
+        self.rewards_addresses = []
+
         self.load()
 
     def load(self):
+        # Load smartrewards addresses
         for addr in self.wallet.get_addresses():
             balance = sum(self.wallet.get_addr_balance(addr))
             label = self.wallet.labels.get(addr)
+            if not label: label = '(no label)'
             if balance >= 1000 * COIN:
-                self.rewards.append(SmartRewardsAddress(label, addr, balance, 0, 0))
-
+                self.rewards_addresses.append(SmartRewardsAddress(label, addr, balance, 0, 0))
 
     def send_subscriptions(self):
         if not self.wallet.network.is_connected():
-            return
-        self.subscribe_to_smartrewards_cycle()
-        self.subscribe_to_smartrewards_address()
-
-    def subscribe_to_smartrewards_cycle(self):
-        if not self.wallet.network.is_connected():
             print_error("Cannot update smartrewards. Wallet not connected")
             return
+        self.subscribe_to_smartrewards_info()
+        self.subscribe_to_smartrewards_addresses()
+
+    def subscribe_to_smartrewards_info(self):
         req = ('smartrewards.current', [])
-        self.wallet.network.send([req], self.smartrewards_cycle_response)
+        self.wallet.network.send([req], self.smartrewards_info_response)
 
-    def subscribe_to_smartrewards_address(self):
+    def subscribe_to_smartrewards_addresses(self):
         requests = []
-        for addr in self.wallet.get_addresses():
-            balance = sum(self.wallet.get_addr_balance(addr))
-            if balance >= 1000 * COIN:
-                requests.append(('smartrewards.check', [addr]))
 
-        if not self.wallet.network.is_connected():
-            print_error("Cannot update smartrewards. Wallet not connected")
-            return
+        for rw in self.rewards_addresses:
+            requests.append(('smartrewards.check', [rw.address]))
 
         self.network.send(requests, self.smartrewards_check_response)
 
-    def smartrewards_cycle_response(self, response):
-
+    def smartrewards_info_response(self, response):
         if not 'result' in response:
             print_error(response['error'])
             return response['error']
@@ -108,11 +102,10 @@ class SmartrewardsManager(object):
 
         print_msg('Received smartrewards info: "%s"' % (result))
 
-        self.smartrewards_cycle = SmartRewardsCycle(**result)
+        smartrewards_cycle = SmartRewardsInfo(**result)
+        smartrewards_cycle.actual_blockheight = self.network.get_local_height()
 
-        self.smartrewards_cycle.actual_blockheight = self.network.get_local_height()
-
-        a = 1
+        self.rewards_info = smartrewards_cycle
 
     def smartrewards_check_response(self, response):
         if not 'result' in response:
@@ -123,16 +116,14 @@ class SmartrewardsManager(object):
         addr = result.get("address")
         eligible_balance = result.get("balance_eligible")
 
-        self.smartrewards_eligible[addr] = eligible_balance
+        for reward in self.rewards_addresses:
+            if addr == reward.address:
+                reward.eligible_amount = eligible_balance
+                reward.estimated_reward = eligible_balance * self.rewards_info.estimated_percent
+                break
 
-        print_msg('received smartrewards resposnse: eligible balance for address {} is {}'.format(addr, eligible_balance))
-
-    def get_smartrewards_current(self):
-        return self.subscribe_to_smartrewards()
-
-    def get_smartrewards_check(self, addr):
-        return self.check_smartrewards_address(addr)
+        print_msg('Rewards for [{}] is [{}]'.format(addr, eligible_balance))
 
     def add_thousands_spaces(self, a):
-        a = int(a)
-        return format(a, ',').replace(',', ' ').replace('.', ',')
+        a = float(a)
+        return format(a, ',').replace(',', ' ')

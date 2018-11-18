@@ -6,13 +6,13 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 from electrum_smart import bitcoin
-from electrum_smart.util import PrintError, bfh
+from electrum_smart.util import PrintError, bfh, bh2u, format_satoshis, json_decode, print_error, json_encode
 from electrum_smart.bitcoin import COIN
 
 from . import util
 
 
-class SmartrewardsModel(QAbstractTableModel):
+class SmartrewardsAddressModel(QAbstractTableModel):
 
     """Model for smartrewards."""
 
@@ -24,10 +24,10 @@ class SmartrewardsModel(QAbstractTableModel):
     TOTAL_FIELDS = 5
 
     def __init__(self, manager, parent=None):
-        super(SmartrewardsModel, self).__init__(parent)
+        super(SmartrewardsAddressModel, self).__init__(parent)
 
         self.manager = manager
-        self.smartrewards = self.manager.rewards
+        self.smartrewards = self.manager.rewards_addresses
 
         headers = [
             {Qt.DisplayRole: 'Label',},
@@ -42,7 +42,7 @@ class SmartrewardsModel(QAbstractTableModel):
 
         self.headers = headers
 
-    def smartnode_for_row(self, row):
+    def smartrewards_for_row(self, row):
         rw = self.smartrewards[row]
         return rw
 
@@ -80,11 +80,11 @@ class SmartrewardsModel(QAbstractTableModel):
         elif i == self.ADDRRESS:
             data = rw.address
         elif i == self.AMOUNT:
-            data = rw.amount
+            data = '{} SMART'.format( self.manager.add_thousands_spaces( format_satoshis(rw.amount) ) )
         elif i == self.ELIGIBLE_AMOUNT:
-            data = rw.eligible_amount
+            data = '{} SMART'.format(rw.eligible_amount)
         elif i == self.ESTIMATED_REWARD:
-            data = rw.estimated_reward
+            data = '{} SMART'.format(rw.estimated_reward)
 
         return QVariant(data)
 
@@ -109,6 +109,7 @@ class SmartrewardsModel(QAbstractTableModel):
 
         self.dataChanged.emit(self.index(index.row(), index.column()), self.index(index.row(), index.column()))
         return True
+
 
 class SmartrewardsTab(QWidget):
     def __init__(self, parent=None):
@@ -266,25 +267,22 @@ class SmartrewardsTab(QWidget):
         self.load_table()
 
     def update(self):
-        self.roundLabel.setText(self.manager.smartrewards_cycle.get_rewards_cycle())
-        self.percentLabel.setText(str(self.manager.smartrewards_cycle.get_estimated_percent()))
-        self.nextRoundLabel.setText(str(self.manager.smartrewards_cycle.get_rounds_end()))
+        self.roundLabel.setText(self.manager.rewards_info.get_rewards_cycle())
+        self.percentLabel.setText(str(self.manager.rewards_info.get_percent_rewards()))
+        self.nextRoundLabel.setText(str(self.manager.rewards_info.get_next_round()))
 
     def subscribe_to_smartrewards(self):
-        self.manager.subscribe_to_smartrewards()
+        self.manager.send_subscriptions()
 
     def load_table(self):
-
-        self.model = SmartrewardsModel(self.manager)
-
+        self.model = SmartrewardsAddressModel(self.manager)
         self.proxy_model = model = QSortFilterProxyModel()
         self.proxy_model.setSourceModel(self.model)
         self.tableWidget.setModel(self.proxy_model)
 
         header = self.tableWidget.horizontalHeader()
-        header.setSectionResizeMode(SmartrewardsModel.LABEL, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(SmartrewardsModel.ADDRRESS, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(SmartrewardsModel.AMOUNT, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(SmartrewardsModel.ELIGIBLE_AMOUNT, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(SmartrewardsModel.ESTIMATED_REWARD, QHeaderView.Stretch)
-
+        header.setSectionResizeMode(SmartrewardsAddressModel.LABEL, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(SmartrewardsAddressModel.ADDRRESS, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(SmartrewardsAddressModel.AMOUNT, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(SmartrewardsAddressModel.ELIGIBLE_AMOUNT, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(SmartrewardsAddressModel.ESTIMATED_REWARD, QHeaderView.Stretch)
