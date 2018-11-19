@@ -119,7 +119,7 @@ class SmartrewardsManager(object):
         for reward in self.rewards_addresses:
             if addr == reward.address:
                 reward.eligible_amount = eligible_balance
-                reward.estimated_reward = eligible_balance * self.rewards_info.estimated_percent
+                reward.estimated_reward = float("{0:.8f}".format(eligible_balance * self.rewards_info.estimated_percent))
                 break
 
         print_msg('Rewards for [{}] is [{}]'.format(addr, eligible_balance))

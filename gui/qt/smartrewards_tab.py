@@ -270,6 +270,7 @@ class SmartrewardsTab(QWidget):
         self.roundLabel.setText(self.manager.rewards_info.get_rewards_cycle())
         self.percentLabel.setText(str(self.manager.rewards_info.get_percent_rewards()))
         self.nextRoundLabel.setText('{} blocks'.format(self.get_next_round()))
+        self.sumLabel.setText('{} SMART'.format(self.get_sum_estimated_rewards()))
 
     def get_next_round(self):
         end = self.manager.rewards_info.end_blockheight
@@ -281,6 +282,9 @@ class SmartrewardsTab(QWidget):
             return str(0)
         else:
             return str(progress)
+
+    def get_sum_estimated_rewards(self):
+        return sum(addr.estimated_reward for addr in self.manager.rewards_addresses)
 
     def subscribe_to_smartrewards(self):
         self.manager.send_subscriptions()
