@@ -318,6 +318,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.console.showMessage(args[0])
         elif event == 'verified':
             self.history_list.update_item(*args)
+            self.smartrewards_manager.send_subscriptions()
         elif event == 'fee':
             if self.config.is_dynfee():
                 #self.fee_slider.update()
@@ -328,7 +329,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 self.do_update_fee()
             # todo: update only unconfirmed tx
             self.history_list.update()
-            self.smartrewards_tab.update()
         else:
             self.print_error("unexpected network_qt signal:", event, args)
 
