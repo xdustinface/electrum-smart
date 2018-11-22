@@ -318,7 +318,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.console.showMessage(args[0])
         elif event == 'verified':
             self.history_list.update_item(*args)
-            self.smartrewards_manager.send_subscriptions()
+            self.smartrewards_tab.reload()
         elif event == 'fee':
             if self.config.is_dynfee():
                 #self.fee_slider.update()

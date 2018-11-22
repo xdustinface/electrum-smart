@@ -72,6 +72,11 @@ class SmartrewardsManager(object):
             if balance >= 1000 * COIN:
                 self.rewards_addresses.append(SmartRewardsAddress(label, addr, balance, 0, 0))
 
+    def reload(self):
+        self.rewards_addresses = []
+        self.load()
+        self.send_subscriptions()
+
     def send_subscriptions(self):
         if not self.wallet.network.is_connected():
             print_error("Cannot update smartrewards. Wallet not connected")

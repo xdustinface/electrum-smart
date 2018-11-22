@@ -301,3 +301,7 @@ class SmartrewardsTab(QWidget):
         header.setSectionResizeMode(SmartrewardsAddressModel.AMOUNT, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(SmartrewardsAddressModel.ELIGIBLE_AMOUNT, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(SmartrewardsAddressModel.ESTIMATED_REWARD, QHeaderView.Stretch)
+
+    def reload(self):
+        self.manager.reload()
+        self.load_table()
