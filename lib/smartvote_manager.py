@@ -27,8 +27,10 @@ class SmartvoteManager(object):
         self.selected_addresses = self.get_avaliable_vote_addresses()
 
     def update_proposals(self):
-        request = "{}/VoteProposals".format(URL_HIVE_VOTING_PORTAL)
-        response = requests.get(request)
+        url = "{}/VoteProposals/CheckAddresses".format(URL_HIVE_VOTING_PORTAL)
+        data = list(self.avaliable_addresses.keys())
+        headers = {'Content-type': 'application/json'}
+        response = requests.post(url, json=data, headers=headers)
 
         if (response.ok):
 
