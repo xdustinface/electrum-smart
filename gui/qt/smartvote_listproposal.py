@@ -232,6 +232,30 @@ class Ui_SmartProposalWidget(object):
         createdDate = datetime.strptime(proposal.get('createdDate'), '%Y-%m-%dT%H:%M:%S')
         percent_time = self.percent_time(createdDate, votingDeadline, datetime.utcnow())
 
+        VotedYes = 0
+        VotedNo = 0
+        VotedAbstain = 0
+        for item in proposal.get('addressStates'):
+            type = item.get('type')
+            amount = item.get('amount')
+            if type == 'YES':
+                VotedYes = VotedYes + amount
+            elif type == 'NO':
+                VotedNo = VotedNo + amount
+            elif type == 'ABSTAIN':
+                VotedAbstain = VotedAbstain + amount
+
+        votedLabelText = ''
+        if VotedYes > 0:
+            votedLabelText += 'YES - {}\n'.format(int(VotedYes))
+        if VotedNo > 0:
+            votedLabelText += 'NO - {}\n'.format(int(VotedNo))
+        if VotedAbstain > 0:
+            votedLabelText += 'ABSTAIN - {}'.format(int(VotedAbstain))
+
+        if VotedYes > 0 or VotedNo > 0 or VotedAbstain > 0:
+            self.votedLabel.setText(votedLabelText)
+
         self.titleLabel.setText(title)
         self.amountSmartLabel.setText(amountSmart)
         self.amountUSDLabel.setText(amountUSD)

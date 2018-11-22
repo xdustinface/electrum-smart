@@ -32,17 +32,11 @@ class SmartvoteManager(object):
         headers = {'Content-type': 'application/json'}
         response = requests.post(url, json=data, headers=headers)
 
-        if (response.ok):
-
-            # Loading the response data into a dict variable
+        if response.ok:
             jData = json.loads(response.content.decode("utf-8"))
-
-            print_msg("Loaded {0} proposals from smartvote API".format(len(jData.get("result"))))
-
-            return jData
-
+            self.proposals = jData.get("result")
+            print_msg("Loaded {0} proposals from smartvote API".format(self.proposals))
         else:
-            # If response code is not ok (200), print the resulting http error code with description
             response.raise_for_status()
 
     def get_avaliable_vote_addresses(self):

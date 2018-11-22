@@ -225,10 +225,10 @@ class SmartvoteTab(QWidget):
             util.WaitingDialog(self, ('Loading proposals...'), self.load_proposal_thread, self.on_load_proposal_successful, self.on_load_proposal_error)
 
     def load_proposal_thread(self):
-        return self.smartvote_manager.update_proposals().get("result")
+        self.smartvote_manager.update_proposals()
 
-    def on_load_proposal_successful(self, open_proposals):
-        self.smartvote_manager.proposals = open_proposals
+    def on_load_proposal_successful(self, result):
+        open_proposals = self.smartvote_manager.proposals
         self.open_proposals_qty = len(open_proposals)
         self.openProposalsLabel.setText(str(self.open_proposals_qty))
 
