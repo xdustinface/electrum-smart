@@ -11,6 +11,7 @@ from electrum_smart.bitcoin import COIN
 
 from . import util
 
+BLOCK_TIME = 55
 
 class SmartrewardsAddressModel(QAbstractTableModel):
 
@@ -269,7 +270,7 @@ class SmartrewardsTab(QWidget):
     def update(self):
         self.roundLabel.setText(self.manager.rewards_info.get_rewards_cycle())
         self.percentLabel.setText(str(self.manager.rewards_info.get_percent_rewards()))
-        self.nextRoundLabel.setText('{} blocks'.format(self.get_next_round()))
+        self.nextRoundLabel.setText(self.get_next_round())
         self.sumLabel.setText('{} SMART'.format(self.get_sum_estimated_rewards()))
 
     def get_next_round(self):
@@ -281,7 +282,21 @@ class SmartrewardsTab(QWidget):
             self.manager.send_subscriptions()
             return str(0)
         else:
-            return str(progress)
+
+            time_to_end_in_seconds = progress * BLOCK_TIME
+
+            t = int(time_to_end_in_seconds)
+            day = t // 86400
+            hour = (t - (day * 86400)) // 3600
+            minit = (t - ((day * 86400) + (hour * 3600))) // 60
+            seconds = t - ((day * 86400) + (hour * 3600) + (minit * 60))
+
+            str_day = 'day' if day == 1 else 'days'
+            str_hour = 'hour' if hour == 1 else 'hours'
+
+            time = ' {}{}, {}{} '.format(day, str_day, hour, str_hour)
+
+            return '{} blocks ( {} )'.format(str(progress), time)
 
     def get_sum_estimated_rewards(self):
         return sum(addr.estimated_reward for addr in self.manager.rewards_addresses)
