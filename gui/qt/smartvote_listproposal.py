@@ -3,10 +3,11 @@ from datetime import datetime
 from electrum_smart import bitcoin
 
 class Ui_SmartProposalWidget(object):
-    def setupUi(self, SmartProposalWidget, proposal, selected_voting_option_map):
+    def setupUi(self, SmartProposalWidget, proposal, selected_voting_option_map, smartvote_manager):
 
         self.selected_voting_option_map = selected_voting_option_map
         self.proposal = proposal
+        self.manager = smartvote_manager
 
         SmartProposalWidget.setObjectName("SmartProposalWidget")
         SmartProposalWidget.resize(768, 203)
@@ -215,6 +216,7 @@ class Ui_SmartProposalWidget(object):
     def update_proposal_details(self):
 
         proposal = self.proposal
+        self.manager.voted_proposals = 0
 
         title = "#{} - {}".format(proposal.get('proposalId'), proposal.get('title'))
         amountSmart = "{} SMART".format(self.add_thousands_spaces(proposal.get('amountSmart')))
@@ -255,6 +257,7 @@ class Ui_SmartProposalWidget(object):
 
         if VotedYes > 0 or VotedNo > 0 or VotedAbstain > 0:
             self.votedLabel.setText(votedLabelText)
+            self.manager.voted_proposals = self.manager.voted_proposals + 1
 
         self.titleLabel.setText(title)
         self.amountSmartLabel.setText(amountSmart)

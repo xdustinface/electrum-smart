@@ -19,6 +19,7 @@ class SmartvoteManager(object):
         self.avaliable_addresses = {}
         self.selected_addresses = {}
         self.proposals = {}
+        self.voted_proposals = 0
         self.load()
 
     def load(self):

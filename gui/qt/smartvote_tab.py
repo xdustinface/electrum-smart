@@ -235,13 +235,14 @@ class SmartvoteTab(QWidget):
         for proposal in open_proposals:
             SmartProposalWidget = QWidget()
             ui = Ui_SmartProposalWidget()
-            ui.setupUi(SmartProposalWidget, proposal, self.selected_voting_option_map)
+            ui.setupUi(SmartProposalWidget, proposal, self.selected_voting_option_map, self.smartvote_manager)
             ui.yesButton.clicked.connect(self.on_proposal_option_changed)
             ui.noButton.clicked.connect(self.on_proposal_option_changed)
             ui.abstainButton.clicked.connect(self.on_proposal_option_changed)
             ui.disabledButton.clicked.connect(self.on_proposal_option_changed)
             self.verticalLayout_6.addWidget(SmartProposalWidget)
 
+        self.votedForLabel.setText(str(self.smartvote_manager.voted_proposals))
         print_msg('Successfully loaded proposals')
 
     def on_load_proposal_error(self, err):
