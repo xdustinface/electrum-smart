@@ -5,7 +5,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-from electrum_smart import bitcoin
+from electrum_smart import bitcoin, keystore
 from .smartvote_listproposal import Ui_SmartProposalWidget
 from electrum_smart.util import print_error, print_msg
 from electrum_smart.smartvote_manager import SmartvoteManager
@@ -194,10 +194,30 @@ class SmartvoteTab(QWidget):
         self.update_vote_info()
 
     def open_cast_vote_dialog(self):
-        d = CastVotesDialog(self.gui, self.smartvote_manager, self.selected_voting_option_map)
+        password = None
+        if self.smartvote_manager.wallet.has_password():
+            if isinstance(self.smartvote_manager.wallet.keystore, keystore.Hardware_KeyStore):
+                self.gui.show_warning('Vote is not supported on hardware wallets yet')
+                return
+            else:
+                password = self.gui.password_dialog('Please enter your password to vote')
+                if password is None:
+                    return
+                else:
+                    try:
+                        self.smartvote_manager.wallet.check_password(password)
+                    except:
+                        self.gui.show_warning('Incorrect password')
+                        return
+                    self.start_cast_vote_dialog(password)
+        else:
+            self.start_cast_vote_dialog(password)
+
+
+    def start_cast_vote_dialog(self, password):
+        d = CastVotesDialog(self.gui, self.smartvote_manager, self.selected_voting_option_map, password)
         d.exec_()
         self.refresh_proposals()
-
 
     def on_proposal_option_changed(self):
         selected_proposals = len(self.selected_voting_option_map)

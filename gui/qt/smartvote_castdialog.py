@@ -6,7 +6,6 @@ from PyQt5.QtWidgets import *
 
 from electrum_smart.i18n import _
 from electrum_smart.util import print_error, PrintError
-from electrum_smart import keystore
 
 class cast_vote_function(QObject):
     def __init__(self, widget):
@@ -29,20 +28,10 @@ class cast_vote_function(QObject):
             len(selected_addresses) * len(self.widget.selected_proposals), len(self.widget.selected_proposals))
         self.widget.results.append(msg)
 
-        password = None
-        if self.widget.manager.wallet.has_password():
-            if isinstance(self.widget.manager.wallet.keystore, keystore.Hardware_KeyStore):
-                self.gui.show_warning('Vote is not supported on hardware wallets yet')
-                return
-            else:
-                password = self.widget.gui.password_dialog(_('Please enter your password to vote'))
-                if password is None:
-                    return
-
         for proposal_id in self.widget.selected_proposals:
             self.widget.results.append("Vote <b>{}</b> with <b>{} addresses</b> for proposal <b>#{}</b>".format(self.widget.selected_proposals[proposal_id], len(selected_addresses), proposal_id))
             self.widget.results.append("<br />Waiting for response.<br />")
-            final_results = self.widget.manager.cast_vote(proposal_id, self.widget.selected_proposals[proposal_id],selected_addresses, password)
+            final_results = self.widget.manager.cast_vote(proposal_id, self.widget.selected_proposals[proposal_id],selected_addresses, self.widget.password)
 
             self.widget.results.append('Result for proposal <b>#{}</b>'.format(proposal_id))
             for result in final_results:
@@ -58,10 +47,10 @@ class cast_vote_function(QObject):
 
 class CastVotesDialog(QDialog, PrintError):
 
-    def __init__(self, parent, manager, selected_proposals):
+    def __init__(self, parent, manager, selected_proposals, password):
         super(CastVotesDialog, self).__init__(parent)
         self.manager = manager
-        self.gui = parent
+        self.password = password
         self.selected_proposals = selected_proposals
         self.setupUi()
         self.start()
