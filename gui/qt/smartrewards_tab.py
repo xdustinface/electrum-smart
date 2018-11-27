@@ -288,15 +288,30 @@ class SmartrewardsTab(QWidget):
             t = int(time_to_end_in_seconds)
             day = t // 86400
             hour = (t - (day * 86400)) // 3600
-            minit = (t - ((day * 86400) + (hour * 3600))) // 60
-            seconds = t - ((day * 86400) + (hour * 3600) + (minit * 60))
+            minute = (t - ((day * 86400) + (hour * 3600))) // 60
+            seconds = t - ((day * 86400) + (hour * 3600) + (minute * 60))
 
             str_day = 'day' if day == 1 else 'days'
             str_hour = 'hour' if hour == 1 else 'hours'
+            str_minute = 'minute' if minute == 1 else 'minutes'
 
-            time = ' {}{}, {}{} '.format(day, str_day, hour, str_hour)
+            time = ''
 
-            return '{} blocks ( {} )'.format(str(progress), time)
+            if day > 0:
+                time += ' {}{} '.format(day, str_day)
+
+            if hour > 0:
+                time += ' {}{} '.format(hour, str_hour)
+
+            if minute > 0 and day <= 0:
+                time += ' {}{} '.format(minute, str_minute)
+
+            if time_to_end_in_seconds > 0:
+                self.label_19.show()
+                return '{} blocks ( {} )'.format(str(progress), time)
+            else:
+                self.label_19.hide()
+                return 'Snapshot in progress'
 
     def get_sum_estimated_rewards(self):
         return sum(addr.estimated_reward for addr in self.manager.rewards_addresses)
