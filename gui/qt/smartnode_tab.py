@@ -540,7 +540,7 @@ class SmartnodeTab(QWidget, PrintError):
     def update_smartnodes_status(self, show_message=True):
         self.manager.subscribe_to_all_masternodes()
         if(show_message):
-            QMessageBox.information(self, ('Success'), ('Successfully requested %s smartnodes status' % str(len(self.smartnodes))))
+            QMessageBox.information(self, ('Success'), ('Successfully requested %s smartnodes status from server.' % str(len(self.smartnodes))))
         self.refresh_items()
 
 if __name__ == '__main__':
