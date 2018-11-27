@@ -465,6 +465,7 @@ class SmartnodeControlDialog(QDialog, PrintError):
             smartnode_pubkey = ''
 
         # Save Smartnode
+        self.manager.wallet.set_frozen_state([tx_addr], True)
         self.mapper.submit()
         self.manager.save()
         self.accept()

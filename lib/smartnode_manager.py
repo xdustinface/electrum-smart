@@ -120,6 +120,7 @@ class MasternodeManager(object):
         if not any(i.alias != mn.alias and i.delegate_key == mn.delegate_key for i in self.masternodes):
             self.wallet.delete_masternode_delegate(mn.delegate_key)
 
+        self.wallet.set_frozen_state([mn.vin.get('address')], False)
         self.masternodes.remove(mn)
         if save:
             self.save()
