@@ -214,6 +214,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.update_smartvote_tab()
         elif (index == 5):
             self.smartrewards_tab.subscribe_to_smartrewards()
+            self.need_update.set()
 
     def on_history(self, b):
         self.new_fx_history_signal.emit()
