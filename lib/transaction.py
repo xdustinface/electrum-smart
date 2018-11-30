@@ -35,6 +35,9 @@ import struct
 import traceback
 import sys
 
+from typing import (Sequence, Union, NamedTuple, Tuple, Optional, Iterable,
+                    Callable, List, Dict)
+
 #
 # Workalike python implementation of SmartCash's CDataStream class.
 #
@@ -52,6 +55,10 @@ class UnknownTxinType(Exception):
 
 
 class NotRecognizedRedeemScript(Exception):
+    pass
+
+
+class MalformedBitcoinScript(Exception):
     pass
 
 
@@ -404,7 +411,10 @@ def parse_redeemScript(s):
 
 
 def get_address_from_output_script(_bytes, *, net=None):
-    decoded = [x for x in script_GetOp(_bytes)]
+    try:
+        decoded = [x for x in script_GetOp(_bytes)]
+    except MalformedBitcoinScript:
+        decoded = None
 
     # The Genesis Block, self-payments, and pay-by-IP-address payments look like:
     # 65 BYTES:... CHECKSIG
@@ -423,12 +433,17 @@ def get_address_from_output_script(_bytes, *, net=None):
     if match_decoded(decoded, match):
         return TYPE_ADDRESS, hash160_to_p2sh(decoded[1][1], net=net)
 
+    #SmartMining
+    match = [opcodes.OP_RETURN, opcodes.OP_PUSHDATA4]
+    if match_decoded(decoded, match):
+        return TYPE_SCRIPT, ''
+
     # segwit address
-    possible_witness_versions = [opcodes.OP_0] + list(range(opcodes.OP_1, opcodes.OP_16 + 1))
-    for witver, opcode in enumerate(possible_witness_versions):
-        match = [ opcode, opcodes.OP_PUSHDATA4 ]
-        if match_decoded(decoded, match):
-            return TYPE_ADDRESS, hash_to_segwit_addr(decoded[1][1], witver=witver, net=net)
+    #possible_witness_versions = [opcodes.OP_0] + list(range(opcodes.OP_1, opcodes.OP_16 + 1))
+    #for witver, opcode in enumerate(possible_witness_versions):
+    #    match = [ opcode, opcodes.OP_PUSHDATA4 ]
+    #    if match_decoded(decoded, match):
+    #        return TYPE_ADDRESS, hash_to_segwit_addr(decoded[1][1], witver=witver, net=net)
 
     return TYPE_SCRIPT, bh2u(_bytes)
 
@@ -630,32 +645,37 @@ class Transaction:
             txin['x_pubkeys'] = x_pubkeys = list(x_pubkeys)
         return pubkeys, x_pubkeys
 
-    def update_signatures(self, raw):
-        """Add new signatures to a transaction"""
-        d = deserialize(raw)
+    def update_signatures(self, signatures: Sequence[str]):
+        """Add new signatures to a transaction
+        `signatures` is expected to be a list of sigs with signatures[i]
+        intended for self._inputs[i].
+        This is used by the Trezor, KeepKey an Safe-T plugins.
+        """
+        if self.is_complete():
+            return
+        if len(self.inputs()) != len(signatures):
+            raise Exception('expected {} signatures; got {}'.format(len(self.inputs()), len(signatures)))
         for i, txin in enumerate(self.inputs()):
             pubkeys, x_pubkeys = self.get_sorted_pubkeys(txin)
-            sigs1 = txin.get('signatures')
-            sigs2 = d['inputs'][i].get('signatures')
-            for sig in sigs2:
-                if sig in sigs1:
-                    continue
-                pre_hash = Hash_Sha256(bfh(self.serialize_preimage(i)))
-                # der to string
-                order = ecdsa.ecdsa.generator_secp256k1.order()
-                r, s = ecdsa.util.sigdecode_der(bfh(sig[:-2]), order)
-                sig_string = ecdsa.util.sigencode_string(r, s, order)
-                compressed = True
-                for recid in range(4):
-                    public_key = MyVerifyingKey.from_signature(sig_string, recid, pre_hash, curve = SECP256k1)
-                    pubkey = bh2u(point_to_ser(public_key.pubkey.point, compressed))
-                    if pubkey in pubkeys:
-                        public_key.verify_digest(sig_string, pre_hash, sigdecode = ecdsa.util.sigdecode_string)
-                        j = pubkeys.index(pubkey)
-                        print_error("adding sig", i, j, pubkey, sig)
-                        self._inputs[i]['signatures'][j] = sig
-                        #self._inputs[i]['x_pubkeys'][j] = pubkey
-                        break
+            sig = signatures[i]
+            if sig in txin.get('signatures'):
+                continue
+            pre_hash = Hash_Sha256(bfh(self.serialize_preimage(i)))
+            # der to string
+            order = ecdsa.ecdsa.generator_secp256k1.order()
+            r, s = ecdsa.util.sigdecode_der(bfh(sig[:-2]), order)
+            sig_string = ecdsa.util.sigencode_string(r, s, order)
+            compressed = True
+            for recid in range(4):
+                public_key = MyVerifyingKey.from_signature(sig_string, recid, pre_hash, curve=SECP256k1)
+                pubkey = bh2u(point_to_ser(public_key.pubkey.point, compressed))
+                if pubkey in pubkeys:
+                    public_key.verify_digest(sig_string, pre_hash, sigdecode=ecdsa.util.sigdecode_string)
+                    j = pubkeys.index(pubkey)
+                    print_error("adding sig", i, j, pubkey, sig)
+                    self._inputs[i]['signatures'][j] = sig
+                    # self._inputs[i]['x_pubkeys'][j] = pubkey
+                    break
         # redo raw
         self.raw = self.serialize()
 
