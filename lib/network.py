@@ -767,9 +767,9 @@ class Network(util.DaemonThread):
                         self.server_retry_time = now
                 else:
                     self.switch_to_interface(self.default_server)
-        else:
-            if self.config.is_fee_estimates_update_required():
-                self.request_fee_estimates()
+        #else:
+            #if self.config.is_fee_estimates_update_required():
+                #self.request_fee_estimates()
 
     def request_chunk(self, interface, index):
         if index in self.requested_chunks:
