@@ -127,7 +127,7 @@ class SmartCashTestnet:
     ADDRTYPE_P2PKH = 65
     ADDRTYPE_P2SH = 21
     SEGWIT_HRP = "tsmart"
-    GENESIS = "0x0000027235b5679bcd28c90d03d4bf1a9ba4c07c4efcc1c87d6c68cce25e6e5d"
+    GENESIS = "0000027235b5679bcd28c90d03d4bf1a9ba4c07c4efcc1c87d6c68cce25e6e5d"
     DEFAULT_PORTS = {'t': '51001', 's': '51002'}
     DEFAULT_SERVERS = read_json('servers_testnet.json', {})
     CHECKPOINTS = read_json('checkpoints_testnet.json', [])

@@ -1,4 +1,10 @@
 {
+    "electrum1-testnet.rc125.cc": {
+        "pruning": "-",
+        "s": "51002",
+        "t": "51001",
+        "version": "1.2"
+    },
     "electrum01.zaphoid.com": {
         "pruning": "-",
         "s": "51000",
