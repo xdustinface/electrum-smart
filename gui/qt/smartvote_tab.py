@@ -271,6 +271,7 @@ class SmartvoteTab(QWidget):
         QMessageBox.critical(self, ('Error loading proposals'), (errmsg))
 
     def refresh_proposals(self):
+        self.smartvote_manager.voted_proposals = 0;
         self.selected_voting_option_map = dict()
         self.on_proposal_option_changed()
         layout = self.verticalLayout_6

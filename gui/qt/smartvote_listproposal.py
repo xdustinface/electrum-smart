@@ -216,7 +216,6 @@ class Ui_SmartProposalWidget(object):
     def update_proposal_details(self):
 
         proposal = self.proposal
-        self.manager.voted_proposals = 0
 
         title = "#{} - {}".format(proposal.get('proposalId'), proposal.get('title'))
         amountSmart = "{} SMART".format(self.add_thousands_spaces(proposal.get('amountSmart')))
