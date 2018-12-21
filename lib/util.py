@@ -509,14 +509,10 @@ mainnet_block_explorers = {
                         {'tx': 'tx/', 'addr': 'address/'}),
     'Insight Explorer': ('https://insight.smartcash.cc/',
                  {'tx': 'tx/', 'addr': 'address/'}),
-    'RpcExplorer': ('https://rpcexplorer.smartcash.cc/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'Explorer3': ('https://explorer.smartcash.cc/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
 }
 
 testnet_block_explorers = {
-    'SmartExplorer': ('https://explorer.smartcash.cc/',
+    'Testnet Explorer': ('https://testnet.dustinface.me/',
                        {'tx': 'tx/', 'addr': 'address/'}),
     'system default': ('blockchain://000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943/',
                        {'tx': 'tx/', 'addr': 'address/'}),
