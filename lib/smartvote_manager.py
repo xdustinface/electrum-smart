@@ -34,7 +34,8 @@ class SmartvoteManager(object):
         response = requests.post(url, json=data, headers=headers)
 
         if response.ok:
-            jData = json.loads(response.content.decode("utf-8"))
+            #jData = json.loads(response.content.decode("utf-8"))
+            jData = response.json()
             self.proposals = jData.get("result")
             print_msg("Loaded {0} proposals from smartvote API".format(self.proposals))
         else:
