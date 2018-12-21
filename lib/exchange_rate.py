@@ -406,7 +406,18 @@ class CoinMarketCap(ExchangeBase):
     def get_rates(self, ccy):
         json = self.get_json('api.coinmarketcap.com', '/v2/ticker/1828/?convert=%s' % ccy)
         return {ccy.upper(): Decimal(json['data']['quotes'][ccy]['price'])}
-      
+
+class CoinGecko(ExchangeBase):
+
+    def get_rates(self, ccy):
+        json = self.get_json('api.coingecko.com', '/api/v3/simple/price?ids=smartcash&vs_currencies=%s' % ccy)
+        return {ccy.upper(): Decimal(json['smartcash'][ccy.lower()])}
+
+class SmartCashAPI(ExchangeBase):
+
+    def get_rates(self, ccy):
+        json = self.get_json('api.smartcash.cc', '/v1/exchange/currencies')
+        return {ccy.upper(): Decimal(json['items'][0]['currencies'][ccy])}
 
 def dictinvert(d):
     inv = {}
