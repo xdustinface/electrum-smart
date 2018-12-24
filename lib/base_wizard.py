@@ -241,7 +241,7 @@ class BaseWizard(object):
             label = info.label or _("An unnamed {}").format(name)
             descr = "%s [%s, %s]" % (label, name, state)
             choices.append(((name, info), descr))
-        msg = _('Select a device') + ':'
+        msg = _('Select a device') + ':\n\n' + '*Trezor will not work with voting and message sign'
         self.choice_dialog(title=title, message=msg, choices=choices, run_next= lambda *args: self.on_device(*args, purpose=purpose))
 
     def on_device(self, name, device_info, *, purpose):
