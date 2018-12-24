@@ -30,14 +30,13 @@ class SmartvoteManager(object):
     def update_proposals(self):
         url = "{}/VoteProposals/CheckAddresses".format(URL_HIVE_VOTING_PORTAL)
         data = list(self.avaliable_addresses.keys())
-        headers = {'Content-type': 'application/json'}
+        headers = {'Content-type': 'application/json', 'User-Agent': 'Electrum'}
         response = requests.post(url, json=data, headers=headers)
 
         if response.ok:
-            #jData = json.loads(response.content.decode("utf-8"))
             jData = response.json()
             self.proposals = jData.get("result")
-            print_msg("Loaded {0} proposals from smartvote API".format(self.proposals))
+            print_msg("[VOTE API] successfully loaded proposals")
         else:
             response.raise_for_status()
 
