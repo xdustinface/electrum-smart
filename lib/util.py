@@ -512,7 +512,9 @@ mainnet_block_explorers = {
 }
 
 testnet_block_explorers = {
-    'Testnet Explorer': ('https://testnet.dustinface.me/',
+    'SmartCash Testnet Explorer': ('http://test-explorer.smartcash.cc',
+                       {'tx': 'tx/', 'addr': 'address/'}),
+    'Dustinface Testnet Explorer': ('https://testnet.dustinface.me/',
                        {'tx': 'tx/', 'addr': 'address/'}),
     'system default': ('blockchain://000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943/',
                        {'tx': 'tx/', 'addr': 'address/'}),
