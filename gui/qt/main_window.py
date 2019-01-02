@@ -599,7 +599,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             _("Before reporting a bug, upgrade to the most recent version of Electrum (latest release or git HEAD), and include the version number in your report."),
             _("Try to explain not only what the bug is, but how it occurs.")
          ])
-        self.show_message(msg, title="Electrum-SMART - " + _("Reporting Bugs"))
+        self.show_message(msg, title="Electrum-SMART - " + _("Reporting Bugs"), rich_text=True)
 
     def notify_transactions(self):
         if not self.network or not self.network.is_connected():
@@ -1667,10 +1667,51 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                     self.invoice_list.update()
                     self.do_clear()
                 else:
-                    parent.show_error(msg)
+                    display_msg = _('The server returned an error when broadcasting the transaction:')
+                    if msg:
+                        self.print_error("The server returned an error when broadcasting the transaction:", msg)
+                        display_msg += '\n\n' + self.get_clean_error_msg(msg)
+                    parent.show_error(display_msg)
 
         WaitingDialog(self, _('Broadcasting transaction...'),
                       broadcast_thread, broadcast_done, self.on_error)
+
+    @staticmethod
+    def get_clean_error_msg(server_msg):
+        if not isinstance(server_msg, str):
+            server_msg = str(server_msg)
+        server_msg = server_msg.replace("\n", r"\n")  # replace \n with slash-n because dict does this.
+
+        if r'Missing inputs' in server_msg or r'Inputs unavailable' in server_msg or r"bad-txns-inputs-spent" in server_msg:
+            return _("Transaction could not be broadcast due to missing, already-spent, or otherwise invalid inputs.")
+        elif r'insufficient priority' in server_msg:
+            return _(
+                "The transaction was rejected due to paying insufficient fees and/or for being of extremely low priority.")
+        elif r'bad-txns-premature-spend-of-coinbase' in server_msg:
+            return _("Transaction could not be broadcast due to an attempt to spend a coinbase input before maturity.")
+        elif r"txn-already-in-mempool" in server_msg or r"txn-already-known" in server_msg:
+            return _("The transaction already exists in the server's mempool.")
+        elif r"txn-mempool-conflict" in server_msg:
+            return _("The transaction conflicts with a transaction already in the server's mempool. Wait for it to be confirmed.")
+        elif r"bad-txns-nonstandard-inputs" in server_msg:
+            return _("The transaction was rejected due its use of non-standard inputs.")
+        elif r"absurdly-high-fee" in server_msg:
+            return _("The transaction was rejected because it specifies an absurdly high fee.")
+        elif r"non-mandatory-script-verify-flag" in server_msg:
+            return _("The transaction was rejected because it contians a non-mandatory script verify flag.")
+        elif r"tx-size" in server_msg:
+            return _("The transaction was rejected because it is too large.")
+        elif r"scriptsig-size" in server_msg:
+            return _("The transaction was rejected because it contains a script that is too large.")
+        elif r"scriptpubkey" in server_msg:
+            return _("The transaction was rejected because it contains a non-standard script public key signature.")
+        elif r"bare-multisig" in server_msg:
+            return _("The transaction was rejected because it contains a bare multisig input.")
+        elif r"multi-op-return" in server_msg:
+            return _("The transaction was rejected because it contains more than 1 OP_RETURN input.")
+        elif r"scriptsig-not-pushonly" in server_msg:
+            return _("The transaction was rejected because it contains non-push-only script sigs.")
+        return _("An error occurred broadcasting the transaction")
 
     def query_choice(self, msg, choices):
         # Needed by QtHandler for hardware wallets
