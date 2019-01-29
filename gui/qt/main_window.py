@@ -1670,14 +1670,14 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                     display_msg = _('The server returned an error when broadcasting the transaction:')
                     if msg:
                         self.print_error("The server returned an error when broadcasting the transaction:", msg)
-                        display_msg += '\n\n' + self.get_clean_error_msg(msg)
+                        display_msg += '\n\n' + self.get_clean_error_msg(msg, self.network)
                     parent.show_error(display_msg)
 
         WaitingDialog(self, _('Broadcasting transaction...'),
                       broadcast_thread, broadcast_done, self.on_error)
 
     @staticmethod
-    def get_clean_error_msg(server_msg):
+    def get_clean_error_msg(server_msg, network):
         if not isinstance(server_msg, str):
             server_msg = str(server_msg)
         server_msg = server_msg.replace("\n", r"\n")  # replace \n with slash-n because dict does this.
@@ -1711,7 +1711,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             return _("The transaction was rejected because it contains more than 1 OP_RETURN input.")
         elif r"scriptsig-not-pushonly" in server_msg:
             return _("The transaction was rejected because it contains non-push-only script sigs.")
-        return _("An error occurred broadcasting the transaction")
+        return network.sanitize_tx_broadcast_response(server_msg)
 
     def query_choice(self, msg, choices):
         # Needed by QtHandler for hardware wallets
