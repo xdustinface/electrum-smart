@@ -2228,7 +2228,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
     @protected
     def do_sign(self, address, message, signature, password):
-        address  = address.text().strip()
+        address = address.text().strip()
         message = message.toPlainText().strip()
         if not bitcoin.is_address(address):
             self.show_message(_('Invalid SmartCash address.'))

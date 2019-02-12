@@ -782,7 +782,7 @@ class EC_KEY(object):
 
     def sign_message(self, message, is_compressed):
         message = to_bytes(message, 'utf8')
-        signature = self.sign(Hash(msg_magic(message)))
+        signature = self.sign(Hash_Sha256(msg_magic(message)))
         for i in range(4):
             sig = bytes([27 + i + (4 if is_compressed else 0)]) + signature
             try:
@@ -808,7 +808,7 @@ class EC_KEY(object):
 
     def verify_message(self, sig, message):
         assert_bytes(message)
-        h = Hash(msg_magic(message))
+        h = Hash_Sha256(msg_magic(message))
         public_key, compressed = pubkey_from_signature(sig, h)
         # check public key
         if point_to_ser(public_key.pubkey.point, compressed) != point_to_ser(self.pubkey.point, compressed):
