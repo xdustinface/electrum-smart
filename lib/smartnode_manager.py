@@ -12,6 +12,7 @@ BUDGET_FEE_CONFIRMATIONS = 6
 BUDGET_FEE_TX = 5 * bitcoin.COIN
 # From masternode.h
 MASTERNODE_MIN_CONFIRMATIONS = 15
+SMARTNODE_COLLATERAL_VALUE = 100000 * bitcoin.COIN
 
 MasternodeConfLine = namedtuple('MasternodeConfLine', ('alias', 'addr',
         'wif', 'txid', 'output_index'))
@@ -137,7 +138,7 @@ class MasternodeManager(object):
         if not txid or prevout_n is None:
             return
         # Return if it already has the information.
-        if mn.collateral_key and mn.vin.get('address') and mn.vin.get('value') == 10000 * bitcoin.COIN:
+        if mn.collateral_key and mn.vin.get('address') and mn.vin.get('value') == SMARTNODE_COLLATERAL_VALUE:
             return
 
         tx = self.wallet.transactions.get(txid)
@@ -162,7 +163,7 @@ class MasternodeManager(object):
         coins = self.wallet.get_utxos(domain, exclude_frozen,
                                       mature=True, confirmed_only=True)
 
-        coins[:] = [c for c in coins if c.get('value') == 10000 * bitcoin.COIN]
+        coins[:] = [c for c in coins if c.get('value') == SMARTNODE_COLLATERAL_VALUE]
 
         avaliable_vins = []
         for coin in coins:
@@ -188,10 +189,10 @@ class MasternodeManager(object):
         used_vins = map(lambda mn: '%s:%d' % (mn.vin.get('prevout_hash'), mn.vin.get('prevout_n', 0xffffffff)), self.masternodes)
         unused = lambda d: '%s:%d' % (d['prevout_hash'], d['prevout_n']) not in used_vins
 
-        #smartnode 10000 output
-        correct_amount = lambda d: d['value'] == 10000 * bitcoin.COIN
+        #smartnode output
+        correct_amount = lambda d: d['value'] == SMARTNODE_COLLATERAL_VALUE
 
-        # Valid outputs have a value of exactly 10000 SMART and
+        # Valid outputs have a value of exactly SMARTNODE_COLLATERAL_VALUE SMART and
         # are not in use by an existing smartnode.
         is_valid = lambda d: correct_amount(d) and unused(d)
 
@@ -221,8 +222,8 @@ class MasternodeManager(object):
         if conf < MASTERNODE_MIN_CONFIRMATIONS:
             raise Exception('Collateral payment must have at least %d confirmations (current: %d)' % (MASTERNODE_MIN_CONFIRMATIONS, conf))
         # Ensure that the Smartnode's vin is valid.
-        if mn.vin.get('value', 0) != bitcoin.COIN * 10000:
-            raise Exception('Smartnode requires a collateral 10000 SMART output.')
+        if mn.vin.get('value', 0) != SMARTNODE_COLLATERAL_VALUE:
+            raise Exception('Smartnode requires a collateral {} SMART output.'.format(SMARTNODE_COLLATERAL_VALUE))
 
         # Ensure collateral was not moved or spent.
         uxto = '{}:{}'.format(mn.vin['prevout_hash'], mn.vin['prevout_n'])
@@ -250,8 +251,8 @@ class MasternodeManager(object):
         if conf < MASTERNODE_MIN_CONFIRMATIONS:
             raise Exception('Collateral payment must have at least %d confirmations (current: %d)' % (MASTERNODE_MIN_CONFIRMATIONS, conf))
         # Ensure that the Smartnode's vin is valid.
-        if mn.vin.get('value', 0) != bitcoin.COIN * 10000:
-            raise Exception('Smartnode requires a collateral 10000 SMART output.')
+        if mn.vin.get('value', 0) != SMARTNODE_COLLATERAL_VALUE:
+            raise Exception('Smartnode requires a collateral {} SMART output.'.format(SMARTNODE_COLLATERAL_VALUE))
 
         collat = mn.get_collateral_str()
         status = self.masternode_statuses.get(collat)

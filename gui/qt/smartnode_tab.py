@@ -187,10 +187,7 @@ class SmartnodeModel(QAbstractTableModel):
         elif i == self.VIN_ADDRESS:
             mn.vin['address'] = value
         elif i == self.VIN_VALUE:
-            if value == '1000000000000':
-                mn.vin['value'] = 10000 * bitcoin.COIN
-            else:
-                mn.vin['value'] = 0
+            mn.vin['value'] = int(value)
         elif i == self.VIN_SCRIPTSIG:
             mn.vin['scriptSig'] = value
         elif i == self.COLLATERAL:
