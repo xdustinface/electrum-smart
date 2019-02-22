@@ -640,26 +640,6 @@ def verify_message(address, sig, message):
         print_error("Verification error: {0}".format(e))
         return False
 
-def verify_node_message(address, sig, message):
-    assert_bytes(sig, message)
-    try:
-        h = Hash_Sha256(msg_magic(message))
-        public_key, compressed = pubkey_from_signature(sig, h)
-        # check public key using the address
-        pubkey = point_to_ser(public_key.pubkey.point, compressed)
-        for txin_type in ['p2pkh','p2wpkh','p2wpkh-p2sh']:
-            addr = pubkey_to_address(txin_type, bh2u(pubkey))
-            if address == addr:
-                break
-        else:
-            raise Exception("Bad signature")
-        # check message
-        public_key.verify_digest(sig[1:], h, sigdecode = ecdsa.util.sigdecode_string)
-        return True
-    except Exception as e:
-        print_error("Verification error: {0}".format(e))
-        return False
-
 
 def encrypt_message(message, pubkey, magic=b'BIE1'):
     return EC_KEY.encrypt_message(message, bfh(pubkey), magic)
@@ -793,31 +773,7 @@ class EC_KEY(object):
         else:
             raise Exception("error: cannot sign message")
 
-    def sign_node_message(self, message, is_compressed):
-        message = to_bytes(message, 'utf8')
-        signature = self.sign(Hash_Sha256(msg_magic(message)))
-        for i in range(4):
-            sig = bytes([27 + i + (4 if is_compressed else 0)]) + signature
-            try:
-                self.verify_node_message(sig, message)
-                return sig
-            except Exception as e:
-                continue
-        else:
-            raise Exception("error: cannot sign message")
-
     def verify_message(self, sig, message):
-        assert_bytes(message)
-        h = Hash_Sha256(msg_magic(message))
-        public_key, compressed = pubkey_from_signature(sig, h)
-        # check public key
-        if point_to_ser(public_key.pubkey.point, compressed) != point_to_ser(self.pubkey.point, compressed):
-            raise Exception("Bad signature")
-        # check message
-        public_key.verify_digest(sig[1:], h, sigdecode = ecdsa.util.sigdecode_string)
-
-
-    def verify_node_message(self, sig, message):
         assert_bytes(message)
         h = Hash_Sha256(msg_magic(message))
         public_key, compressed = pubkey_from_signature(sig, h)

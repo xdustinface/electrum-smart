@@ -288,7 +288,7 @@ class MasternodeManager(object):
 
         # After creating the Smartnode Ping, sign the Smartnode Announce.
         address = bitcoin.public_key_to_p2pkh(bfh(mn.collateral_key))
-        mn.sig = self.wallet.sign_node_message(address, mn.serialize_for_sig(update_time=True), password)
+        mn.sig = self.wallet.sign_message(address, mn.serialize_for_sig(update_time=True), password)
 
         return mn
 
