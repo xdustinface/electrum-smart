@@ -197,15 +197,15 @@ class SmartvoteTab(QWidget):
         password = None
         if self.smartvote_manager.wallet.has_password():
             password = self.gui.password_dialog('Please enter your password to vote')
-                 if password is None:
-                     return
-                 else:
-                     try:
-                         self.smartvote_manager.wallet.check_password(password)
-                     except:
-                         self.gui.show_warning('Incorrect password')
-                         return
-                     self.start_cast_vote_dialog(password)
+            if password is None:
+                return
+            else:
+                try:
+                    self.smartvote_manager.wallet.check_password(password)
+                except:
+                    self.gui.show_warning('Incorrect password')
+                    return
+                self.start_cast_vote_dialog(password)
             # if isinstance(self.smartvote_manager.wallet.keystore, keystore.Hardware_KeyStore):
             #     self.gui.show_warning('Vote is not supported on hardware wallets yet')
             #     return
