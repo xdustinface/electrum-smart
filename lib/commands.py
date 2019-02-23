@@ -671,6 +671,11 @@ class Commands:
             return 'Error: %s' % str(e)
 
     @command('w')
+    def export_checkpoints(self, path):
+        self.network.export_checkpoints(path)
+
+
+    @command('w')
     def smartnode_status(self, alias):
         """Get smartnode status."""
         try:
