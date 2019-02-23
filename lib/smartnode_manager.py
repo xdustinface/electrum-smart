@@ -177,7 +177,7 @@ class MasternodeManager(object):
 
         for vin in unavaliable_vins:
             prevout_hash, prevout_n = vin.split(':')
-            coins[:] = [c for c in coins if (c.get('prevout_hash') != prevout_hash and c.get('prevout_n') != prevout_n)]
+            [coins.remove(c) for c in coins if (c.get('prevout_hash') == prevout_hash) and (c.get('prevout_n') == int(prevout_n))]
 
         return coins
 
