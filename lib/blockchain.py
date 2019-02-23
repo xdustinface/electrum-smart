@@ -296,33 +296,21 @@ class Blockchain(util.PrintError):
         if constants.net.TESTNET:
             return 0
         if index == -1:
-            return 0x00000FFFF0000000000000000000000000000000000000000000000000000000
+            return MAX_TARGET
         if index < len(self.checkpoints):
-            h, t, _ = self.checkpoints[index]
+            h, t = self.checkpoints[index]
             return t
         # new target
-        # Zcoin: go back the full period unless it's the first retarget
-        first_timestamp = self.get_timestamp(index * 2016 - 1 if index > 0 else 0)
+        first = self.read_header(index * 2016)
         last = self.read_header(index * 2016 + 2015)
         bits = last.get('bits')
         target = self.bits_to_target(bits)
-        nActualTimespan = last.get('timestamp') - first_timestamp
-        nTargetTimespan = 84 * 60 * 60
+        nActualTimespan = last.get('timestamp') - first.get('timestamp')
+        nTargetTimespan = 14 * 24 * 60 * 60
         nActualTimespan = max(nActualTimespan, nTargetTimespan // 4)
         nActualTimespan = min(nActualTimespan, nTargetTimespan * 4)
         new_target = min(MAX_TARGET, (target * nActualTimespan) // nTargetTimespan)
         return new_target
-        # new target
-        #first = self.read_header(index * 2016)
-        #last = self.read_header(index * 2016 + 2015)
-        #bits = last.get('bits')
-        #target = self.bits_to_target(bits)
-        #nActualTimespan = last.get('timestamp') - first.get('timestamp')
-        #nTargetTimespan = 14 * 24 * 60 * 60
-        #nActualTimespan = max(nActualTimespan, nTargetTimespan // 4)
-        #nActualTimespan = min(nActualTimespan, nTargetTimespan * 4)
-        #new_target = min(MAX_TARGET, (target * nActualTimespan) // nTargetTimespan)
-        #return new_target
 
     def bits_to_target(self, bits):
         bitsN = (bits >> 24) & 0xff
@@ -383,7 +371,5 @@ class Blockchain(util.PrintError):
         for index in range(n):
             h = self.get_hash((index+1) * 2016 -1)
             target = self.get_target(index)
-            # Zcoin: also store the timestamp of the last block
-            tstamp = self.get_timestamp((index+1) * 2016 - 1)
-            cp.append((h, target, tstamp))
+            cp.append((h, target))
         return cp
