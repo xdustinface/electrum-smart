@@ -306,6 +306,7 @@ class MasternodeManager(object):
         errmsg = []
         callback = lambda r: self.broadcast_announce_callback(alias, errmsg, r)
         self.network_event.clear()
+        print("MNB: {}".format(serialized))
         self.wallet.network.send([('masternode.announce.broadcast', [serialized])], callback)
         self.network_event.wait()
         self.subscribe_to_masternodes()
